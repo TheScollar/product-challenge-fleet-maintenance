@@ -2348,7 +2348,7 @@ Expected: FAIL, `Failed to resolve import "./validation"`.
 - [ ] **Step 3: Write `src/domain/validation.ts`**
 
 ```ts
-import { computeWeekCapacity, weekFixtureFor } from './capacity'
+import { computeWeekCapacity } from './capacity'
 import { formatDay } from './clock'
 import { isDeferralComplete } from './deferral'
 import { slotBlockers } from './feasibility'
@@ -2365,8 +2365,10 @@ export function validatePlan(args: {
   decisions: Record<ItemId, DraftDecision>
 }): Blocker[] {
   const { fixture, weekId, decisions } = args
-  const week = weekFixtureFor(fixture, weekId)
-  const items = fixture.items.filter((i) => week.itemIds.includes(i.id))
+  // Every item the caller has a decision slot for, which is the week's queue.
+  // Filtering on week.itemIds would skip resurfaced items entirely, since weeks
+  // after the first author none of their own.
+  const items = fixture.items.filter((i) => decisions[i.id] !== undefined)
   const visits = visitsFromDecisions(decisions, fixture.items)
   const out: Blocker[] = []
 
@@ -3132,16 +3134,14 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
     case 'commit': {
       const decisions = draftFor({ fixture, state, weekId: action.weekId })
       const plan = commitPlan({ weekId: action.weekId, decisions, demoDate: state.demoDate })
-      // Every item this plan decided gets its record rebuilt, not just the
-      // deferred ones. A decided item keeps only records from weeks after
-      // this commit, so any record at or before plan.weekId is superseded,
-      // then a fresh record is added only if this decision carries a
-      // deferral. An item decided away from a deferral is left with nothing,
-      // so it stops resurfacing instead of clinging to a stale rationale
-      // from whichever earlier week deferred it.
+      // Rebuild history only for items this plan actually decided. An item
+      // decided away from a deferral must lose its old record, or it resurfaces
+      // forever on a stale rationale. An item still undisposed has decided
+      // nothing, so its history must survive untouched.
       const history = { ...state.deferralHistory }
       const newRecords = new Map(deferralRecordsFrom(plan).map((r) => [r.itemId, r]))
-      for (const itemId of Object.keys(plan.decisions)) {
+      for (const [itemId, decision] of Object.entries(plan.decisions)) {
+        if (decision.treatment === null) continue
         const others = (history[itemId] ?? []).filter((r) => r.weekId > plan.weekId)
         const record = newRecords.get(itemId)
         const next = record ? [...others, record] : others
@@ -3205,14 +3205,23 @@ function isValidCommittedByWeek(value: unknown): boolean {
   return isPlainObject(value) && Object.values(value).every((v) => v === null || isValidCommittedPlan(v))
 }
 
-/** Shallow shape check for a DeferralRecord: enough to let latestRecord sort
- *  and resurfacing() read a record without throwing, nothing deeper. */
+/** Shape check for a DeferralRecord: weekId and decidedOn as strings, and a
+ *  deferral whose reviewDate is a string and whose trigger is a plain object
+ *  with a string kind. That is exactly what latestRecord's sort and
+ *  resurfacing()'s and nextResurfaceDate()'s reads of trigger.kind and
+ *  reviewDate need to not throw. It does not validate reason, or the
+ *  trigger's other fields (eventId, vehicleId, thresholdKm), so a record can
+ *  pass this check and still name an event or vehicle that does not exist:
+ *  that is a silently inert record, not a crash. */
 function isValidDeferralRecord(value: unknown): boolean {
   return (
     isPlainObject(value) &&
     typeof value.weekId === 'string' &&
     typeof value.decidedOn === 'string' &&
-    isPlainObject(value.deferral)
+    isPlainObject(value.deferral) &&
+    typeof value.deferral.reviewDate === 'string' &&
+    isPlainObject(value.deferral.trigger) &&
+    typeof value.deferral.trigger.kind === 'string'
   )
 }
 

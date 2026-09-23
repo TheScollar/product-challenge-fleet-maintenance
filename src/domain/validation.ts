@@ -1,4 +1,4 @@
-import { computeWeekCapacity, weekFixtureFor } from './capacity'
+import { computeWeekCapacity } from './capacity'
 import { formatDay } from './clock'
 import { isDeferralComplete } from './deferral'
 import { slotBlockers } from './feasibility'
@@ -15,8 +15,10 @@ export function validatePlan(args: {
   decisions: Record<ItemId, DraftDecision>
 }): Blocker[] {
   const { fixture, weekId, decisions } = args
-  const week = weekFixtureFor(fixture, weekId)
-  const items = fixture.items.filter((i) => week.itemIds.includes(i.id))
+  // Every item the caller has a decision slot for, which is the week's queue.
+  // Filtering on week.itemIds would skip resurfaced items entirely, since weeks
+  // after the first author none of their own.
+  const items = fixture.items.filter((i) => decisions[i.id] !== undefined)
   const visits = visitsFromDecisions(decisions, fixture.items)
   const out: Blocker[] = []
 

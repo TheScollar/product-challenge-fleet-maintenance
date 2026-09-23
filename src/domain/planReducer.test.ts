@@ -136,6 +136,17 @@ describe('resolving a resurfaced item', () => {
     )
     expect(later.deferralHistory['item-v041'] ?? []).toHaveLength(0)
   })
+
+  it('keeps the history of an item it has not decided yet', () => {
+    const advanced = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    expect(advanced.demoDate).toBe('2026-10-05')
+
+    const s = reduce(advanced, { type: 'commit', weekId: '2026-10-05' })
+
+    expect(s.deferralHistory['item-v041']).toHaveLength(1)
+    expect(s.deferralHistory['item-v041'][0].deferral.reason).toContain('No specialist cover')
+    expect(queueFor({ fixture, state: s, weekId: '2026-10-05' }).map((q) => q.item.id)).toContain('item-v041')
+  })
 })
 
 describe('reset', () => {

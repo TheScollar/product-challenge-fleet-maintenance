@@ -23,14 +23,23 @@ function isValidCommittedByWeek(value: unknown): boolean {
   return isPlainObject(value) && Object.values(value).every((v) => v === null || isValidCommittedPlan(v))
 }
 
-/** Shallow shape check for a DeferralRecord: enough to let latestRecord sort
- *  and resurfacing() read a record without throwing, nothing deeper. */
+/** Shape check for a DeferralRecord: weekId and decidedOn as strings, and a
+ *  deferral whose reviewDate is a string and whose trigger is a plain object
+ *  with a string kind. That is exactly what latestRecord's sort and
+ *  resurfacing()'s and nextResurfaceDate()'s reads of trigger.kind and
+ *  reviewDate need to not throw. It does not validate reason, or the
+ *  trigger's other fields (eventId, vehicleId, thresholdKm), so a record can
+ *  pass this check and still name an event or vehicle that does not exist:
+ *  that is a silently inert record, not a crash. */
 function isValidDeferralRecord(value: unknown): boolean {
   return (
     isPlainObject(value) &&
     typeof value.weekId === 'string' &&
     typeof value.decidedOn === 'string' &&
-    isPlainObject(value.deferral)
+    isPlainObject(value.deferral) &&
+    typeof value.deferral.reviewDate === 'string' &&
+    isPlainObject(value.deferral.trigger) &&
+    typeof value.deferral.trigger.kind === 'string'
   )
 }
 

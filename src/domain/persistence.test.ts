@@ -122,6 +122,24 @@ describe('loadState', () => {
     })
   })
 
+  it('falls back to the seed, and does not throw, when a deferral record has a trigger-less deferral', () => {
+    withStoredValue(
+      validEnvelope({
+        deferralHistory: {
+          'item-v041': [{ weekId: '2026-09-28', decidedOn: '2026-09-28', deferral: {} }],
+        },
+      }),
+      () => {
+        let s: AppState | undefined
+        expect(() => {
+          s = loadState(fixture)
+        }).not.toThrow()
+        expectSeedEquivalent(s!)
+        expect(s!.storageNotice).not.toBeNull()
+      },
+    )
+  })
+
   it('round-trips a real committed state through saveState', () => {
     withStoredValue(null, () => {
       const real = committedRealState()

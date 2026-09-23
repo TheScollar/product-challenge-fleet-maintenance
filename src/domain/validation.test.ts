@@ -100,6 +100,17 @@ describe('the journey to a committable plan', () => {
   })
 })
 
+describe('a resurfaced-only week', () => {
+  it('reports its undecided resurfaced item as undisposed, so the plan cannot commit with nothing decided', () => {
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v041': { itemId: 'item-v041', treatment: null, slotDate: null, deferral: null },
+    }
+    const blockers = validatePlan({ fixture, weekId: '2026-10-05', decisions })
+    expect(blockers.some((b) => b.kind === 'undisposed-item' && b.itemId === 'item-v041')).toBe(true)
+    expect(canCommit(blockers)).toBe(false)
+  })
+})
+
 describe('blockers are named in plain language', () => {
   it('describes a shortfall by day and class', () => {
     const text = describeBlocker(validate(coldOpen())[0], fixture)
