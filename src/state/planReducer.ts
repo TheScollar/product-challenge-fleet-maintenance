@@ -116,15 +116,21 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
     case 'commit': {
       const decisions = draftFor({ fixture, state, weekId: action.weekId })
       const plan = commitPlan({ weekId: action.weekId, decisions, demoDate: state.demoDate })
-      // Records are replaced per item rather than appended, so recommitting
-      // the same week cannot accumulate duplicates.
+      // Every item this plan decided gets its record rebuilt, not just the
+      // deferred ones. A decided item keeps only records from weeks after
+      // this commit, so any record at or before plan.weekId is superseded,
+      // then a fresh record is added only if this decision carries a
+      // deferral. An item decided away from a deferral is left with nothing,
+      // so it stops resurfacing instead of clinging to a stale rationale
+      // from whichever earlier week deferred it.
       const history = { ...state.deferralHistory }
-      for (const record of deferralRecordsFrom(plan)) {
-        // This reducer keeps at most one record per item per week. resurfacedItems
-        // relies on that as a precondition rather than as a guarantee, since
-        // loadState can rehydrate a history this reducer did not build.
-        const others = (history[record.itemId] ?? []).filter((r) => r.weekId !== plan.weekId)
-        history[record.itemId] = [...others, record]
+      const newRecords = new Map(deferralRecordsFrom(plan).map((r) => [r.itemId, r]))
+      for (const itemId of Object.keys(plan.decisions)) {
+        const others = (history[itemId] ?? []).filter((r) => r.weekId > plan.weekId)
+        const record = newRecords.get(itemId)
+        const next = record ? [...others, record] : others
+        if (next.length === 0) delete history[itemId]
+        else history[itemId] = next
       }
       return {
         ...state,

@@ -3132,13 +3132,21 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
     case 'commit': {
       const decisions = draftFor({ fixture, state, weekId: action.weekId })
       const plan = commitPlan({ weekId: action.weekId, decisions, demoDate: state.demoDate })
-      // Records are replaced per item rather than appended, so recommitting
-      // the same week cannot accumulate duplicates.
+      // Every item this plan decided gets its record rebuilt, not just the
+      // deferred ones. A decided item keeps only records from weeks after
+      // this commit, so any record at or before plan.weekId is superseded,
+      // then a fresh record is added only if this decision carries a
+      // deferral. An item decided away from a deferral is left with nothing,
+      // so it stops resurfacing instead of clinging to a stale rationale
+      // from whichever earlier week deferred it.
       const history = { ...state.deferralHistory }
-      for (const record of deferralRecordsFrom(plan)) {
-        // At most one record per item per week, which is what makes weekId a total order in resurfacedItems.
-        const others = (history[record.itemId] ?? []).filter((r) => r.weekId !== plan.weekId)
-        history[record.itemId] = [...others, record]
+      const newRecords = new Map(deferralRecordsFrom(plan).map((r) => [r.itemId, r]))
+      for (const itemId of Object.keys(plan.decisions)) {
+        const others = (history[itemId] ?? []).filter((r) => r.weekId > plan.weekId)
+        const record = newRecords.get(itemId)
+        const next = record ? [...others, record] : others
+        if (next.length === 0) delete history[itemId]
+        else history[itemId] = next
       }
       return {
         ...state,
@@ -3178,10 +3186,46 @@ import type { Fixture } from '../domain/types'
 export const STORAGE_KEY = 'fleet-maintenance-prototype/v1'
 const CURRENT_VERSION = 1
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Shallow shape check for a CommittedPlan: the three fields resurfacedItems
+ *  and the reducer actually read, nothing deeper. */
+function isValidCommittedPlan(value: unknown): boolean {
+  return (
+    isPlainObject(value) &&
+    typeof value.weekId === 'string' &&
+    typeof value.committedOn === 'string' &&
+    isPlainObject(value.decisions)
+  )
+}
+
+function isValidCommittedByWeek(value: unknown): boolean {
+  return isPlainObject(value) && Object.values(value).every((v) => v === null || isValidCommittedPlan(v))
+}
+
+/** Shallow shape check for a DeferralRecord: enough to let latestRecord sort
+ *  and resurfacing() read a record without throwing, nothing deeper. */
+function isValidDeferralRecord(value: unknown): boolean {
+  return (
+    isPlainObject(value) &&
+    typeof value.weekId === 'string' &&
+    typeof value.decidedOn === 'string' &&
+    isPlainObject(value.deferral)
+  )
+}
+
+function isValidDeferralHistory(value: unknown): boolean {
+  return (
+    isPlainObject(value) && Object.values(value).every((v) => Array.isArray(v) && v.every(isValidDeferralRecord))
+  )
+}
+
 /**
  * Every failure path falls back to the seed and says so in the demo bar.
- * Storage is never trusted: it can be absent, disabled, full, or written by
- * an older build. None of those may crash the app. [S 5.2]
+ * Storage is never trusted: it can be absent, disabled, full, corrupt, or
+ * written by an older build. None of those may crash the app. [S 5.2]
  */
 export function loadState(fixture: Fixture): AppState {
   const fresh = initialState(fixture)
@@ -3200,6 +3244,14 @@ export function loadState(fixture: Fixture): AppState {
       return { ...fresh, storageNotice: 'Saved state was written by an older build. Reset to the seed.' }
     }
     if (typeof parsed.demoDate !== 'string' || typeof parsed.draftByWeek !== 'object') {
+      return { ...fresh, storageNotice: 'Saved state was incomplete. Reset to the seed.' }
+    }
+    // A parseable envelope with the right version and a plausible demoDate
+    // can still carry a committedByWeek or deferralHistory that is the wrong
+    // shape entirely (a string, an array, records missing their weekId).
+    // Left unchecked, that reaches latestRecord's sort and throws well after
+    // this function returns. Checked here, it is just another incomplete save.
+    if (!isValidCommittedByWeek(parsed.committedByWeek) || !isValidDeferralHistory(parsed.deferralHistory)) {
       return { ...fresh, storageNotice: 'Saved state was incomplete. Reset to the seed.' }
     }
     return {

@@ -118,6 +118,26 @@ describe('advancing the clock', () => {
   })
 })
 
+describe('resolving a resurfaced item', () => {
+  it('stops resurfacing an item once it is decided some other way', () => {
+    let s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    expect(s.demoDate).toBe('2026-10-05')
+
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-10-05',
+      decision: { itemId: 'item-v041', treatment: 'act-now', slotDate: '2026-10-06', deferral: null },
+    })
+    s = reduce(s, { type: 'commit', weekId: '2026-10-05' })
+
+    const later = reduce(s, { type: 'advance-days', days: 7 })
+    expect(queueFor({ fixture, state: later, weekId: '2026-10-12' }).some((q) => q.item.id === 'item-v041')).toBe(
+      false,
+    )
+    expect(later.deferralHistory['item-v041'] ?? []).toHaveLength(0)
+  })
+})
+
 describe('reset', () => {
   it('restores the seed and the demo date', () => {
     const s = reduce(committedWeek40(), { type: 'reset' })
