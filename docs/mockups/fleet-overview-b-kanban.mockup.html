@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #fff; --border: #e3e6ea; --border-strong: #cfd5dc;
+    --text: #14181d; --muted: #626a75; --faint: #8b939e;
+    --accent: #1f5fd0; --accent-soft: #eaf0fc;
+    --crit: #c0322b; --crit-soft: #fbecea;
+    --warn: #b26a00; --warn-soft: #fdf3e3;
+    --ok: #2c7a4b; --ok-soft: #eaf5ee;
+    --spec: #5b3fa8; --spec-soft: #f0ecfa;
+    --r: 6px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .ribbon {
+    background: #2b3440; color: #cdd6e0; font-size: 11px; letter-spacing: 0.05em;
+    padding: 5px 18px; font-weight: 700; text-transform: uppercase;
+  }
+  .ribbon b { color: #fff; }
+
+  .demobar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 7px 18px; background: #fff8e6; border-bottom: 1px solid #f0dfb4; font-size: 12px;
+  }
+  .demobar .tag {
+    background: var(--warn); color: #fff; padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .demobar .clock { color: #7a5a12; font-weight: 600; }
+  .demobar .spacer { flex: 1; }
+  .demobar button {
+    font-size: 11px; background: #fff; border: 1px solid #e0cd9e;
+    padding: 3px 9px; border-radius: 4px; color: #7a5a12; cursor: pointer;
+  }
+
+  .tabs {
+    display: flex; gap: 2px; padding: 0 18px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    font-size: 12.5px; font-weight: 600; padding: 10px 14px 8px; color: var(--muted);
+    border-bottom: 2px solid transparent; cursor: pointer;
+  }
+  .tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .glance {
+    display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+    padding: 14px 18px 12px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .glance h1 { margin: 0 0 3px; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+  .glance .today { font-size: 12.5px; color: var(--muted); }
+  .glance .today b { color: var(--text); }
+  .glance .spacer { flex: 1; }
+  .glance .cta { text-align: right; }
+  .glance .cta button {
+    font: inherit; font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: var(--r);
+    border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer;
+  }
+  .glance .cta .sub { font-size: 11.5px; color: var(--warn); font-weight: 600; margin-top: 4px; }
+  .tomorrow {
+    width: 100%; display: flex; align-items: center; gap: 7px;
+    font-size: 11.5px; color: var(--crit); font-weight: 600;
+  }
+  .tomorrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--crit); flex: none; }
+  .tomorrow .fix { color: var(--accent); font-weight: 600; }
+
+  .urg {
+    display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px;
+    border-radius: 3px; border: 1px solid; letter-spacing: 0.03em; white-space: nowrap;
+  }
+  .urg.deadline { color: var(--crit); border-color: #e8bdb9; background: var(--crit-soft); }
+  .urg.estimate { color: var(--warn); border-color: #ecd5a6; background: var(--warn-soft); }
+  .urg.assessment { color: #4a525c; border-color: var(--border-strong); background: #f2f4f6; }
+  .badge {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px;
+  }
+  .badge.safety { background: var(--crit-soft); color: var(--crit); }
+  .badge.specialist { background: var(--spec-soft); color: var(--spec); }
+  .badge.held { background: #eceef1; color: #4a525c; }
+  .vid { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .board {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    padding: 14px 18px 8px; align-items: start;
+  }
+  .col { background: #f1f3f5; border: 1px solid var(--border); border-radius: var(--r); }
+  .col .colhead {
+    display: flex; align-items: center; gap: 7px; padding: 8px 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .col .colhead .n {
+    margin-left: auto; font-size: 11px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 0 7px;
+    font-variant-numeric: tabular-nums;
+  }
+  .col .colhead .cdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .col.crit .colhead .cdot { background: var(--crit); }
+  .col.warn .colhead .cdot { background: var(--warn); }
+  .col.acc .colhead .cdot { background: var(--accent); }
+  .col.watch .colhead .cdot { background: var(--spec); }
+  .col.ok .colhead .cdot { background: var(--ok); }
+  .col .colbody { padding: 8px; }
+
+  .kcard {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 5px;
+    padding: 8px 9px; margin-bottom: 7px; cursor: pointer;
+  }
+  .kcard:hover { border-color: var(--border-strong); }
+  .kcard .row1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+  .kcard .title { font-size: 12px; margin-bottom: 4px; }
+  .kcard .why { font-size: 11px; color: var(--muted); }
+  .kcard .go { margin-top: 5px; font-size: 10.5px; font-weight: 600; color: var(--accent); }
+
+  .colempty {
+    border: 1px dashed var(--border-strong); border-radius: 5px; padding: 14px 10px;
+    font-size: 11px; color: var(--faint); text-align: center; margin-bottom: 7px;
+  }
+
+  .minigrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .mini {
+    position: relative; background: var(--surface); border: 1px solid var(--border);
+    border-bottom: 2px solid #bfe0cb; border-radius: 4px; text-align: center;
+    font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+    padding: 5px 2px; cursor: pointer;
+  }
+  .mini .specdot {
+    position: absolute; top: 3px; right: 3px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--spec);
+  }
+  .mini.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .aggr {
+    font-size: 11px; color: var(--muted); padding: 2px 2px 8px;
+  }
+
+  .popwrap { position: relative; }
+  .popover {
+    position: absolute; z-index: 5; top: 30px; right: 0; width: 264px; text-align: left;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r);
+    box-shadow: 0 8px 24px rgba(20, 24, 29, 0.14); padding: 11px 12px;
+  }
+  .popover .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .popover .kv { display: grid; grid-template-columns: 104px 1fr; gap: 3px 10px; font-size: 12px; margin: 0; }
+  .popover .kv dt { color: var(--muted); }
+  .popover .kv dd { margin: 0; }
+  .popover .foot {
+    margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--border);
+    font-size: 11.5px; color: var(--ok); font-weight: 600;
+  }
+  .footer-note { padding: 6px 18px 22px; font-size: 11.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<div class="ribbon"><b>Mockup B</b> · Fleet overview as a Kanban board · read-only, all actions stay in the week plan</div>
+
+<div class="demobar">
+  <span class="tag">SIMULATION</span>
+  <span>Depot Nord · 45 vans</span>
+  <span class="clock">Mon 28 Sep 2026 · Week 40</span>
+  <span class="spacer"></span>
+  <button>Advance a day</button>
+  <button>Advance to review date</button>
+  <button>Reset</button>
+  <button>About</button>
+</div>
+
+<div class="tabs">
+  <div class="tab on">Fleet today</div>
+  <div class="tab">Week plan</div>
+</div>
+
+<div class="glance">
+  <div>
+    <h1>Fleet &mdash; Monday 28 September</h1>
+    <div class="today"><b>44 of 45</b> vans on the road &middot; every assignment covered today &middot; R-1 on site covering the held van</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="cta">
+    <button>Open the week plan &rarr;</button>
+    <div class="sub">4 decisions waiting for week 40</div>
+  </div>
+  <div class="tomorrow">
+    <span class="dot"></span>
+    Tomorrow, Tue 29 Sep: standard vans short by 1 as currently planned &middot;
+    <span class="fix">resolve in the week plan</span>
+  </div>
+</div>
+
+<div class="board">
+
+  <div class="col crit">
+    <div class="colhead"><span class="cdot"></span>Off the road<span class="n">1</span></div>
+    <div class="colbody">
+      <div class="kcard">
+        <div class="row1"><span class="vid">V-012</span><span class="badge safety">Safety</span><span class="badge held">Held</span></div>
+        <div class="title">Brake defect found at UVV inspection</div>
+        <div class="why">Held since Thu 24 Sep &middot; covered by R-1 all week &middot; Tue 29 Sep booked</div>
+        <div class="go">Open in week plan &rarr;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col warn">
+    <div class="colhead"><span class="cdot"></span>Needs a decision<span class="n">4</span></div>
+    <div class="colbody">
+      <div class="kcard">
+        <div class="row1"><span class="vid">V-041</span><span class="badge specialist">Specialist</span><span class="urg assessment">Assessment needed</span></div>
+        <div class="title">Intermittent fault code, cleared twice</div>
+        <div class="why">No slot chosen &middot; no specialist cover exists this week</div>
+        <div class="go">Open in week plan &rarr;</div>
+      </div>
+      <div class="kcard">
+        <div class="row1"><span class="vid">V-103</span><span class="urg estimate">Estimate</span></div>
+        <div class="title">Front suspension wear against the odometer interval</div>
+        <div class="why">Tue 29 Sep proposed</div>
+        <div class="go">Open in week plan &rarr;</div>
+      </div>
+      <div class="kcard">
+        <div class="row1"><span class="vid">V-118</span><span class="urg deadline">Fixed deadline</span></div>
+        <div class="title">Service interval approaching</div>
+        <div class="why">Tue 29 Sep proposed &middot; movable to Thursday</div>
+        <div class="go">Open in week plan &rarr;</div>
+      </div>
+      <div class="kcard">
+        <div class="row1"><span class="vid">V-027</span><span class="urg estimate">Estimate</span></div>
+        <div class="title">Wiper linkage noise reported by driver</div>
+        <div class="why">Proposal: watch &middot; recent inspection clean</div>
+        <div class="go">Open in week plan &rarr;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col acc">
+    <div class="colhead"><span class="cdot"></span>Booked this week<span class="n">0</span></div>
+    <div class="colbody">
+      <div class="colempty">Fills when the week plan is committed</div>
+    </div>
+  </div>
+
+  <div class="col watch">
+    <div class="colhead"><span class="cdot"></span>Watching<span class="n">0</span></div>
+    <div class="colbody">
+      <div class="colempty">Deferred items with a review date and trigger land here</div>
+    </div>
+  </div>
+
+  <div class="col ok">
+    <div class="colhead"><span class="cdot"></span>In service<span class="n">40</span></div>
+    <div class="colbody">
+      <div class="aggr">Nothing open. Click any van to inspect.</div>
+      <div class="minigrid">
+        <div class="mini">V-003</div>
+        <div class="mini">V-005</div>
+        <div class="mini"><span class="specdot"></span>V-007</div>
+        <div class="mini">V-009</div>
+        <div class="mini">V-011</div>
+        <div class="mini">V-014</div>
+        <div class="mini">V-016</div>
+        <div class="mini"><span class="specdot"></span>V-018</div>
+        <div class="mini">V-020</div>
+        <div class="mini">V-022</div>
+        <div class="mini">V-024</div>
+        <div class="mini">V-026</div>
+        <div class="mini">V-029</div>
+        <div class="mini">V-031</div>
+        <div class="mini"><span class="specdot"></span>V-033</div>
+        <div class="mini">V-035</div>
+        <div class="mini">V-037</div>
+        <div class="mini">V-039</div>
+        <div class="mini">V-042</div>
+        <div class="mini">V-044</div>
+        <div class="popwrap">
+          <div class="mini sel">V-058</div>
+          <div class="popover">
+            <div class="head"><span class="vid">V-058</span><span class="badge held" style="background:#f2f4f6;">Standard</span></div>
+            <dl class="kv">
+              <dt>Model year</dt><dd>2022</dd>
+              <dt>Odometer</dt><dd>81,240 km &middot; read Fri 25 Sep</dd>
+              <dt>Typical week</dt><dd>&approx; 1,050 km</dd>
+              <dt>Status</dt><dd>In service &middot; not held</dd>
+            </dl>
+            <div class="foot">Nothing open for this van</div>
+          </div>
+        </div>
+        <div class="mini">V-060</div>
+        <div class="mini"><span class="specdot"></span>V-063</div>
+        <div class="mini">V-067</div>
+        <div class="mini">V-071</div>
+        <div class="mini">V-074</div>
+        <div class="mini">V-078</div>
+        <div class="mini"><span class="specdot"></span>V-082</div>
+        <div class="mini">V-086</div>
+        <div class="mini">V-089</div>
+        <div class="mini">V-092</div>
+        <div class="mini">V-095</div>
+        <div class="mini">V-099</div>
+        <div class="mini"><span class="specdot"></span>V-104</div>
+        <div class="mini">V-110</div>
+        <div class="mini">V-115</div>
+        <div class="mini">V-121</div>
+        <div class="mini">V-124</div>
+        <div class="mini">V-129</div>
+        <div class="mini">V-133</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  Columns are workflow states, so a committed plan moves cards: booked vans into &ldquo;Booked this week&rdquo;, deferrals into &ldquo;Watching&rdquo;. The board stays read-only; the move happens by committing in the week plan.
+</div>
+
+</body>
+</html>

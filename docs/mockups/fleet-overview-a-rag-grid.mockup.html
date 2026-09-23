@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #fff; --border: #e3e6ea; --border-strong: #cfd5dc;
+    --text: #14181d; --muted: #626a75; --faint: #8b939e;
+    --accent: #1f5fd0; --accent-soft: #eaf0fc;
+    --crit: #c0322b; --crit-soft: #fbecea;
+    --warn: #b26a00; --warn-soft: #fdf3e3;
+    --ok: #2c7a4b; --ok-soft: #eaf5ee;
+    --spec: #5b3fa8; --spec-soft: #f0ecfa;
+    --r: 6px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .ribbon {
+    background: #2b3440; color: #cdd6e0; font-size: 11px; letter-spacing: 0.05em;
+    padding: 5px 18px; font-weight: 700; text-transform: uppercase;
+  }
+  .ribbon b { color: #fff; }
+
+  .demobar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 7px 18px; background: #fff8e6; border-bottom: 1px solid #f0dfb4; font-size: 12px;
+  }
+  .demobar .tag {
+    background: var(--warn); color: #fff; padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .demobar .clock { color: #7a5a12; font-weight: 600; }
+  .demobar .spacer { flex: 1; }
+  .demobar button {
+    font-size: 11px; background: #fff; border: 1px solid #e0cd9e;
+    padding: 3px 9px; border-radius: 4px; color: #7a5a12; cursor: pointer;
+  }
+
+  .tabs {
+    display: flex; gap: 2px; padding: 0 18px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    font-size: 12.5px; font-weight: 600; padding: 10px 14px 8px; color: var(--muted);
+    border-bottom: 2px solid transparent; cursor: pointer;
+  }
+  .tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .glance {
+    display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+    padding: 14px 18px 12px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .glance h1 { margin: 0 0 3px; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+  .glance .today { font-size: 12.5px; color: var(--muted); }
+  .glance .today b { color: var(--text); }
+  .glance .spacer { flex: 1; }
+  .glance .cta { text-align: right; }
+  .glance .cta button {
+    font: inherit; font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: var(--r);
+    border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer;
+  }
+  .glance .cta .sub { font-size: 11.5px; color: var(--warn); font-weight: 600; margin-top: 4px; }
+  .tomorrow {
+    width: 100%; display: flex; align-items: center; gap: 7px;
+    font-size: 11.5px; color: var(--crit); font-weight: 600;
+  }
+  .tomorrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--crit); flex: none; }
+  .tomorrow .fix { color: var(--accent); font-weight: 600; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 18px 0; }
+  .stat {
+    border: 1px solid var(--border); border-radius: var(--r); background: var(--surface);
+    padding: 10px 12px; border-left-width: 4px;
+  }
+  .stat .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat .l { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+  .stat.crit { border-left-color: var(--crit); } .stat.crit .n { color: var(--crit); }
+  .stat.warn { border-left-color: var(--warn); } .stat.warn .n { color: var(--warn); }
+  .stat.ok { border-left-color: var(--ok); } .stat.ok .n { color: var(--ok); }
+
+  .section { padding: 14px 18px 4px; }
+  .section > h2 {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--faint); margin: 0 0 8px;
+  }
+  .section > h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--faint); }
+
+  .urg {
+    display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px;
+    border-radius: 3px; border: 1px solid; letter-spacing: 0.03em; white-space: nowrap;
+  }
+  .urg.deadline { color: var(--crit); border-color: #e8bdb9; background: var(--crit-soft); }
+  .urg.estimate { color: var(--warn); border-color: #ecd5a6; background: var(--warn-soft); }
+  .urg.assessment { color: #4a525c; border-color: var(--border-strong); background: #f2f4f6; }
+  .badge {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px;
+  }
+  .badge.safety { background: var(--crit-soft); color: var(--crit); }
+  .badge.specialist { background: var(--spec-soft); color: var(--spec); }
+  .badge.held { background: #eceef1; color: #4a525c; }
+  .vid { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .attn { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+  .acard {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 9px 11px 9px 13px; position: relative; border-left-width: 4px; cursor: pointer;
+  }
+  .acard.crit { border-left-color: var(--crit); }
+  .acard.warn { border-left-color: var(--warn); }
+  .acard:hover { border-color: var(--border-strong); }
+  .acard .row1 { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+  .acard .title { font-size: 12.5px; margin-bottom: 5px; }
+  .acard .why { font-size: 11.5px; color: var(--muted); }
+  .acard .go {
+    margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--accent);
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 6px; padding-bottom: 8px; }
+  .tile {
+    position: relative; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 5px; padding: 7px 6px 6px; text-align: center; cursor: pointer;
+  }
+  .tile .vid { font-size: 12px; }
+  .tile .s { font-size: 9.5px; color: var(--ok); font-weight: 600; }
+  .tile.ok { border-bottom: 3px solid #bfe0cb; }
+  .tile:hover { border-color: var(--border-strong); }
+  .tile.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .tile .specdot {
+    position: absolute; top: 5px; right: 5px; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--spec);
+  }
+  .legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); padding: 2px 0 12px; }
+  .legend .specdot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--spec); margin-right: 5px;
+  }
+
+  .popwrap { position: relative; }
+  .popover {
+    position: absolute; z-index: 5; top: 44px; left: -2px; width: 268px; text-align: left;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r);
+    box-shadow: 0 8px 24px rgba(20, 24, 29, 0.14); padding: 11px 12px;
+  }
+  .popover .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .popover .kv { display: grid; grid-template-columns: 104px 1fr; gap: 3px 10px; font-size: 12px; margin: 0; }
+  .popover .kv dt { color: var(--muted); }
+  .popover .kv dd { margin: 0; }
+  .popover .foot {
+    margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--border);
+    font-size: 11.5px; color: var(--ok); font-weight: 600;
+  }
+  .footer-note { padding: 6px 18px 22px; font-size: 11.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<div class="ribbon"><b>Mockup A</b> · Fleet overview as a red / amber / green grid · read-only, all actions stay in the week plan</div>
+
+<div class="demobar">
+  <span class="tag">SIMULATION</span>
+  <span>Depot Nord · 45 vans</span>
+  <span class="clock">Mon 28 Sep 2026 · Week 40</span>
+  <span class="spacer"></span>
+  <button>Advance a day</button>
+  <button>Advance to review date</button>
+  <button>Reset</button>
+  <button>About</button>
+</div>
+
+<div class="tabs">
+  <div class="tab on">Fleet today</div>
+  <div class="tab">Week plan</div>
+</div>
+
+<div class="glance">
+  <div>
+    <h1>Fleet &mdash; Monday 28 September</h1>
+    <div class="today"><b>44 of 45</b> vans on the road &middot; every assignment covered today &middot; R-1 on site covering the held van</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="cta">
+    <button>Open the week plan &rarr;</button>
+    <div class="sub">4 decisions waiting for week 40</div>
+  </div>
+  <div class="tomorrow">
+    <span class="dot"></span>
+    Tomorrow, Tue 29 Sep: standard vans short by 1 as currently planned &middot;
+    <span class="fix">resolve in the week plan</span>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat crit"><div class="n">1</div><div class="l">Off the road</div></div>
+  <div class="stat warn"><div class="n">4</div><div class="l">Need a decision</div></div>
+  <div class="stat ok"><div class="n">40</div><div class="l">In service, nothing open</div></div>
+</div>
+
+<div class="section">
+  <h2>Needs attention <span class="hint">&middot; click a van to open it in the week plan</span></h2>
+  <div class="attn">
+    <div class="acard crit">
+      <div class="row1"><span class="vid">V-012</span><span class="badge safety">Safety</span><span class="badge held">Held</span><span class="urg deadline">Fixed deadline</span></div>
+      <div class="title">Brake defect found at UVV inspection</div>
+      <div class="why">Held since Thu 24 Sep &middot; covered by R-1 all week &middot; Tue 29 Sep booked</div>
+      <div class="go">Open in week plan &rarr;</div>
+    </div>
+    <div class="acard warn">
+      <div class="row1"><span class="vid">V-041</span><span class="badge specialist">Specialist</span><span class="urg assessment">Assessment needed</span></div>
+      <div class="title">Intermittent fault code, cleared twice</div>
+      <div class="why">Any visit this week leaves a specialist assignment uncovered &middot; no slot chosen</div>
+      <div class="go">Open in week plan &rarr;</div>
+    </div>
+    <div class="acard warn">
+      <div class="row1"><span class="vid">V-103</span><span class="urg estimate">Estimate</span></div>
+      <div class="title">Front suspension wear against the odometer interval</div>
+      <div class="why">Wear contradicts the service interval &middot; Tue 29 Sep proposed</div>
+      <div class="go">Open in week plan &rarr;</div>
+    </div>
+    <div class="acard warn">
+      <div class="row1"><span class="vid">V-118</span><span class="urg deadline">Fixed deadline</span></div>
+      <div class="title">Service interval approaching</div>
+      <div class="why">Due in 9 days &middot; Tue 29 Sep proposed, movable to Thursday</div>
+      <div class="go">Open in week plan &rarr;</div>
+    </div>
+    <div class="acard warn">
+      <div class="row1"><span class="vid">V-027</span><span class="urg estimate">Estimate</span></div>
+      <div class="title">Wiper linkage noise reported by driver</div>
+      <div class="why">Recent inspection clean, low weekly mileage &middot; proposal: watch</div>
+      <div class="go">Open in week plan &rarr;</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>In service, nothing open <span class="hint">&middot; 40 vans &middot; click any van to inspect</span></h2>
+  <div class="legend"><span><span class="specdot"></span>Specialist van (7 in fleet)</span></div>
+  <div class="grid">
+    <div class="tile ok"><span class="vid">V-003</span></div>
+    <div class="tile ok"><span class="vid">V-005</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-007</span></div>
+    <div class="tile ok"><span class="vid">V-009</span></div>
+    <div class="tile ok"><span class="vid">V-011</span></div>
+    <div class="tile ok"><span class="vid">V-014</span></div>
+    <div class="tile ok"><span class="vid">V-016</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-018</span></div>
+    <div class="tile ok"><span class="vid">V-020</span></div>
+    <div class="tile ok"><span class="vid">V-022</span></div>
+    <div class="tile ok"><span class="vid">V-024</span></div>
+    <div class="tile ok"><span class="vid">V-026</span></div>
+    <div class="tile ok"><span class="vid">V-029</span></div>
+    <div class="tile ok"><span class="vid">V-031</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-033</span></div>
+    <div class="tile ok"><span class="vid">V-035</span></div>
+    <div class="tile ok"><span class="vid">V-037</span></div>
+    <div class="tile ok"><span class="vid">V-039</span></div>
+    <div class="tile ok"><span class="vid">V-042</span></div>
+    <div class="tile ok"><span class="vid">V-044</span></div>
+    <div class="popwrap">
+      <div class="tile ok sel"><span class="vid">V-058</span></div>
+      <div class="popover">
+        <div class="head"><span class="vid">V-058</span><span class="badge held" style="background:#f2f4f6;">Standard</span></div>
+        <dl class="kv">
+          <dt>Model year</dt><dd>2022</dd>
+          <dt>Odometer</dt><dd>81,240 km &middot; read Fri 25 Sep</dd>
+          <dt>Typical week</dt><dd>&approx; 1,050 km</dd>
+          <dt>Status</dt><dd>In service &middot; not held</dd>
+        </dl>
+        <div class="foot">Nothing open for this van</div>
+      </div>
+    </div>
+    <div class="tile ok"><span class="vid">V-060</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-063</span></div>
+    <div class="tile ok"><span class="vid">V-067</span></div>
+    <div class="tile ok"><span class="vid">V-071</span></div>
+    <div class="tile ok"><span class="vid">V-074</span></div>
+    <div class="tile ok"><span class="vid">V-078</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-082</span></div>
+    <div class="tile ok"><span class="vid">V-086</span></div>
+    <div class="tile ok"><span class="vid">V-089</span></div>
+    <div class="tile ok"><span class="vid">V-092</span></div>
+    <div class="tile ok"><span class="vid">V-095</span></div>
+    <div class="tile ok"><span class="vid">V-099</span></div>
+    <div class="tile ok"><span class="specdot"></span><span class="vid">V-104</span></div>
+    <div class="tile ok"><span class="vid">V-110</span></div>
+    <div class="tile ok"><span class="vid">V-115</span></div>
+    <div class="tile ok"><span class="vid">V-121</span></div>
+    <div class="tile ok"><span class="vid">V-124</span></div>
+    <div class="tile ok"><span class="vid">V-129</span></div>
+    <div class="tile ok"><span class="vid">V-133</span></div>
+  </div>
+</div>
+
+<div class="footer-note">
+  After the week plan is committed, tiles gain their outcome as a sub-label: &ldquo;booked Tue&rdquo;, &ldquo;watching &middot; review 12 Oct&rdquo;. The grid stays a severity view; workflow lives in the week plan.
+</div>
+
+</body>
+</html>
