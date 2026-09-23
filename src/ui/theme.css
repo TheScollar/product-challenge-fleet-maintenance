@@ -1,0 +1,97 @@
+:root {
+  --bg: #f7f8fa;
+  --surface: #fff;
+  --border: #e3e6ea;
+  --border-strong: #cfd5dc;
+  --text: #14181d;
+  --muted: #626a75;
+  --faint: #8b939e;
+  --accent: #1f5fd0;
+  --accent-soft: #eaf0fc;
+  --crit: #c0322b;
+  --crit-soft: #fbecea;
+  --warn: #b26a00;
+  --warn-soft: #fdf3e3;
+  --ok: #2c7a4b;
+  --ok-soft: #eaf5ee;
+  --spec: #5b3fa8;
+  --spec-soft: #f0ecfa;
+  --r: 6px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+.demobar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 7px 18px; background: #fff8e6;
+  border-bottom: 1px solid #f0dfb4; font-size: 12px;
+}
+.demobar .tag {
+  background: var(--warn); color: #fff; padding: 2px 7px; border-radius: 3px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+}
+.demobar .clock { color: #7a5a12; font-weight: 600; }
+.demobar .spacer { flex: 1; }
+.demobar button {
+  font-size: 11px; background: #fff; border: 1px solid #e0cd9e;
+  padding: 3px 9px; border-radius: 4px; color: #7a5a12;
+}
+.demobar button:disabled { opacity: 0.45; }
+.demobar .notice {
+  width: 100%; color: var(--crit); font-weight: 600; padding-top: 4px;
+}
+
+.planheader {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 14px 18px 12px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.planheader h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+.planheader .week { color: var(--muted); font-size: 13px; }
+.planheader .spacer { flex: 1; }
+.planheader .commit {
+  font-weight: 600; font-size: 13px; padding: 7px 15px; border-radius: var(--r);
+  border: 1px solid var(--accent); background: var(--accent); color: #fff;
+}
+.planheader .commit:disabled {
+  border-color: var(--border-strong); background: #f1f2f4; color: var(--faint);
+}
+.planheader .blocked {
+  font-size: 11.5px; color: var(--crit); margin-top: 4px;
+  text-align: right; max-width: 420px;
+}
+.planheader .committed { font-size: 11.5px; color: var(--ok); margin-top: 4px; text-align: right; }
+
+.urg {
+  display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px;
+  border-radius: 3px; border: 1px solid; letter-spacing: 0.03em; white-space: nowrap;
+}
+.urg.deadline { color: var(--crit); border-color: #e8bdb9; background: var(--crit-soft); }
+.urg.estimate { color: var(--warn); border-color: #ecd5a6; background: var(--warn-soft); }
+.urg.assessment-needed { color: #4a525c; border-color: var(--border-strong); background: #f2f4f6; }
+
+.badge {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+}
+.badge.safety { background: var(--crit-soft); color: var(--crit); }
+.badge.specialist { background: var(--spec-soft); color: var(--spec); }
+.badge.held { background: #eceef1; color: #4a525c; }
+.badge.resurfaced { background: var(--accent-soft); color: var(--accent); }
+
+.vid { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.synthetic {
+  font-size: 9.5px; font-weight: 700; color: var(--warn); background: var(--warn-soft);
+  border: 1px solid #ecd5a6; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.04em;
+}

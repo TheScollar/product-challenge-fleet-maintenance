@@ -1,10 +1,25 @@
-function App() {
+import { useMemo } from 'react'
+import { validatePlan } from './domain/validation'
+import { usePlan } from './state/PlanProvider'
+import { activeWeekId, draftFor } from './state/planReducer'
+import { DemoBar } from './ui/DemoBar'
+import { PlanHeader } from './ui/PlanHeader'
+
+export default function App() {
+  const { state, dispatch, fixture } = usePlan()
+  const weekId = activeWeekId(state)
+  const decisions = useMemo(() => draftFor({ fixture, state, weekId }), [fixture, state, weekId])
+  const blockers = useMemo(
+    () => validatePlan({ fixture, weekId, decisions }),
+    [fixture, weekId, decisions],
+  )
+
   return (
-    <main>
-      <h1>Fleet Maintenance Prototype</h1>
-      <p>Scaffold placeholder. The UI arrives in later tasks.</p>
-    </main>
+    <>
+      <DemoBar />
+      <PlanHeader blockers={blockers} onCommit={() => dispatch({ type: 'commit', weekId })} />
+      {/* CapacityBand mounts here in Task 11 */}
+      {/* DecisionQueue and ItemDetail mount here in Tasks 12 and 13 */}
+    </>
   )
 }
-
-export default App

@@ -1,14 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import App from './App'
+import { PlanProvider } from './state/PlanProvider'
+import './ui/theme.css'
 
-const rootElement = document.getElementById('root')
-if (!rootElement) {
-  throw new Error('Root element with id "root" was not found in index.html')
-}
+const root = document.getElementById('root')
+if (root === null) throw new Error('Root element #root is missing from index.html')
 
-createRoot(rootElement).render(
+createRoot(root).render(
   <StrictMode>
-    <App />
+    <PlanProvider>
+      <App />
+    </PlanProvider>
   </StrictMode>,
 )
