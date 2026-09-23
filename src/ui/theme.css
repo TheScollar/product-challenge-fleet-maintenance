@@ -143,3 +143,38 @@ button:disabled { cursor: not-allowed; }
 .band .flag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--crit); flex: none; }
 .band .flag.ok { color: var(--ok); }
 .band .flag.ok .dot { background: var(--ok); }
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.85fr) minmax(460px, 1.1fr);
+  align-items: start;
+}
+.pane { padding: 13px 16px; }
+.pane.left { border-right: 1px solid var(--border); }
+.pane.right { background: #fbfcfd; border-left: 3px solid var(--accent); min-height: 60vh; }
+.pane .panetitle {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--faint); margin: 0 0 10px;
+}
+
+.card {
+  display: block; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 9px 11px; margin-bottom: 7px; position: relative;
+}
+.card:hover { border-color: var(--border-strong); }
+.card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.card .row1 { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; padding-right: 110px; }
+.card .title { font-size: 12.5px; margin-bottom: 5px; padding-right: 110px; }
+.card .why { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.card .state {
+  position: absolute; top: 9px; right: 11px; font-size: 10.5px;
+  font-weight: 600; color: var(--muted); max-width: 105px; text-align: right;
+}
+.card .state.warn { color: var(--warn); }
+.card .state.crit { color: var(--crit); }
+.card .prior {
+  margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);
+  font-size: 11px; color: var(--muted);
+}
+.empty { color: var(--muted); font-size: 12.5px; padding: 12px 0; }
