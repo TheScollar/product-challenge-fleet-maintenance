@@ -1,0 +1,126 @@
+import { describe, expect, it } from 'vitest'
+import { fixture } from './fixture'
+import { nextResurfaceDate } from './deferral'
+import { activeWeekId, draftFor, initialState, planReducer, queueFor } from '../state/planReducer'
+import type { AppState } from '../state/planReducer'
+
+const reduce = (s: AppState, a: Parameters<typeof planReducer>[1]) => planReducer(s, a, fixture)
+
+function committedWeek40(): AppState {
+  let s = initialState(fixture)
+  s = reduce(s, {
+    type: 'set-decision',
+    weekId: '2026-09-28',
+    decision: { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-10-01', deferral: null },
+  })
+  s = reduce(s, {
+    type: 'set-decision',
+    weekId: '2026-09-28',
+    decision: {
+      itemId: 'item-v041',
+      treatment: 'watch',
+      slotDate: null,
+      deferral: {
+        reason: 'No specialist cover this week.',
+        reviewDate: '2026-10-05',
+        trigger: { kind: 'event', eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' },
+      },
+    },
+  })
+  return reduce(s, { type: 'commit', weekId: '2026-09-28' })
+}
+
+describe('initial state', () => {
+  const s = initialState(fixture)
+
+  it('opens on the seeded Monday with nothing committed', () => {
+    expect(s.demoDate).toBe('2026-09-28')
+    expect(activeWeekId(s)).toBe('2026-09-28')
+    expect(s.committedByWeek['2026-09-28'] ?? null).toBeNull()
+  })
+
+  it('seeds the draft from the system proposals, undisposed items included', () => {
+    const draft = draftFor({ fixture, state: s, weekId: '2026-09-28' })
+    expect(Object.keys(draft)).toHaveLength(5)
+    expect(draft['item-v118'].slotDate).toBe('2026-09-29')
+    expect(draft['item-v041'].slotDate).toBeNull()
+  })
+
+  it('shows all five items in the week 40 queue', () => {
+    expect(queueFor({ fixture, state: s, weekId: '2026-09-28' })).toHaveLength(5)
+  })
+})
+
+describe('editing the draft', () => {
+  it('records a decision without touching the proposal', () => {
+    const s = reduce(initialState(fixture), {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-10-01', deferral: null },
+    })
+    expect(draftFor({ fixture, state: s, weekId: '2026-09-28' })['item-v118'].slotDate).toBe('2026-10-01')
+    expect(fixture.items.find((i) => i.id === 'item-v118')!.proposal.slotDate).toBe('2026-09-29')
+  })
+})
+
+describe('committing', () => {
+  const s = committedWeek40()
+
+  it('stores a snapshot and the deferral history', () => {
+    expect(s.committedByWeek['2026-09-28']!.decisions['item-v118'].slotDate).toBe('2026-10-01')
+    expect(Object.keys(s.deferralHistory).sort()).toEqual(['item-v027', 'item-v041'])
+  })
+
+  it('leaves the snapshot intact when the draft is edited afterwards', () => {
+    const edited = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-09-30', deferral: null },
+    })
+    expect(edited.committedByWeek['2026-09-28']!.decisions['item-v118'].slotDate).toBe('2026-10-01')
+    expect(draftFor({ fixture, state: edited, weekId: '2026-09-28' })['item-v118'].slotDate).toBe('2026-09-30')
+  })
+
+  it('does not accumulate duplicate deferral records on recommit', () => {
+    const again = reduce(s, { type: 'commit', weekId: '2026-09-28' })
+    expect(again.deferralHistory['item-v041']).toHaveLength(1)
+  })
+})
+
+describe('advancing the clock', () => {
+  it('moves the active week when it crosses into the next one', () => {
+    const s = reduce(committedWeek40(), { type: 'advance-days', days: 7 })
+    expect(s.demoDate).toBe('2026-10-05')
+    expect(activeWeekId(s)).toBe('2026-10-05')
+  })
+
+  it('finds the next resurface date', () => {
+    const s = committedWeek40()
+    expect(nextResurfaceDate({ fixture, history: s.deferralHistory, after: '2026-09-28' })).toBe('2026-10-05')
+  })
+
+  it('jumps straight to it', () => {
+    const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    expect(s.demoDate).toBe('2026-10-05')
+  })
+
+  it('resurfaces V-041 into week 41 with its rationale intact', () => {
+    const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    const queue = queueFor({ fixture, state: s, weekId: '2026-10-05' })
+    expect(queue.map((q) => q.item.id)).toEqual(['item-v041'])
+    expect(queue[0].resurfacedBecause).toContain('Review date')
+    expect(queue[0].priorDecision!.deferral.reason).toContain('No specialist cover')
+  })
+
+  it('leaves V-027 down, since neither its date nor its trigger has arrived', () => {
+    const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    expect(queueFor({ fixture, state: s, weekId: '2026-10-05' }).some((q) => q.item.id === 'item-v027')).toBe(false)
+  })
+})
+
+describe('reset', () => {
+  it('restores the seed and the demo date', () => {
+    const s = reduce(committedWeek40(), { type: 'reset' })
+    expect(s).toEqual(initialState(fixture))
+  })
+})

@@ -1,4 +1,4 @@
-import { formatDay, hasEventFired, projectedOdometerKm } from './clock'
+import { addDays, formatDay, hasEventFired, projectedOdometerKm } from './clock'
 import type { Deferral, DeferralRecord, Fixture, ISODate, ItemId, OpenItem, Trigger } from './types'
 
 /** Reason, review date and trigger are all required. [WP E6.2, E6.3] */
@@ -69,4 +69,38 @@ export function resurfacedItems(args: {
     if (resurfaced && because) out.push({ item, record: latest, because })
   }
   return out.sort((a, b) => a.item.id.localeCompare(b.item.id))
+}
+
+/**
+ * The earliest date strictly after `after` on which some deferred item comes
+ * back. Returns null when nothing is pending, which is what disables the
+ * "advance to next review date" control. [S 6.3]
+ */
+export function nextResurfaceDate(args: {
+  fixture: Fixture
+  history: Record<ItemId, DeferralRecord[]>
+  after: ISODate
+}): ISODate | null {
+  const { fixture, history, after } = args
+  const candidates: ISODate[] = []
+
+  for (const records of Object.values(history)) {
+    const latest = [...records].sort((a, b) => a.decidedOn.localeCompare(b.decidedOn)).at(-1)
+    if (!latest) continue
+    if (latest.deferral.reviewDate > after) candidates.push(latest.deferral.reviewDate)
+    const trigger = latest.deferral.trigger
+    if (trigger.kind === 'event') {
+      const event = fixture.events.find((e) => e.eventId === trigger.eventId)
+      if (event && event.firesOn > after) candidates.push(event.firesOn)
+    } else {
+      const vehicle = fixture.vehicles.find((v) => v.id === trigger.vehicleId)
+      if (vehicle && vehicle.weeklyRateKm > 0) {
+        const kmNeeded = trigger.thresholdKm - vehicle.odometerKm
+        const days = Math.ceil(kmNeeded / (vehicle.weeklyRateKm / 7))
+        const date = addDays(vehicle.odometerReadOn, Math.max(0, days))
+        if (date > after) candidates.push(date)
+      }
+    }
+  }
+  return candidates.length === 0 ? null : candidates.sort()[0]
 }
