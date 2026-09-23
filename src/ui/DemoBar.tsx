@@ -2,7 +2,7 @@ import { formatLongDay } from '../domain/clock'
 import { nextResurfaceDate } from '../domain/deferral'
 import { usePlan } from '../state/PlanProvider'
 
-export function DemoBar() {
+export function DemoBar({ onAbout }: { onAbout: () => void }) {
   const { state, dispatch, fixture } = usePlan()
   const nextReview = nextResurfaceDate({
     fixture,
@@ -25,6 +25,7 @@ export function DemoBar() {
         Advance to next review date
       </button>
       <button onClick={() => dispatch({ type: 'reset' })}>Reset scenario</button>
+      <button onClick={onAbout}>About this prototype</button>
       {state.storageNotice !== null && (
         <div className="notice">
           {state.storageNotice}{' '}

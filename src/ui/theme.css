@@ -278,3 +278,46 @@ button:disabled { cursor: not-allowed; }
   background: var(--warn-soft); border: 1px solid #ecd5a6; border-radius: var(--r);
   padding: 9px 11px; font-size: 12px; color: #7a5a12; margin-bottom: 14px;
 }
+
+/* A full screen shown before the plan, not chrome over it: see
+   src/ui/CoverNote.tsx and docs/superpowers/specs/2026-09-23-cover-note-design.md.
+   display:flex + min-height:100vh on the container, with the action bar as a
+   sticky last child, keeps the button reachable at the bottom of the
+   viewport whether the content is shorter or taller than one screen. */
+.covernote { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }
+.covernote-col { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 48px 24px 32px; }
+.covernote-col h1 {
+  margin: 0 0 14px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; color: var(--text);
+}
+.covernote .promise {
+  margin: 0 0 30px; padding: 12px 14px; font-size: 14px; font-weight: 600; line-height: 1.5;
+  color: var(--text); background: var(--accent-soft); border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+}
+.covernote-block { margin-bottom: 26px; }
+.covernote-block h2 {
+  margin: 0 0 10px; padding-bottom: 6px; font-size: 14px; font-weight: 700;
+  color: var(--text); border-bottom: 1px solid var(--border);
+}
+.covernote-block p { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: var(--text); }
+.covernote-block p:last-child { margin-bottom: 0; }
+.covernote-pairs { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.covernote-pair dt { margin-bottom: 2px; font-size: 12.5px; font-weight: 700; color: var(--text); }
+.covernote-pair dd { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.covernote-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.covernote-paths { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.covernote-paths li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.covernote-paths code {
+  font-size: 12px; padding: 1px 6px; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+}
+.covernote-path-desc { font-size: 12.5px; color: var(--muted); }
+.covernote-bar {
+  position: sticky; bottom: 0; display: flex; justify-content: center;
+  padding: 14px 24px; background: var(--surface); border-top: 1px solid var(--border);
+}
+.covernote-cta {
+  font-weight: 600; font-size: 13px; padding: 10px 22px; border-radius: var(--r);
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+}
+.covernote-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

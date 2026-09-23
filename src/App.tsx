@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { validatePlan } from './domain/validation'
 import type { ItemId } from './domain/types'
+import { hasSeenCoverNote, markCoverNoteSeen } from './state/coverNoteSeen'
 import { usePlan } from './state/PlanProvider'
 import { activeWeekId, draftFor } from './state/planReducer'
 import { CapacityBand } from './ui/CapacityBand'
 import { CommitSummary } from './ui/CommitSummary'
+import { CoverNote } from './ui/CoverNote'
 import { DecisionQueue } from './ui/DecisionQueue'
 import { DemoBar } from './ui/DemoBar'
 import { ItemDetail } from './ui/ItemDetail'
@@ -14,6 +16,10 @@ export default function App() {
   const { state, dispatch, fixture } = usePlan()
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null)
   const [view, setView] = useState<'planning' | 'summary'>('planning')
+  // A boolean, not a router: two states, no URLs, no history entries.
+  // [cover note spec 5.4] Lazy-initialised so the synchronous localStorage
+  // read only happens once, on mount, not on every render.
+  const [showCoverNote, setShowCoverNote] = useState(() => !hasSeenCoverNote())
 
   const weekId = activeWeekId(state)
 
@@ -29,9 +35,22 @@ export default function App() {
   )
   const selectedItem = fixture.items.find((i) => i.id === selectedItemId) ?? null
 
+  // The cover note is a full screen, not chrome over the plan: the demo bar
+  // does not render here. [cover note spec 4]
+  if (showCoverNote) {
+    return (
+      <CoverNote
+        onOpenPlan={() => {
+          markCoverNoteSeen()
+          setShowCoverNote(false)
+        }}
+      />
+    )
+  }
+
   return (
     <>
-      <DemoBar />
+      <DemoBar onAbout={() => setShowCoverNote(true)} />
       <PlanHeader
         blockers={blockers}
         onCommit={() => {
