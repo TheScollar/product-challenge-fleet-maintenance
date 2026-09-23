@@ -1,8 +1,8 @@
 # Acceptance record
 
 **Run on:** 2026-09-23
-**Build:** b6cdb4c
-**Commands:** `npm test` (166 tests, 12 files, all passing), `npx tsc --noEmit` (clean), `npm run build`
+**Build:** 7e07d22
+**Commands:** `npm test` (183 tests, 12 files, all passing), `npx tsc --noEmit` (clean), `npm run build`
 (succeeds; `dist/index.html` verified to load from a filesystem-style origin), plus two consecutive
 live browser walkthroughs of the section 7.3 journey against `npm run dev`.
 
@@ -11,6 +11,17 @@ build's own agent tooling driving a real browser: every click, form entry, commi
 and reset was performed against the running app and asserted against the live DOM, twice, with
 identical results. No human unfamiliar with the build has run it. Wherever a goal's criterion requires
 an observed human, that element is recorded as **not run**, not as passed.
+
+**Final whole-branch review.** After all tasks passed their gates, an adversarial review of the entire
+branch deliberately left the scripted path. It found one Critical defect the per-task gates could not
+see: switching an item to watch, filling the deferral, then changing the decision back to act-now left
+the stale deferral attached, so one van committed as both a confirmed visit and a deferred follow-up
+and later resurfaced despite being serviced. It also found three Important issues: a held van was
+blamed for a shortfall its visit cannot affect, one surface still carried a superseded description of
+the aggregate arithmetic, and the deferral trigger list was a fixed global list unscoped to the item.
+All were fixed in build 7e07d22 with 17 new regression tests, and the Critical's exact repro was then
+re-run live in the browser and confirmed dead: three visits, two deferred follow-ups, and no deferral
+history entry for the switched item.
 
 ## Goals
 
@@ -39,7 +50,7 @@ an observed human, that element is recorded as **not run**, not as passed.
   minutes usability timing for an unfamiliar evaluator: **not run**, same limitation as G1.
 - **G6, deliver a repeatable prototype.** **Passed.** Fresh launch, saved-state reload, reset and two
   consecutive walkthroughs behaved identically (three visits, two deferred follow-ups, clean forward
-  availability, byte-identical seed after reset). The 166 automated tests pin the domain and state
+  availability, byte-identical seed after reset). The 183 automated tests pin the domain and state
   behaviour, including the ten verification scenarios end to end. The handoff (`README.md`) states the
   launch path, the simulated integrations, the limitations, the decisions taken, the alternatives
   rejected and the next step.
