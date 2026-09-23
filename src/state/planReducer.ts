@@ -104,11 +104,15 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
   switch (action.type) {
     case 'set-decision': {
       const current = draftFor({ fixture, state, weekId: action.weekId })
+      // A deferral is meaningful only under watch. Normalising at the write
+      // site keeps a decision moved off watch from carrying a stale follow-up.
+      const decision: DraftDecision =
+        action.decision.treatment === 'watch' ? action.decision : { ...action.decision, deferral: null }
       return {
         ...state,
         draftByWeek: {
           ...state.draftByWeek,
-          [action.weekId]: { ...current, [action.decision.itemId]: action.decision },
+          [action.weekId]: { ...current, [decision.itemId]: decision },
         },
       }
     }

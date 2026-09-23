@@ -99,6 +99,37 @@ describe('deferral records extracted from a commit', () => {
     expect(records[0].decidedOn).toBe('2026-09-28')
     expect(records[0].weekId).toBe(WEEK_40)
   })
+
+  it('ignores a stale deferral left on a decision that is not a watch', () => {
+    const decisions = committable()
+    decisions['item-v118'] = {
+      itemId: 'item-v118',
+      treatment: 'act-now',
+      slotDate: '2026-10-01',
+      deferral: {
+        reason: 'Left behind by an earlier watch.',
+        reviewDate: '2026-10-09',
+        trigger: {
+          kind: 'odometer',
+          vehicleId: 'V-118',
+          thresholdKm: 49_500,
+          label: 'Odometer passes 49,500 km',
+        },
+      },
+    }
+    const plan = commitPlan({ weekId: WEEK_40, decisions, demoDate: '2026-09-28' })
+    expect(deferralRecordsFrom(plan).map((r) => r.itemId)).not.toContain('item-v118')
+    expect(summaryFor({ fixture, plan }).deferrals.map((d) => d.itemId)).not.toContain('item-v118')
+  })
+})
+
+describe('a cover the week carries but no day confirms', () => {
+  it('says so rather than rendering a confirmed sentence with the days missing', () => {
+    const plan = commitPlan({ weekId: '2026-10-12', decisions: {}, demoDate: '2026-10-12' })
+    const line = summaryFor({ fixture, plan }).coverAssumptions.find((a) => a.startsWith('R-1'))!
+    expect(line).toBe('R-1, standard cover, not confirmed for any day this week.')
+    expect(line).not.toContain('EUR')
+  })
 })
 
 describe('the daily confirmation is a read-only projection', () => {

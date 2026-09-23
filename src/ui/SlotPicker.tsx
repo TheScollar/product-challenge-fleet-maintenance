@@ -1,7 +1,7 @@
 import { computeDayCapacity, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { slotOptions } from '../domain/feasibility'
-import type { DraftDecision, ISODate, ItemId, OpenItem } from '../domain/types'
+import type { DayCapacity, DraftDecision, ISODate, ItemId, OpenItem } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId } from '../state/planReducer'
@@ -23,19 +23,44 @@ export function SlotPicker({
   const garage = fixture.garages.find((g) => g.id === item.garageId)?.name ?? item.garageId
   const options = slotOptions({ item, fixture, decisions, weekId })
 
-  /** What picking this day would do to capacity, computed by actually trying it. */
-  function effectOf(date: ISODate): { text: string; tone: string } {
-    const trial = { ...decisions, [item.id]: { ...decisions[item.id], itemId: item.id, slotDate: date } }
-    const visits = visitsFromDecisions(trial, fixture.items)
-    const shortfalls = week.days.flatMap((day) =>
+  /** The week's shortfalls under a given draft, through the domain's own count. */
+  function shortfallsUnder(draft: Record<ItemId, DraftDecision>): DayCapacity[] {
+    const visits = visitsFromDecisions(draft, fixture.items)
+    return week.days.flatMap((day) =>
       (['standard', 'specialist'] as const)
         .map((vehicleClass) => computeDayCapacity({ date: day, vehicleClass, fixture, visits, week }))
         .filter((c) => c.shortfall > 0),
     )
-    if (shortfalls.length === 0) return { text: 'Every day stays covered', tone: 'good' }
-    const here = shortfalls.filter((s) => s.date === date)
-    if (here.length > 0) return { text: `${formatDay(date)} short ${here[0].shortfall}`, tone: 'bad' }
-    return { text: `Moves the shortfall to ${formatDay(shortfalls[0].date)}`, tone: 'bad' }
+  }
+
+  const keyOf = (c: DayCapacity) => `${c.date} ${c.vehicleClass} ${c.shortfall}`
+  // The week as it stands, computed once. Every option is read against it.
+  const baseline = new Set(shortfallsUnder(decisions).map(keyOf))
+
+  /**
+   * What picking this day would change, not what the week already is. Saying
+   * "moves the shortfall" about a choice that moves nothing is a false claim of
+   * causation, and the held van hits it every time. [S 4.5]
+   */
+  function effectOf(date: ISODate): { text: string; tone: string } {
+    const trial = shortfallsUnder({
+      ...decisions,
+      [item.id]: { ...decisions[item.id], itemId: item.id, slotDate: date },
+    })
+    const added = trial.filter((s) => !baseline.has(keyOf(s)))
+    const unchanged = added.length === 0 && trial.length === baseline.size
+
+    if (unchanged) {
+      return trial.length === 0
+        ? { text: 'Every day stays covered', tone: 'good' }
+        : { text: "Does not change this week's coverage", tone: '' }
+    }
+    // The chosen day first: a shortfall on the day being picked is the plainer
+    // reading, even when another day's shortfall also changed.
+    const onChosenDay = added.find((s) => s.date === date)
+    if (onChosenDay) return { text: `${formatDay(date)} short ${onChosenDay.shortfall}`, tone: 'bad' }
+    if (added.length > 0) return { text: `Moves the shortfall to ${formatDay(added[0].date)}`, tone: 'bad' }
+    return { text: 'Clears the shortfall', tone: 'good' }
   }
 
   return (

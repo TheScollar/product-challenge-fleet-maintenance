@@ -356,6 +356,7 @@ Held at cold open, before any commit and with no interruption UI [WP §9, first 
 | Proposal | Act now. Werkstatt Berg, Tue 2026-09-29, 1 day. **Scope can extend to a second day** |
 | Parts | Bushing set, ready 2026-09-25 |
 | Figures | Service €620. Cover €140. Disruption: 0 uncovered |
+| If deferred | Odometer trigger at 66,000 km, before the 70,000 km interval **[new]** |
 
 The scope extension to Tue and Wed is the multi-day arithmetic check [WP §5], retained as a test even
 though E7 is out of scope.
@@ -391,7 +392,8 @@ create capacity": moving a visit relocates a shortage rather than resolving it.
 **Arriving undisposed is a deliberate design decision [new].** If the proposal pre-scheduled the visit,
 the cold open would carry two capacity shortfalls at once and bury the lesson. Undisposed, `V-041` is an
 `UndisposedItem` blocker at cold open; the **specialist** shortfall appears only when the user tries to
-schedule it, which is the moment it teaches something. The aggregate count looks healthy throughout.
+schedule it, which is the moment it teaches something. The aggregate count reads one van short and
+forgivable throughout, and never shows which van or that nothing can cover it.
 
 #### `V-027`, standard, the defensible deferral
 

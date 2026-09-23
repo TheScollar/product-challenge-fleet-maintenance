@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from './fixture'
+import { deferralRecordsFrom, summaryFor } from './commit'
 import { nextResurfaceDate } from './deferral'
 import { activeWeekId, draftFor, initialState, planReducer, queueFor } from '../state/planReducer'
 import type { AppState } from '../state/planReducer'
+import type { Deferral } from './types'
 
 const reduce = (s: AppState, a: Parameters<typeof planReducer>[1]) => planReducer(s, a, fixture)
 
@@ -146,6 +148,89 @@ describe('resolving a resurfaced item', () => {
     expect(s.deferralHistory['item-v041']).toHaveLength(1)
     expect(s.deferralHistory['item-v041'][0].deferral.reason).toContain('No specialist cover')
     expect(queueFor({ fixture, state: s, weekId: '2026-10-05' }).map((q) => q.item.id)).toContain('item-v041')
+  })
+})
+
+describe('a deferral exists only while the treatment is watch', () => {
+  const v118Deferral: Deferral = {
+    reason: 'The interval is still 2,180 km away on the stated rate.',
+    reviewDate: '2026-10-09',
+    trigger: {
+      kind: 'odometer',
+      vehicleId: 'V-118',
+      thresholdKm: 49_500,
+      label: 'Odometer passes 49,500 km',
+    },
+  }
+
+  it('stores no deferral when the treatment is not watch', () => {
+    const s = reduce(initialState(fixture), {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: {
+        itemId: 'item-v118',
+        treatment: 'act-now',
+        slotDate: '2026-10-01',
+        deferral: v118Deferral,
+      },
+    })
+    expect(draftFor({ fixture, state: s, weekId: '2026-09-28' })['item-v118'].deferral).toBeNull()
+  })
+
+  it('books the visit and leaves no follow-up behind when watch is applied and then reversed', () => {
+    let s = initialState(fixture)
+    // Watch, with a complete deferral applied.
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'watch', slotDate: null, deferral: v118Deferral },
+    })
+    expect(draftFor({ fixture, state: s, weekId: '2026-09-28' })['item-v118'].deferral).not.toBeNull()
+
+    // Act now with a slot, dispatched in the shape that carried the stale
+    // deferral through, which is what put the van in both lists at once.
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: {
+        itemId: 'item-v118',
+        treatment: 'act-now',
+        slotDate: '2026-10-01',
+        deferral: v118Deferral,
+      },
+    })
+    s = reduce(s, { type: 'commit', weekId: '2026-09-28' })
+
+    const plan = s.committedByWeek['2026-09-28']!
+    const summary = summaryFor({ fixture, plan })
+    expect(summary.visits.map((v) => v.itemId)).toContain('item-v118')
+    expect(summary.deferrals.map((d) => d.itemId)).not.toContain('item-v118')
+    expect(deferralRecordsFrom(plan).map((r) => r.itemId)).not.toContain('item-v118')
+    expect(s.deferralHistory['item-v118'] ?? []).toHaveLength(0)
+  })
+
+  it('does not resurface a van the same plan serviced', () => {
+    let s = initialState(fixture)
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'watch', slotDate: null, deferral: v118Deferral },
+    })
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: {
+        itemId: 'item-v118',
+        treatment: 'act-now',
+        slotDate: '2026-10-01',
+        deferral: v118Deferral,
+      },
+    })
+    s = reduce(s, { type: 'commit', weekId: '2026-09-28' })
+    const later = reduce(s, { type: 'advance-days', days: 14 })
+    expect(
+      queueFor({ fixture, state: later, weekId: '2026-10-12' }).some((q) => q.item.id === 'item-v118'),
+    ).toBe(false)
   })
 })
 

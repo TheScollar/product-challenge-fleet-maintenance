@@ -81,8 +81,8 @@ and no external booking exists.** Prices are scenario prices.
   all computed. That is why recommitting cannot duplicate a visit and why a held van with a booked
   visit is never subtracted twice.
 - **A hold is a question about a date, not a flag.** The held van stays unavailable until the fixture
-  records a release, booking a visit never releases it, and one predicate answers "held on this day"
-  everywhere.
+  records a release, booking a visit never releases it, and every availability computation asks one
+  predicate, isHeldOn, wherever a date is in play.
 
 ## Alternatives rejected
 

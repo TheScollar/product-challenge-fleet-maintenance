@@ -128,7 +128,7 @@ Rendered as term-and-detail pairs.
 
 | Term | Detail |
 | --- | --- |
-| Capacity is counted per class, never in aggregate | An aggregate count reads healthy while the only compatible specialist van is off the road. `V-041` exists to make that visible. |
+| Capacity is counted per class, never in aggregate | An aggregate count reads one van short and forgivable while the only compatible specialist van is off the road with nothing able to cover it. `V-041` exists to make that visible. |
 | Urgency is three states, never a score | A known deadline, an estimate with its assumption named, or an unknown condition that reads `assessment needed`. No number is invented where the evidence supports none. |
 | The three cost figures stay apart | Service cost, replacement cover and operational disruption are never blended. Disruption stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route figure this scenario cannot support. |
 | Deferral is a record, not a gut call | Reason, review date and trigger are all required, and the item returns carrying them. Waiting is a legitimate decision; waiting without a follow-up is not. |

@@ -84,3 +84,53 @@ describe('fixture integrity', () => {
     expect(SEED_DATE).toBe('2026-09-28')
   })
 })
+
+describe('each item carries its own deferral triggers', () => {
+  const optionsFor = (id: string) => fixture.items.find((i) => i.id === id)!.triggerOptions
+
+  it('offers none for the safety-class item, where watch is disabled anyway', () => {
+    expect(optionsFor('item-v012')).toEqual([])
+  })
+
+  it('offers V-103 an odometer trigger ahead of its 70,000 km interval', () => {
+    expect(optionsFor('item-v103')).toEqual([
+      {
+        kind: 'odometer',
+        vehicleId: 'V-103',
+        thresholdKm: 66_000,
+        label: 'Odometer passes 66,000 km',
+      },
+    ])
+  })
+
+  it('offers V-118 the odometer trigger the design names', () => {
+    expect(optionsFor('item-v118')).toEqual([
+      {
+        kind: 'odometer',
+        vehicleId: 'V-118',
+        thresholdKm: 49_500,
+        label: 'Odometer passes 49,500 km',
+      },
+    ])
+  })
+
+  it('offers V-041 the recurrence event that the fixture schedules', () => {
+    expect(optionsFor('item-v041')).toEqual([
+      { kind: 'event', eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' },
+    ])
+  })
+
+  it('offers V-027 the event its own proposed deferral names', () => {
+    expect(optionsFor('item-v027')).toEqual([
+      { kind: 'event', eventId: 'v027-wipe-degrades', label: 'Driver reports the wipe quality degrading' },
+    ])
+  })
+
+  it('never offers an item a trigger about another vehicle', () => {
+    for (const i of fixture.items) {
+      for (const t of i.triggerOptions) {
+        if (t.kind === 'odometer') expect(t.vehicleId).toBe(i.vehicleId)
+      }
+    }
+  })
+})

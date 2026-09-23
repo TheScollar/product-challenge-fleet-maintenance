@@ -31,9 +31,14 @@ export function commitPlan(args: {
   }
 }
 
+/**
+ * Structural, not trusting: a follow-up exists only where the treatment is
+ * watch. A decision moved to a visit keeps no deferral, whatever its stored
+ * deferral field still says.
+ */
 export function deferralRecordsFrom(plan: CommittedPlan): DeferralRecord[] {
   return Object.values(plan.decisions)
-    .filter((d) => d.deferral !== null)
+    .filter((d) => d.treatment === 'watch' && d.deferral !== null)
     .map((d) => ({
       itemId: d.itemId,
       deferral: d.deferral!,
@@ -76,6 +81,9 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
     .filter((c) => week.coverIds.includes(c.id))
     .map((c) => {
       const inWeek = c.confirmedDates.filter((d) => week.days.includes(d))
+      // A cover the week carries but no day confirms is stated as that, not as
+      // a confirmed sentence with the days missing from it.
+      if (inWeek.length === 0) return `${c.id}, ${c.vehicleClass} cover, not confirmed for any day this week.`
       return `${c.id}, ${c.vehicleClass} cover, confirmed ${inWeek.map(formatDay).join(', ')} at EUR ${c.dayRateEur} per day.`
     })
   if (!fixture.covers.some((c) => week.coverIds.includes(c.id) && c.vehicleClass === 'specialist')) {
@@ -95,8 +103,10 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
     })),
     availability: computeWeekCapacity({ fixture, weekId: plan.weekId, visits }),
     coverAssumptions,
+    // Same structural test as deferralRecordsFrom: the summary must not list a
+    // van as a deferred follow-up when the same plan books it a visit.
     deferrals: Object.values(plan.decisions)
-      .filter((d) => d.deferral !== null)
+      .filter((d) => d.treatment === 'watch' && d.deferral !== null)
       .map((d) => {
         const item = fixture.items.find((i) => i.id === d.itemId)
         return {

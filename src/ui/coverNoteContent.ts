@@ -82,7 +82,7 @@ export const coverNoteContent: CoverNoteContent = {
         {
           term: 'Capacity is counted per class, never in aggregate',
           detail:
-            'An aggregate count reads healthy while the only compatible specialist van is off the road. V-041 exists to make that visible.',
+            'An aggregate count reads one van short and forgivable while the only compatible specialist van is off the road with nothing able to cover it. V-041 exists to make that visible.',
         },
         {
           term: 'Urgency is three states, never a score',

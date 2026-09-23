@@ -1,4 +1,4 @@
-import { computeWeekCapacity } from './capacity'
+import { computeWeekCapacity, isHeldOn } from './capacity'
 import { formatDay } from './clock'
 import { isDeferralComplete } from './deferral'
 import { slotBlockers } from './feasibility'
@@ -63,9 +63,19 @@ export function canCommit(blockers: Blocker[]): boolean {
   return blockers.length === 0
 }
 
-export function blockersForItem(blockers: Blocker[], item: OpenItem): Blocker[] {
+/**
+ * Membership in a shortfall is not causation. `contributors` is every vehicle
+ * off the road that day, which is right for the band's "Off the road:" line and
+ * wrong as attribution: a van already held that day subtracts nothing further
+ * by also taking a visit, so the shortfall is not its doing. [S 4.5]
+ */
+export function blockersForItem(blockers: Blocker[], item: OpenItem, fixture: Fixture): Blocker[] {
   return blockers.filter((b) => {
-    if (b.kind === 'capacity-shortfall') return b.contributors.includes(item.vehicleId)
+    if (b.kind === 'capacity-shortfall') {
+      if (!b.contributors.includes(item.vehicleId)) return false
+      const vehicle = fixture.vehicles.find((v) => v.id === item.vehicleId)
+      return vehicle === undefined || !isHeldOn(vehicle, b.date)
+    }
     return b.itemId === item.id
   })
 }

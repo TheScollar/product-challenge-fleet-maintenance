@@ -39,7 +39,7 @@ export function DecisionQueue({
             item={item}
             vehicle={vehicle}
             decision={decisions[item.id]}
-            blockers={blockersForItem(blockers, item)}
+            blockers={blockersForItem(blockers, item, fixture)}
             resurfacedBecause={entry.resurfacedBecause}
             priorDecision={entry.priorDecision}
             selected={selectedItemId === item.id}

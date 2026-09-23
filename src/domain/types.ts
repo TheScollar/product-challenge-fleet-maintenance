@@ -77,6 +77,9 @@ export interface OpenItem {
   canExtendToDays: number | null
   consequence: Consequence
   proposal: Proposal
+  /** The triggers a deferral of this item may name. Scoped to the item, so a
+   *  van is never offered a follow-up about a different van. [S 4.4] */
+  triggerOptions: Trigger[]
   garageId: string
 }
 

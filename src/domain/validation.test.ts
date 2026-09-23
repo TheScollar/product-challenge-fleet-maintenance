@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from './fixture'
-import { canCommit, describeBlocker, validatePlan } from './validation'
-import { coldOpenDecisions as coldOpen } from './testSupport'
-import type { DraftDecision, ItemId } from './types'
+import { blockersForItem, canCommit, describeBlocker, validatePlan } from './validation'
+import { coldOpenDecisions as coldOpen, item } from './testSupport'
+import type { Blocker, DraftDecision, ItemId } from './types'
 
 const WEEK_40 = '2026-09-28'
 
@@ -111,10 +111,66 @@ describe('a resurfaced-only week', () => {
   })
 })
 
+describe('attributing a shortfall to an item', () => {
+  const blockers = validate(coldOpen())
+
+  it('does not attribute it to a van that is already held that day', () => {
+    // V-012 is off the road before the plan starts, so its Tuesday visit
+    // subtracts nothing further and the shortfall is not its doing. [S 4.5]
+    const attributed = blockersForItem(blockers, item('item-v012'), fixture)
+    expect(attributed.some((b) => b.kind === 'capacity-shortfall')).toBe(false)
+  })
+
+  it('attributes it to the vans whose visits do subtract from the day', () => {
+    for (const id of ['item-v103', 'item-v118']) {
+      const attributed = blockersForItem(blockers, item(id), fixture)
+      expect(attributed.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
+    }
+  })
+
+  it('leaves an item its own blockers, whatever the shortfall says', () => {
+    expect(blockersForItem(blockers, item('item-v041'), fixture)).toEqual([
+      { kind: 'undisposed-item', itemId: 'item-v041' },
+    ])
+  })
+})
+
 describe('blockers are named in plain language', () => {
   it('describes a shortfall by day and class', () => {
-    const text = describeBlocker(validate(coldOpen())[0], fixture)
-    expect(text.length).toBeGreaterThan(10)
+    const shortfall = validate(coldOpen()).find((b) => b.kind === 'capacity-shortfall')!
+    const text = describeBlocker(shortfall, fixture)
+    expect(text).toContain('Tue 29 Sep')
+    expect(text).toContain('standard')
+    expect(text).toContain('short by 1')
+  })
+
+  it('describes an infeasible slot with its reasons and the vehicle', () => {
+    const b: Blocker = {
+      kind: 'infeasible-slot',
+      itemId: 'item-v118',
+      reasons: ['Werkstatt Berg is fully booked on Mon 28 Sep'],
+    }
+    const text = describeBlocker(b, fixture)
+    expect(text).toContain('V-118')
+    expect(text).toContain('Werkstatt Berg is fully booked on Mon 28 Sep')
+  })
+
+  it('describes parts not ready with the part and the date', () => {
+    const b: Blocker = {
+      kind: 'parts-not-ready',
+      itemId: 'item-v012',
+      partName: 'Front brake pad set',
+      readyOn: '2026-09-29',
+    }
+    const text = describeBlocker(b, fixture)
+    expect(text).toContain('Front brake pad set')
+    expect(text).toContain('Tue 29 Sep')
+  })
+
+  it('falls back to the raw id for an item the fixture does not carry', () => {
+    const b: Blocker = { kind: 'undisposed-item', itemId: 'item-nonexistent' }
+    expect(() => describeBlocker(b, fixture)).not.toThrow()
+    expect(describeBlocker(b, fixture)).toContain('item-nonexistent')
   })
 
   it('describes every blocker kind without throwing', () => {

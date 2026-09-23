@@ -127,6 +127,8 @@ const items: OpenItem[] = [
       uncoveredAssignmentsNote: 'None. R-1 covers this van for the whole week.',
     },
     proposal: { treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+    // Watch is disabled for a safety-class item, so it offers no trigger.
+    triggerOptions: [],
   },
   {
     id: 'item-v103',
@@ -160,6 +162,14 @@ const items: OpenItem[] = [
       uncoveredAssignmentsNote: 'None on the proposed day.',
     },
     proposal: { treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+    triggerOptions: [
+      {
+        kind: 'odometer',
+        vehicleId: 'V-103',
+        thresholdKm: 66_000,
+        label: 'Odometer passes 66,000 km',
+      },
+    ],
   },
   {
     id: 'item-v118',
@@ -192,6 +202,14 @@ const items: OpenItem[] = [
       uncoveredAssignmentsNote: 'Depends on the day chosen. Tuesday leaves one assignment uncovered.',
     },
     proposal: { treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+    triggerOptions: [
+      {
+        kind: 'odometer',
+        vehicleId: 'V-118',
+        thresholdKm: 49_500,
+        label: 'Odometer passes 49,500 km',
+      },
+    ],
   },
   {
     id: 'item-v041',
@@ -226,6 +244,7 @@ const items: OpenItem[] = [
     // Arrives undisposed on purpose: the specialist shortfall should appear
     // when the user schedules it, not at cold open. [S 4.4]
     proposal: { treatment: 'act-now', slotDate: null, deferral: null },
+    triggerOptions: [{ kind: 'event', eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' }],
   },
   {
     id: 'item-v027',
@@ -272,6 +291,9 @@ const items: OpenItem[] = [
         },
       },
     },
+    triggerOptions: [
+      { kind: 'event', eventId: 'v027-wipe-degrades', label: 'Driver reports the wipe quality degrading' },
+    ],
   },
 ]
 
