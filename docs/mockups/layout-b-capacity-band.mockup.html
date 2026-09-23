@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layout B · Persistent capacity band, queue left, detail right</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#fff; --border:#e3e6ea; --border-strong:#cfd5dc;
+    --text:#14181d; --muted:#626a75; --faint:#8b939e;
+    --accent:#1f5fd0; --accent-soft:#eaf0fc;
+    --crit:#c0322b; --crit-soft:#fbecea;
+    --warn:#b26a00; --warn-soft:#fdf3e3;
+    --ok:#2c7a4b; --ok-soft:#eaf5ee;
+    --spec:#5b3fa8; --spec-soft:#f0ecfa;
+    --r:6px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .label{position:fixed;top:0;left:0;right:0;z-index:50;background:#14181d;color:#fff;
+    padding:6px 14px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+  .app{margin-top:27px}
+
+  .demobar{display:flex;align-items:center;gap:14px;padding:7px 18px;
+    background:#fff8e6;border-bottom:1px solid #f0dfb4;font-size:12px}
+  .demobar .tag{background:#b26a00;color:#fff;padding:2px 7px;border-radius:3px;
+    font-size:10px;font-weight:700;letter-spacing:.05em}
+  .demobar .clock{color:#7a5a12;font-weight:600}
+  .demobar .spacer{flex:1}
+  .demobar button{font:inherit;font-size:11px;background:#fff;border:1px solid #e0cd9e;
+    padding:3px 9px;border-radius:4px;color:#7a5a12;cursor:pointer}
+
+  header{display:flex;align-items:baseline;gap:16px;padding:14px 18px 12px;
+    background:var(--surface);border-bottom:1px solid var(--border)}
+  header h1{margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em}
+  header .week{color:var(--muted);font-size:13px}
+  header .spacer{flex:1}
+  .commitbtn{font:inherit;font-weight:600;font-size:13px;padding:7px 15px;border-radius:var(--r);
+    border:1px solid var(--border-strong);background:#f1f2f4;color:var(--faint);cursor:not-allowed}
+  .blockedhint{font-size:11.5px;color:var(--crit);margin-top:4px;text-align:right}
+
+  /* PERSISTENT CAPACITY BAND */
+  .band{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 18px 11px}
+  .bandhead{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+  .bandhead .t{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .bandhead .live{font-size:11px;color:var(--accent);font-weight:600;
+    background:var(--accent-soft);padding:2px 7px;border-radius:3px}
+  .bandhead .spacer{flex:1}
+  .cover{font-size:11px;color:var(--muted)}
+  .cover b{color:var(--text)}
+  .days{display:grid;grid-template-columns:76px repeat(5,1fr);gap:7px;align-items:stretch}
+  .rowlab{display:flex;flex-direction:column;justify-content:flex-end;gap:11px;
+    font-size:11px;font-weight:600;color:var(--muted);padding-bottom:2px}
+  .rowlab .top{margin-top:auto}
+  .day{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:#fbfcfd}
+  .day .dh{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--faint);text-align:center;padding:4px 0 3px;border-bottom:1px solid var(--border);background:#fff}
+  .day .cells{display:grid;grid-template-rows:1fr 1fr}
+  .c{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 4px;
+    font-size:12px;font-variant-numeric:tabular-nums;font-weight:600}
+  .c + .c{border-top:1px solid var(--border)}
+  .c .sub{font-size:10px;font-weight:600}
+  .c.short{background:var(--crit-soft);color:var(--crit)}
+  .c.spare{background:var(--ok-soft);color:var(--ok)}
+  .day.impacted{border-color:var(--crit);box-shadow:0 0 0 2px var(--crit-soft)}
+  .day.candidate{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft)}
+  .flagline{display:flex;gap:16px;margin-top:8px;font-size:11.5px}
+  .flag{display:flex;align-items:center;gap:6px;color:var(--crit);font-weight:600}
+  .flag .dot{width:7px;height:7px;border-radius:50%;background:var(--crit);flex:none}
+  .flag.g{color:var(--ok)} .flag.g .dot{background:var(--ok)}
+
+  /* body split */
+  .split{display:grid;grid-template-columns:minmax(380px,.85fr) minmax(500px,1.1fr);
+    height:calc(100vh - 27px - 33px - 56px - 128px)}
+  .pane{overflow:auto;padding:13px 16px}
+  .pane.left{border-right:1px solid var(--border)}
+  .pane.right{background:#fbfcfd;border-left:3px solid var(--accent)}
+  .panetitle{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 10px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:9px 11px;margin-bottom:7px;cursor:pointer;position:relative}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .card .row1{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+  .vid{font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+  .badge{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:2px 6px;border-radius:3px}
+  .b-safety{background:var(--crit-soft);color:var(--crit)}
+  .b-spec{background:var(--spec-soft);color:var(--spec)}
+  .b-held{background:#eceef1;color:#4a525c}
+  .card .title{font-size:12.5px;margin-bottom:5px}
+  .card .why{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .urg{display:inline-block;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;
+    border:1px solid;letter-spacing:.03em}
+  .u-deadline{color:var(--crit);border-color:#e8bdb9;background:var(--crit-soft)}
+  .u-est{color:var(--warn);border-color:#ecd5a6;background:var(--warn-soft)}
+  .u-unknown{color:#4a525c;border-color:var(--border-strong);background:#f2f4f6}
+  .card .state{position:absolute;top:9px;right:11px;font-size:10.5px;font-weight:600;color:var(--muted)}
+  .card .state.warnst{color:var(--warn)}
+
+  .ovhead{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  .ovsub{font-size:12.5px;color:var(--muted);margin-bottom:11px}
+  .block{border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;
+    margin-bottom:9px;background:var(--surface)}
+  .blocktitle{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:6px}
+  .kv{display:grid;grid-template-columns:104px 1fr;gap:3px 10px;font-size:12px}
+  .kv dt{color:var(--muted)} .kv dd{margin:0}
+  .src{font-size:10.5px;color:var(--faint);font-style:italic}
+  .synth{font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);
+    border:1px solid #ecd5a6;padding:1px 5px;border-radius:3px;letter-spacing:.04em}
+  .costs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+  .cost{border:1px solid var(--border);border-radius:5px;padding:7px 8px;background:#fbfcfd}
+  .cost .n{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+  .cost .l{font-size:10px;color:var(--muted);line-height:1.3;margin-top:2px}
+  .slot{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--border);
+    border-radius:5px;margin-bottom:6px;font-size:12px;background:#fff}
+  .slot.on{border-color:var(--accent);background:var(--accent-soft)}
+  .slot.off{opacity:.55;background:#f4f5f7}
+  .slot .eff{margin-left:auto;font-size:11px;font-weight:600}
+  .slot .eff.bad{color:var(--crit)} .slot .eff.good{color:var(--ok)} .slot .eff.no{color:var(--faint)}
+  .radio{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--border-strong);flex:none}
+  .slot.on .radio{border-color:var(--accent);border-width:4px}
+  .treat{display:flex;gap:6px;margin-bottom:9px}
+  .treat span{flex:1;text-align:center;padding:6px;border:1px solid var(--border);
+    border-radius:5px;font-size:11.5px;font-weight:600;background:#fff}
+  .treat span.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .req{font-size:10px;color:var(--crit);font-weight:700}
+  .field{margin-bottom:7px}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+  .field .input{border:1px solid var(--border-strong);border-radius:5px;padding:6px 8px;
+    font-size:12px;color:var(--faint);background:#fff}
+  .ovactions{display:flex;gap:8px;margin-top:11px}
+  .ovactions button{font:inherit;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:5px;cursor:pointer}
+  .primary{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+  .ghost{background:#fff;color:var(--muted);border:1px solid var(--border-strong)}
+</style>
+</head>
+<body>
+<div class="label">Layout B · Capacity band stays visible while you work the item</div>
+<div class="app">
+
+  <div class="demobar">
+    <span class="tag">SIMULATED</span>
+    <span class="clock">Demo clock: Mon 28 Sep 2026</span>
+    <span style="color:#8a6d2f">Synthetic fleet and scenario prices</span>
+    <span class="spacer"></span>
+    <button>Advance 1 day</button>
+    <button>Advance to next review date</button>
+    <button>Reset scenario</button>
+  </div>
+
+  <header>
+    <h1>Weekly maintenance plan</h1>
+    <span class="week">Week 40 · Mon 28 Sep – Fri 2 Oct 2026 · Depot Nord · 45 vans</span>
+    <span class="spacer"></span>
+    <div>
+      <button class="commitbtn">Commit plan</button>
+      <div class="blockedhint">Blocked: Tue standard short by 1</div>
+    </div>
+  </header>
+
+  <!-- PERSISTENT CAPACITY BAND -->
+  <div class="band">
+    <div class="bandhead">
+      <span class="t">Week capacity · available / demand</span>
+      <span class="live">Reacting to V-118</span>
+      <span class="spacer"></span>
+      <span class="cover"><b>R-1</b> Mon–Fri &nbsp;·&nbsp; <b>R-2</b> Tue + Thu only
+        &nbsp;·&nbsp; <b style="color:var(--crit)">no specialist cover</b></span>
+    </div>
+    <div class="days">
+      <div class="rowlab"><span class="top">Standard</span><span>Specialist</span></div>
+      <div class="day"><div class="dh">Mon 28</div><div class="cells">
+        <div class="c">38 / 38</div><div class="c">7 / 7</div></div></div>
+      <div class="day impacted"><div class="dh">Tue 29</div><div class="cells">
+        <div class="c short">37 / 38 <span class="sub">short 1</span></div><div class="c">7 / 7</div></div></div>
+      <div class="day"><div class="dh">Wed 30</div><div class="cells">
+        <div class="c">38 / 38</div><div class="c">7 / 7</div></div></div>
+      <div class="day candidate"><div class="dh">Thu 1</div><div class="cells">
+        <div class="c spare">39 / 38 <span class="sub">+1</span></div><div class="c">7 / 7</div></div></div>
+      <div class="day"><div class="dh">Fri 2</div><div class="cells">
+        <div class="c">38 / 38</div><div class="c">7 / 7</div></div></div>
+    </div>
+    <div class="flagline">
+      <span class="flag"><span class="dot"></span>Tue: V-012 held + V-103 and V-118 in service,
+        R-1 and R-2 cover 2 of 3</span>
+      <span class="flag g"><span class="dot"></span>Thu has the only spare standard van this week</span>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="pane left">
+      <p class="panetitle">Decisions needing attention · 5</p>
+
+      <div class="card">
+        <div class="row1"><span class="vid">V-012</span>
+          <span class="badge b-safety">Safety · hard stop</span>
+          <span class="badge b-held">Held since Fri</span></div>
+        <div class="title">Brake defect found at UVV inspection</div>
+        <div class="why"><span class="urg u-deadline">Deadline</span>
+          Out of service until released</div>
+        <div class="state">Visit booked</div>
+      </div>
+
+      <div class="card sel">
+        <div class="row1"><span class="vid">V-118</span></div>
+        <div class="title">Service interval approaching</div>
+        <div class="why"><span class="urg u-est">Estimate</span>
+          47,820 km on 18 Sep · interval at 50,000</div>
+        <div class="state warnst">Tue · causes shortfall</div>
+      </div>
+
+      <div class="card">
+        <div class="row1"><span class="vid">V-041</span>
+          <span class="badge b-spec">Specialist</span></div>
+        <div class="title">Intermittent fault code, cleared twice</div>
+        <div class="why"><span class="urg u-unknown">Assessment needed</span>
+          No basis for a safe waiting period</div>
+        <div class="state warnst">No specialist cover</div>
+      </div>
+
+      <div class="card">
+        <div class="row1"><span class="vid">V-103</span></div>
+        <div class="title">Front suspension wear, contradicting odometer interval</div>
+        <div class="why"><span class="urg u-est">Estimate</span>
+          Inspection 22 Sep · wear ahead of interval</div>
+        <div class="state">Tue · booked</div>
+      </div>
+
+      <div class="card">
+        <div class="row1"><span class="vid">V-027</span></div>
+        <div class="title">Wiper linkage noise reported by driver</div>
+        <div class="why"><span class="urg u-est">Estimate</span>
+          Clean 11 Sep · 210 km/week · service in 5 weeks</div>
+        <div class="state">Watch proposed</div>
+      </div>
+    </div>
+
+    <div class="pane right">
+      <div class="ovhead"><span class="vid" style="font-size:15px">V-118</span>
+        <span class="urg u-est">Estimate</span></div>
+      <div class="ovsub">Service interval approaching · standard class</div>
+
+      <div class="block">
+        <div class="blocktitle">Observation</div>
+        <div class="kv">
+          <dt>Reading</dt><dd>47,820 km on 18 Sep 2026</dd>
+          <dt>Interval</dt><dd>50,000 km service</dd>
+          <dt>Source</dt><dd>Telematics odometer feed <span class="src">· received 18 Sep 06:12</span></dd>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="blocktitle">Assumption in play</div>
+        <div style="font-size:12px">Weekly mileage holds at the trailing 8-week average of 560 km.
+          On that basis the interval is reached around <b>15 Oct 2026</b>.
+          This is an estimate, not a predicted failure date.</div>
+      </div>
+
+      <div class="block">
+        <div class="blocktitle">Consequence of waiting <span class="synth">SYNTHETIC PRICES</span></div>
+        <div style="font-size:12px;margin-bottom:6px">Interval overrun is a warranty and contract
+          exposure, not a safety one. No UVV deadline applies.</div>
+        <div class="costs">
+          <div class="cost"><div class="n">€340</div><div class="l">Service cost</div></div>
+          <div class="cost"><div class="n">€0</div><div class="l">Replacement cover<br>R-2 covers Tue</div></div>
+          <div class="cost"><div class="n">1</div><div class="l">Assignment uncovered<br>on Tue</div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="blocktitle">Slot · Werkstatt Berg · 1 day</div>
+        <div class="slot on"><span class="radio"></span>Tue 29 Sep · 08:00
+          <span class="eff bad">Tue short 1</span></div>
+        <div class="slot"><span class="radio"></span>Thu 1 Oct · 08:00
+          <span class="eff good">Clears the shortfall</span></div>
+        <div class="slot"><span class="radio"></span>Wed 30 Sep · 08:00
+          <span class="eff bad">Moves the shortfall to Wed</span></div>
+        <div class="slot off"><span class="radio"></span>Mon 28 Sep · 08:00
+          <span class="eff no">Garage fully booked</span></div>
+      </div>
+
+      <div class="block">
+        <div class="blocktitle">Treatment</div>
+        <div class="treat"><span class="on">Act now</span><span>Bundle</span><span>Watch</span></div>
+        <div class="field"><label>Rationale <span class="req">required</span></label>
+          <div class="input">&nbsp;</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="field"><label>Review date <span class="req">required</span></label>
+            <div class="input">&nbsp;</div></div>
+          <div class="field"><label>Trigger <span class="req">required</span></label>
+            <div class="input">&nbsp;</div></div>
+        </div>
+      </div>
+
+      <div class="ovactions">
+        <button class="primary">Apply to draft</button>
+        <button class="ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
