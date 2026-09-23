@@ -93,18 +93,18 @@ describe('resurfacing', () => {
   })
 
   it('uses the most recent record when an item has been deferred more than once', () => {
-    const older: DeferralRecord = { ...v041Record, decidedOn: '2026-09-21', deferral: { ...v041Record.deferral, reason: 'older' } }
+    const older: DeferralRecord = { ...v041Record, weekId: '2026-09-21', decidedOn: '2026-09-21', deferral: { ...v041Record.deferral, reason: 'older' } }
     const history: Record<ItemId, DeferralRecord[]> = { 'item-v041': [older, v041Record] }
     const out = resurfacedItems({ fixture, history, demoDate: '2026-10-05' })
     expect(out[0].record.deferral.reason).toContain('No specialist cover')
   })
 
-  it('breaks a same-day tie on the later week, not on array order', () => {
-    const firstByArray: DeferralRecord = { ...v041Record, decidedOn: '2026-09-28', weekId: '2026-10-05', deferral: { ...v041Record.deferral, reason: 'first in array' } }
-    const secondByArray: DeferralRecord = { ...v041Record, decidedOn: '2026-09-28', weekId: '2026-09-28', deferral: { ...v041Record.deferral, reason: 'second in array' } }
-    const history: Record<ItemId, DeferralRecord[]> = { 'item-v041': [firstByArray, secondByArray] }
+  it('picks the later week regardless of array order', () => {
+    const earlier: DeferralRecord = { ...v041Record, weekId: '2026-09-28', decidedOn: '2026-09-28', deferral: { ...v041Record.deferral, reason: 'earlier week' } }
+    const later: DeferralRecord = { ...v041Record, weekId: '2026-10-05', decidedOn: '2026-10-06', deferral: { ...v041Record.deferral, reason: 'later week' } }
+    const history: Record<ItemId, DeferralRecord[]> = { 'item-v041': [later, earlier] }
     const out = resurfacedItems({ fixture, history, demoDate: '2026-10-05' })
-    expect(out[0].record.deferral.reason).toContain('first in array')
+    expect(out[0].record.deferral.reason).toContain('later week')
   })
 
   it('keeps V-027 down, since neither its date nor its trigger has arrived', () => {
