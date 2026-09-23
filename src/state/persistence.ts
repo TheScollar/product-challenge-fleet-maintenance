@@ -1,58 +1,122 @@
+import { parseISO, toISO } from '../domain/clock'
 import { initialState, type AppState } from './planReducer'
-import type { Fixture } from '../domain/types'
+import type {
+  CommittedPlan,
+  Deferral,
+  DeferralRecord,
+  DraftDecision,
+  Fixture,
+  ISODate,
+  Trigger,
+} from '../domain/types'
 
 export const STORAGE_KEY = 'fleet-maintenance-prototype/v1'
 const CURRENT_VERSION = 1
+const TREATMENTS = new Set(['act-now', 'bundle', 'watch'])
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** Shallow shape check for a CommittedPlan: the three fields resurfacedItems
- *  and the reducer actually read, nothing deeper. */
-function isValidCommittedPlan(value: unknown): boolean {
+/**
+ * A regex match alone is not enough: parseISO silently normalises an
+ * out-of-range day (2026-02-30 becomes 2026-03-02) instead of rejecting it.
+ * Parsing the string back to a Date and formatting it again is the only way
+ * to catch that, so a value only counts as an ISODate here if it survives
+ * the round trip unchanged.
+ */
+function isISODate(x: unknown): x is ISODate {
+  if (typeof x !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x)) return false
+  try {
+    return toISO(parseISO(x)) === x
+  } catch {
+    return false
+  }
+}
+
+function isTrigger(value: unknown): value is Trigger {
+  if (!isPlainObject(value)) return false
+  if (value.kind === 'event') {
+    return typeof value.eventId === 'string' && typeof value.label === 'string'
+  }
+  if (value.kind === 'odometer') {
+    return (
+      typeof value.vehicleId === 'string' &&
+      typeof value.thresholdKm === 'number' &&
+      Number.isFinite(value.thresholdKm) &&
+      typeof value.label === 'string'
+    )
+  }
+  return false
+}
+
+function isDeferral(value: unknown): value is Deferral {
+  if (!isPlainObject(value)) return false
+  const { reason, reviewDate, trigger } = value
+  return typeof reason === 'string' && reason.trim().length > 0 && isISODate(reviewDate) && isTrigger(trigger)
+}
+
+function isDraftDecision(value: unknown): value is DraftDecision {
+  if (!isPlainObject(value)) return false
+  const { itemId, treatment, slotDate, deferral } = value
   return (
-    isPlainObject(value) &&
-    typeof value.weekId === 'string' &&
-    typeof value.committedOn === 'string' &&
-    isPlainObject(value.decisions)
+    typeof itemId === 'string' &&
+    (treatment === null || (typeof treatment === 'string' && TREATMENTS.has(treatment))) &&
+    (slotDate === null || isISODate(slotDate)) &&
+    (deferral === null || isDeferral(deferral))
   )
 }
 
-function isValidCommittedByWeek(value: unknown): boolean {
-  return isPlainObject(value) && Object.values(value).every((v) => v === null || isValidCommittedPlan(v))
+function isDecisionsMap(value: unknown): value is Record<string, DraftDecision> {
+  return isPlainObject(value) && Object.values(value).every(isDraftDecision)
 }
 
-/** Shape check for a DeferralRecord: weekId and decidedOn as strings, and a
- *  deferral whose reviewDate is a string and whose trigger is a plain object
- *  with a string kind. That is exactly what latestRecord's sort and
- *  resurfacing()'s and nextResurfaceDate()'s reads of trigger.kind and
- *  reviewDate need to not throw. It does not validate reason, or the
- *  trigger's other fields (eventId, vehicleId, thresholdKm), so a record can
- *  pass this check and still name an event or vehicle that does not exist:
- *  that is a silently inert record, not a crash. */
-function isValidDeferralRecord(value: unknown): boolean {
-  return (
-    isPlainObject(value) &&
-    typeof value.weekId === 'string' &&
-    typeof value.decidedOn === 'string' &&
-    isPlainObject(value.deferral) &&
-    typeof value.deferral.reviewDate === 'string' &&
-    isPlainObject(value.deferral.trigger) &&
-    typeof value.deferral.trigger.kind === 'string'
-  )
+function isCommittedPlan(value: unknown): value is CommittedPlan {
+  if (!isPlainObject(value)) return false
+  const { weekId, committedOn, decisions } = value
+  return isISODate(weekId) && isISODate(committedOn) && isDecisionsMap(decisions)
 }
 
-function isValidDeferralHistory(value: unknown): boolean {
+function isDeferralRecord(value: unknown): value is DeferralRecord {
+  if (!isPlainObject(value)) return false
+  const { itemId, decidedOn, weekId, deferral } = value
+  return typeof itemId === 'string' && isISODate(decidedOn) && isISODate(weekId) && isDeferral(deferral)
+}
+
+/** The full shape of a stored AppState, minus storageNotice, which is never
+ *  persisted meaningfully and is overwritten on every load. */
+function isValidState(value: Partial<AppState>): value is AppState {
+  const { version, demoDate, draftByWeek, committedByWeek, deferralHistory } = value
   return (
-    isPlainObject(value) && Object.values(value).every((v) => Array.isArray(v) && v.every(isValidDeferralRecord))
+    version === CURRENT_VERSION &&
+    isISODate(demoDate) &&
+    isPlainObject(draftByWeek) &&
+    Object.values(draftByWeek).every(isDecisionsMap) &&
+    isPlainObject(committedByWeek) &&
+    Object.values(committedByWeek).every((v) => v === null || isCommittedPlan(v)) &&
+    isPlainObject(deferralHistory) &&
+    Object.values(deferralHistory).every((v) => Array.isArray(v) && v.every(isDeferralRecord))
   )
 }
 
 /**
- * Every failure path falls back to the seed and says so in the demo bar.
- * Storage is never trusted: it can be absent, disabled, full, corrupt, or
- * written by an older build. None of those may crash the app. [S 5.2]
+ * Every date string in stored state, demoDate, every slotDate and
+ * reviewDate, every weekId, committedOn and decidedOn, is checked by
+ * isISODate before this function returns it. isISODate does not stop at
+ * matching the YYYY-MM-DD pattern: it also round-trips the value through
+ * toISO(parseISO(x)) and rejects anything that comes back different, which
+ * is what catches a calendar-invalid date such as 2026-02-30 that parseISO
+ * alone would silently normalise into the following month rather than
+ * reject. So every date string that later flows into parseISO, formatDay,
+ * addDays, or a date comparison has been round-trip checked here: no stored
+ * value can reach date arithmetic uninspected.
+ *
+ * Everything else about the payload, treatments, reasons, trigger kinds and
+ * the ids they name, is checked only for shape, not for whether the event or
+ * vehicle a trigger names actually exists in the fixture. Any shape failure,
+ * unparseable JSON, or a version mismatch falls back to the seed and says so
+ * in the demo bar: storage is never trusted, and none of its failure modes
+ * may crash the app. [S 5.2]
  */
 export function loadState(fixture: Fixture): AppState {
   const fresh = initialState(fixture)
@@ -70,25 +134,10 @@ export function loadState(fixture: Fixture): AppState {
     if (parsed.version !== CURRENT_VERSION) {
       return { ...fresh, storageNotice: 'Saved state was written by an older build. Reset to the seed.' }
     }
-    if (typeof parsed.demoDate !== 'string' || typeof parsed.draftByWeek !== 'object') {
+    if (!isValidState(parsed)) {
       return { ...fresh, storageNotice: 'Saved state was incomplete. Reset to the seed.' }
     }
-    // A parseable envelope with the right version and a plausible demoDate
-    // can still carry a committedByWeek or deferralHistory that is the wrong
-    // shape entirely (a string, an array, records missing their weekId).
-    // Left unchecked, that reaches latestRecord's sort and throws well after
-    // this function returns. Checked here, it is just another incomplete save.
-    if (!isValidCommittedByWeek(parsed.committedByWeek) || !isValidDeferralHistory(parsed.deferralHistory)) {
-      return { ...fresh, storageNotice: 'Saved state was incomplete. Reset to the seed.' }
-    }
-    return {
-      version: CURRENT_VERSION,
-      demoDate: parsed.demoDate,
-      draftByWeek: parsed.draftByWeek ?? {},
-      committedByWeek: parsed.committedByWeek ?? {},
-      deferralHistory: parsed.deferralHistory ?? {},
-      storageNotice: null,
-    }
+    return { ...parsed, storageNotice: null }
   } catch {
     return { ...fresh, storageNotice: 'Saved state could not be read. Reset to the seed.' }
   }
