@@ -106,15 +106,21 @@ Promise, set apart from the body:
 > One planning week. A capacity band across the top that stays visible while you work, because it is
 > the thing every decision moves. Below it, five decisions waiting on you.
 >
-> Two of them block the week. `V-012` is already out of service before you commit anything, on a brake
-> defect found at inspection. `V-041` is the only specialist van in the queue, and no specialist cover
-> exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.
+> Two things block the week. Tuesday is one van short, because three standard vans are off the road at
+> once and the rental cover only stretches to two of them: moving one visit clears it. And `V-041`, the
+> only specialist van in the queue, still needs a decision. No specialist cover exists this week, so
+> scheduling it leaves an assignment uncovered that nothing available can fill.
 >
-> The plan cannot be committed until both are disposed of. That is deliberate.
+> `V-012` is already out of service before you commit anything, on a brake defect found at inspection.
+> It stays out until a release is recorded, and the week plans around it.
+>
+> The plan cannot be committed until the blockers are cleared. That is deliberate.
 
-**Implementation note.** This block describes a screen that does not exist yet. Verify it against the
-built surface before shipping, and correct it rather than correcting the screen. This is the reason the
-task is placed after Task 14 (§6).
+**Implementation note.** This block was verified against the built surface on 2026-09-23 and corrected
+per the rule below: the original draft named `V-012` and `V-041` as the two blockers, but on the built
+screen `V-012` is covered and booked, so it does not block commit. The two blockers are the Tuesday
+shortfall and `V-041`'s undecided item. The rule stands for future edits: verify against the built
+surface, and correct the copy rather than the screen.
 
 ### 3.6 The decisions worth knowing about
 
