@@ -410,28 +410,32 @@ this is the side that stays defensible. Service is never forced merely to clear 
 
 Cold open, after the system proposals and before any user action:
 
+> **Notation.** `unavail{...}` is the count of distinct unavailable vehicles, the `Set` from §3.1.
+> Pipes are avoided deliberately: escaped pipes inside a markdown table cell get mangled by some
+> editors, and the corruption silently flipped `+ R-1` to `- R-1` once already.
+
 | Day | Standard available | Demand | Result |
 | --- | --- | --- | --- |
-| Mon 28 Sep | 38 − \|{V-012}\| + R-1 = 38 | 38 | met |
-| **Tue 29 Sep** | 38 − \|{V-012, V-103, V-118}\| + R-1 + R-2 = **37** | 38 | **short 1** |
-| Wed 30 Sep | 38 − \|{V-012}\| + R-1 = 38 | 38 | met |
-| Thu 1 Oct | 38 − \|{V-012}\| + R-1 + R-2 = 39 | 38 | 1 spare |
-| Fri 2 Oct | 38 − \|{V-012}\| + R-1 = 38 | 38 | met |
+| Mon 28 Sep | 38 − unavail{V-012} + R-1 = 38 | 38 | met |
+| **Tue 29 Sep** | 38 − unavail{V-012, V-103, V-118} + R-1 + R-2 = **37** | 38 | **short 1** |
+| Wed 30 Sep | 38 − unavail{V-012} + R-1 = 38 | 38 | met |
+| Thu 1 Oct | 38 − unavail{V-012} + R-1 + R-2 = 39 | 38 | 1 spare |
+| Fri 2 Oct | 38 − unavail{V-012} + R-1 = 38 | 38 | met |
 
 Specialist is 7 against 7 on every day, because `V-041` is undisposed.
 
 `V-012` is already held, so its Tuesday visit subtracts nothing further. This is the
 never-count-a-vehicle-twice check.
 
-**Moving `V-118` to Thursday** returns Tuesday to `38 − |{V-012, V-103}| + 2 = 38` and takes Thursday to
-`38 − |{V-012, V-118}| + 2 = 38`. Both met, and the week commits.
+**Moving `V-118` to Thursday** returns Tuesday to `38 − unavail{V-012, V-103} + 2 = 38` and takes Thursday to
+`38 − unavail{V-012, V-118} + 2 = 38`. Both met, and the week commits.
 
-**Moving `V-118` to Wednesday** instead gives `38 − |{V-012, V-118}| + R-1 = 37` against 38, because
+**Moving `V-118` to Wednesday** instead gives `38 − unavail{V-012, V-118} + R-1 = 37` against 38, because
 `R-2` does not cover Wednesday. The shortage relocates.
 
 **Scheduling `V-041` on any day** gives specialist `7 − 1 + 0 = 6` against 7. No lever closes it.
 
-**Extending `V-103` to Tue and Wed** gives Wednesday `38 − |{V-012, V-103}| + R-1 = 37` against 38.
+**Extending `V-103` to Tue and Wed** gives Wednesday `38 − unavail{V-012, V-103} + R-1 = 37` against 38.
 
 All figures match [WP §5].
 
