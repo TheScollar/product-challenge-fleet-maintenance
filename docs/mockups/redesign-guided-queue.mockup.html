@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Redesign proposal · Guided queue, slim tiles, exception-first band</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#fff; --border:#e3e6ea; --border-strong:#cfd5dc;
+    --text:#14181d; --muted:#626a75; --faint:#8b939e;
+    --accent:#1f5fd0; --accent-soft:#eaf0fc;
+    --crit:#c0322b; --crit-soft:#fbecea;
+    --warn:#b26a00; --warn-soft:#fdf3e3;
+    --ok:#2c7a4b; --ok-soft:#eaf5ee;
+    --spec:#5b3fa8; --spec-soft:#f0ecfa;
+    --r:6px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .label{position:fixed;top:0;left:0;right:0;z-index:50;background:#14181d;color:#fff;
+    padding:6px 14px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+  .app{margin-top:27px}
+
+  /* Demo bar: unchanged role, one notch quieter */
+  .demobar{display:flex;align-items:center;gap:14px;padding:5px 18px;
+    background:#fffbef;border-bottom:1px solid #f0e4c0;font-size:11.5px}
+  .demobar .tag{background:#b26a00;color:#fff;padding:1px 6px;border-radius:3px;
+    font-size:9.5px;font-weight:700;letter-spacing:.05em}
+  .demobar .clock{color:#7a5a12;font-weight:600}
+  .demobar .spacer{flex:1}
+  .demobar button{font:inherit;font-size:11px;background:#fff;border:1px solid #e8d9ae;
+    padding:2px 9px;border-radius:4px;color:#7a5a12;cursor:pointer}
+
+  /* Header: blockers become chips, one per blocker, each jumps to its tile */
+  header{display:flex;align-items:center;gap:16px;padding:13px 18px;
+    background:var(--surface);border-bottom:1px solid var(--border)}
+  header h1{margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em}
+  header .week{color:var(--muted);font-size:12.5px}
+  header .spacer{flex:1}
+  .blockerchips{display:flex;gap:6px;align-items:center}
+  .bchip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+    color:var(--crit);background:var(--crit-soft);border:1px solid #e8bdb9;
+    padding:4px 10px;border-radius:99px;cursor:pointer}
+  .bchip .dot{width:6px;height:6px;border-radius:50%;background:var(--crit)}
+  .commitbtn{font:inherit;font-weight:600;font-size:13px;padding:7px 15px;border-radius:var(--r);
+    border:1px solid var(--border-strong);background:#f1f2f4;color:var(--faint);cursor:not-allowed}
+
+  /* Capacity band: quiet by default, loud only on exception days */
+  .band{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 18px 10px}
+  .bandhead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .bandhead .t{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .bandhead .spacer{flex:1}
+  .cover{font-size:11px;color:var(--faint)}
+  .cover b{color:var(--muted)}
+  .cover .none{color:var(--crit);font-weight:600}
+  .days{display:grid;grid-template-columns:76px repeat(5,1fr);gap:7px}
+  .rowlab{display:flex;flex-direction:column;justify-content:flex-end;gap:9px;
+    font-size:11px;font-weight:600;color:var(--faint);padding-bottom:2px}
+  .rowlab .top{margin-top:auto}
+  .day{border-radius:var(--r);overflow:hidden;border:1px solid transparent}
+  .day.exc{border-color:var(--border)}
+  .day.impacted{border-color:var(--crit);box-shadow:0 0 0 2px var(--crit-soft)}
+  .day.candidate{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft)}
+  .bandhead .live{font-size:11px;color:var(--accent);font-weight:600;
+    background:var(--accent-soft);padding:2px 7px;border-radius:3px}
+  .day .dh{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--faint);text-align:center;padding:3px 0 2px}
+  .c{display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:4px 4px;font-size:12px;font-variant-numeric:tabular-nums}
+  .c .n{color:var(--faint);font-weight:500}
+  .c .sub{font-size:10px;font-weight:700}
+  .c.short{background:var(--crit-soft)}
+  .c.short .n{color:var(--crit);font-weight:700}
+  .c.short .sub{color:var(--crit)}
+  .c.spare{background:var(--ok-soft)}
+  .c.spare .n{color:var(--ok);font-weight:700}
+  .c.spare .sub{color:var(--ok)}
+  .flagline{display:flex;gap:16px;margin-top:7px;font-size:11.5px}
+  .flag{display:flex;align-items:center;gap:6px;color:var(--crit);font-weight:600}
+  .flag .dot{width:7px;height:7px;border-radius:50%;background:var(--crit)}
+
+  /* Split panes */
+  .split{display:grid;grid-template-columns:minmax(360px,.85fr) minmax(460px,1.1fr);align-items:start}
+  .pane{padding:13px 16px}
+  .pane.left{border-right:1px solid var(--border)}
+  .pane.right{background:#fbfcfd;min-height:60vh}
+
+  /* Queue: grouped by what stands between you and commit */
+  .group{margin-bottom:16px}
+  .grouptitle{display:flex;align-items:baseline;gap:7px;font-size:10.5px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:0 0 8px}
+  .grouptitle.crit{color:var(--crit)}
+  .grouptitle .cnt{font-weight:600;color:var(--faint)}
+
+  /* Slim tile: two rows, one bold element, status is the loudest thing on it */
+  .card{display:block;width:100%;text-align:left;font:inherit;cursor:pointer;
+    background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border-strong);
+    border-radius:var(--r);padding:8px 11px;margin-bottom:6px}
+  .card.blocking{border-left-color:var(--crit)}
+  .card.settled{border-left-color:#bfd8c9}
+  .card.settled .title{color:var(--muted)}
+  .card.settled .urg,.card.settled .badge{opacity:.7}
+  .card:hover{border-color:var(--border-strong)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);border-left-color:var(--accent)}
+  .card .r1{display:flex;align-items:center;gap:7px;margin-bottom:2px}
+  .card .r2{display:flex;align-items:center;gap:7px}
+  .vid{font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+  .card .title{font-size:12.5px}
+  .card .spacer{flex:1}
+  .status{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .status.crit{color:var(--crit)}
+  .status.ok{color:var(--ok)}
+
+  /* Badges: quieter, still legible. Safety keeps red: it is the hard stop. */
+  .badge{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:1px 5px;border-radius:3px;color:var(--muted);background:#f0f2f4}
+  .badge.safety{background:var(--crit-soft);color:var(--crit)}
+  .badge.specialist{background:var(--spec-soft);color:var(--spec)}
+  .badge.resurfaced{background:var(--accent-soft);color:var(--accent)}
+
+  /* Urgency: deadline is a fact, not an alarm. Red stays reserved for blockage. */
+  .urg{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:3px;
+    border:1px solid transparent;letter-spacing:.03em;white-space:nowrap}
+  .urg.deadline{color:#fff;background:#2b3138}
+  .urg.estimate{color:var(--warn);border-color:#ecd5a6;background:var(--warn-soft)}
+  .urg.assessment{color:#4a525c;border-color:var(--border-strong);background:#f2f4f6}
+
+  /* Detail pane (right): unchanged blocks; head gains the evidence sentence the tile dropped */
+  .detail .head{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  .detail .head .vid{font-size:15px}
+  .detail .sub{font-size:12.5px;color:var(--muted)}
+  .detail .because{font-size:12px;color:var(--muted);margin:4px 0 11px}
+  .block{border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;margin-bottom:9px;background:var(--surface)}
+  .blocktitle{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .kv{display:grid;grid-template-columns:108px 1fr;gap:3px 10px;font-size:12px;margin:0}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+  .src{font-size:10.5px;color:var(--faint);font-style:italic}
+  .block p{margin:0 0 6px;font-size:12px}
+  .block p:last-child{margin-bottom:0}
+  .synthetic{font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);
+    border:1px solid #ecd5a6;padding:1px 5px;border-radius:3px;letter-spacing:.04em}
+  .costs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+  .cost{border:1px solid var(--border);border-radius:5px;padding:7px 8px;background:#fbfcfd}
+  .cost .n{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+  .cost .l{font-size:10px;color:var(--muted);line-height:1.3;margin-top:2px}
+  .slot{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font:inherit;
+    padding:7px 9px;border:1px solid var(--border);border-radius:5px;margin-bottom:6px;font-size:12px;background:#fff}
+  .slot.on{border-color:var(--accent);background:var(--accent-soft)}
+  .slot.off{opacity:.6;background:#f4f5f7}
+  .radio{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--border-strong);flex:none}
+  .slot.on .radio{border-color:var(--accent);border-width:4px}
+  .slot .eff{margin-left:auto;font-size:11px;font-weight:600}
+  .slot .eff.bad{color:var(--crit)}
+  .slot .eff.good{color:var(--ok)}
+  .slot .eff.no{color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="label">Redesign proposal · Guided queue, slim tiles, exception-first band · Week 40 at open, V-103 selected</div>
+<div class="app">
+
+  <div class="demobar">
+    <span class="tag">SIMULATED</span>
+    <span class="clock">Demo clock: Monday 28 September 2026</span>
+    <span>Synthetic fleet and scenario prices</span>
+    <span class="spacer"></span>
+    <button>Advance 1 day</button>
+    <button>Advance to next review date</button>
+    <button>Reset scenario</button>
+    <button>About this prototype</button>
+  </div>
+
+  <header>
+    <h1>Weekly maintenance plan</h1>
+    <span class="week">Week 40 · Mon 28 Sep to Fri 2 Oct 2026 · Depot Nord · 45 vans</span>
+    <span class="spacer"></span>
+    <div class="blockerchips">
+      <span class="bchip"><span class="dot"></span>V-041 · no decision</span>
+      <span class="bchip"><span class="dot"></span>Tue 29 Sep · standard short 1</span>
+    </div>
+    <button class="commitbtn">Commit plan</button>
+  </header>
+
+  <div class="band">
+    <div class="bandhead">
+      <span class="t">Week capacity · available / demand</span>
+      <span class="live">Reacting to V-103</span>
+      <span class="spacer"></span>
+      <span class="cover"><b>R-1</b> Mon to Fri · <b>R-2</b> Tue and Thu only · <span class="none">no specialist cover</span></span>
+    </div>
+    <div class="days">
+      <div class="rowlab"><span class="top">Standard</span><span>Specialist</span></div>
+      <div class="day"><div class="dh">Mon 28 Sep</div><div class="c"><span class="n">38 / 38</span></div><div class="c"><span class="n">7 / 7</span></div></div>
+      <div class="day exc impacted"><div class="dh">Tue 29 Sep</div><div class="c short"><span class="n">37 / 38</span><span class="sub">short 1</span></div><div class="c"><span class="n">7 / 7</span></div></div>
+      <div class="day"><div class="dh">Wed 30 Sep</div><div class="c"><span class="n">38 / 38</span></div><div class="c"><span class="n">7 / 7</span></div></div>
+      <div class="day exc candidate"><div class="dh">Thu 1 Oct</div><div class="c spare"><span class="n">39 / 38</span><span class="sub">+1</span></div><div class="c"><span class="n">7 / 7</span></div></div>
+      <div class="day"><div class="dh">Fri 2 Oct</div><div class="c"><span class="n">38 / 38</span></div><div class="c"><span class="n">7 / 7</span></div></div>
+    </div>
+    <div class="flagline">
+      <span class="flag"><span class="dot"></span>Tue 29 Sep: standard short by 1 · off the road: V-012, V-103, V-118</span>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="pane left">
+
+      <div class="group">
+        <p class="grouptitle crit">Blocking the week <span class="cnt">· 3</span></p>
+
+        <button class="card blocking">
+          <div class="r1">
+            <span class="vid">V-041</span>
+            <span class="badge specialist">Specialist</span>
+            <span class="spacer"></span>
+            <span class="status crit">No decision</span>
+          </div>
+          <div class="r2">
+            <span class="title">Intermittent fault code, cleared twice</span>
+            <span class="spacer"></span>
+            <span class="urg assessment">Assessment needed</span>
+          </div>
+        </button>
+
+        <button class="card blocking sel">
+          <div class="r1">
+            <span class="vid">V-103</span>
+            <span class="spacer"></span>
+            <span class="status crit">Causes Tue shortfall</span>
+          </div>
+          <div class="r2">
+            <span class="title">Front suspension wear, contradicting the odometer interval</span>
+            <span class="spacer"></span>
+            <span class="urg estimate">Estimate</span>
+          </div>
+        </button>
+
+        <button class="card blocking">
+          <div class="r1">
+            <span class="vid">V-118</span>
+            <span class="spacer"></span>
+            <span class="status crit">Causes Tue shortfall</span>
+          </div>
+          <div class="r2">
+            <span class="title">Service interval approaching</span>
+            <span class="spacer"></span>
+            <span class="urg estimate">Estimate</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="group">
+        <p class="grouptitle">Settled <span class="cnt">· 2</span></p>
+
+        <button class="card settled">
+          <div class="r1">
+            <span class="vid">V-012</span>
+            <span class="badge safety">Safety · hard stop</span>
+            <span class="badge">Held since 25 Sep</span>
+            <span class="spacer"></span>
+            <span class="status ok">Tue 29 Sep booked</span>
+          </div>
+          <div class="r2">
+            <span class="title">Brake defect found at UVV inspection</span>
+            <span class="spacer"></span>
+            <span class="urg deadline">Deadline</span>
+          </div>
+        </button>
+
+        <button class="card settled">
+          <div class="r1">
+            <span class="vid">V-027</span>
+            <span class="spacer"></span>
+            <span class="status">Watch until Mon 2 Nov</span>
+          </div>
+          <div class="r2">
+            <span class="title">Wiper linkage noise reported by driver</span>
+            <span class="spacer"></span>
+            <span class="urg estimate">Estimate</span>
+          </div>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="pane right">
+      <div class="detail">
+        <div class="head">
+          <span class="vid">V-103</span>
+          <span class="urg estimate">Estimate</span>
+        </div>
+        <div class="sub">Front suspension wear, contradicting the odometer interval · standard class</div>
+        <div class="because">Inspection finding, dated 22 Sep, ahead of the odometer interval.</div>
+
+        <div class="block">
+          <div class="blocktitle">Observation</div>
+          <dl class="kv">
+            <dt>What was seen</dt><dd>Front lower control arm bushings worn. Odometer 61,400 km against an interval due at 70,000 km.</dd>
+            <dt>Source</dt><dd>Workshop inspection <span class="src">· received Tue 22 Sep</span></dd>
+          </dl>
+        </div>
+
+        <div class="block">
+          <div class="blocktitle">Assumption in play</div>
+          <p>The urban duty cycle accelerates bushing wear, so the inspection finding overrides the odometer interval.</p>
+          <p><b>Proposed:</b> Book a visit: Tue 29 Sep, 1 day.</p>
+        </div>
+
+        <div class="block">
+          <div class="blocktitle">Consequence of waiting <span class="synthetic">SYNTHETIC PRICES</span></div>
+          <p>Continued wear transfers load to the damper mounts. No regulatory deadline applies, and no failure date can be stated from one inspection.</p>
+          <div class="costs">
+            <div class="cost"><div class="n">EUR 620</div><div class="l">Service cost</div></div>
+            <div class="cost"><div class="n">EUR 140</div><div class="l">Replacement cover</div></div>
+            <div class="cost"><div class="n" style="font-size:12.5px">None on the proposed day.</div><div class="l">Operational disruption</div></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="blocktitle">Slot · Werkstatt Berg · 1 day</div>
+          <button class="slot off"><span class="radio"></span>Mon 28 Sep<span class="eff no">Werkstatt Berg is fully booked on Mon 28 Sep</span></button>
+          <button class="slot on"><span class="radio"></span>Tue 29 Sep<span class="eff no">Does not change this week's coverage</span></button>
+          <button class="slot"><span class="radio"></span>Wed 30 Sep<span class="eff bad">Wed 30 Sep short 1</span></button>
+          <button class="slot"><span class="radio"></span>Thu 1 Oct<span class="eff good">Clears the shortfall</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
