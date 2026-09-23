@@ -64,7 +64,7 @@ function buildVehicle(id: VehicleId, vehicleClass: 'standard' | 'specialist', in
         ? {
             reason: 'Safety-relevant brake defect recorded at UVV inspection',
             since: '2026-09-25',
-            releaseRecordedOn: '2026-10-01',
+            releaseRecordedOn: '2026-10-06',
           }
         : null,
   }

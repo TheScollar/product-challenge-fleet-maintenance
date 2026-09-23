@@ -331,7 +331,7 @@ describe('fixture integrity', () => {
     const v012 = fixture.vehicles.find((v) => v.id === 'V-012')!
     expect(v012.hold).not.toBeNull()
     expect(v012.hold!.since).toBe('2026-09-25')
-    expect(v012.hold!.releaseRecordedOn).toBe('2026-10-01')
+    expect(v012.hold!.releaseRecordedOn).toBe('2026-10-06')
   })
 
   it('holds no other vehicle', () => {
@@ -466,7 +466,7 @@ function buildVehicle(id: VehicleId, vehicleClass: 'standard' | 'specialist', in
         ? {
             reason: 'Safety-relevant brake defect recorded at UVV inspection',
             since: '2026-09-25',
-            releaseRecordedOn: '2026-10-01',
+            releaseRecordedOn: '2026-10-06',
           }
         : null,
   }
@@ -1066,9 +1066,15 @@ describe('unavailability is a set, so nothing is subtracted twice', () => {
     expect([...unavailable]).toEqual(['V-012'])
   })
 
-  it('releases the held vehicle only on the date the fixture records', () => {
-    expect(unavailableOn('2026-09-30', fixture.vehicles, []).has('V-012')).toBe(true)
-    expect(unavailableOn('2026-10-01', fixture.vehicles, []).has('V-012')).toBe(false)
+  it('keeps the held vehicle unavailable for the whole planning week', () => {
+    for (const date of ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02']) {
+      expect(unavailableOn(date, fixture.vehicles, []).has('V-012')).toBe(true)
+    }
+  })
+
+  it('releases it only on the date the fixture records, not before', () => {
+    expect(unavailableOn('2026-10-05', fixture.vehicles, []).has('V-012')).toBe(true)
+    expect(unavailableOn('2026-10-06', fixture.vehicles, []).has('V-012')).toBe(false)
   })
 })
 
@@ -2550,7 +2556,7 @@ describe('the commit summary', () => {
 
   it('states the outstanding hold and the release the fixture records', () => {
     expect(summary.holds.map((h) => h.vehicleId)).toEqual(['V-012'])
-    expect(summary.holds[0].releaseRecordedOn).toBe('2026-10-01')
+    expect(summary.holds[0].releaseRecordedOn).toBe('2026-10-06')
   })
 })
 
@@ -4803,7 +4809,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
               <div className="meta">
                 {h.releaseRecordedOn === null
                   ? 'No release recorded. The van stays out of service.'
-                  : `Release recorded for ${formatDay(h.releaseRecordedOn)}, after repair sign-off. Booking a visit does not release it.`}
+                  : `Release recorded for ${formatDay(h.releaseRecordedOn)}, after repair and UVV re-inspection. Booking a visit does not release it.`}
               </div>
             </div>
           ))}

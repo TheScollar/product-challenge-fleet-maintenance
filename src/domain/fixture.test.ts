@@ -25,7 +25,7 @@ describe('fixture integrity', () => {
     const v012 = fixture.vehicles.find((v) => v.id === 'V-012')!
     expect(v012.hold).not.toBeNull()
     expect(v012.hold!.since).toBe('2026-09-25')
-    expect(v012.hold!.releaseRecordedOn).toBe('2026-10-01')
+    expect(v012.hold!.releaseRecordedOn).toBe('2026-10-06')
   })
 
   it('holds no other vehicle', () => {

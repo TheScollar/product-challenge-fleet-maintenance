@@ -338,7 +338,7 @@ demonstrates a genuine `InfeasibleSlot`.
 | Item | Brake defect found at UVV inspection |
 | Evidence | UVV-Prüfbericht, 2026-09-25: front axle brake pads below wear limit, finding recorded as *verkehrsunsicher* |
 | Urgency | `deadline`. UVV requires immediate removal from service |
-| Hold | Held since 2026-09-25. `releaseRecordedOn: 2026-10-01`, recorded by the fixture after repair sign-off |
+| Hold | Held since 2026-09-25. `releaseRecordedOn: 2026-10-06`, recorded by the fixture after the repair and the follow-up UVV re-inspection. Held for the whole planning week, which is what makes the five days of R-1 cover correct |
 | Proposal | Act now. Werkstatt Berg, Tue 2026-09-29, 1 day |
 | Parts | Brake pads, ready **2026-09-29**. Monday is parts-blocked as well as garage-blocked |
 | Treatments | `bundle` and `watch` disabled, reason stated |
