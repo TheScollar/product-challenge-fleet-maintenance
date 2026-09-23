@@ -2764,7 +2764,9 @@ export function dailyConfirmation(args: {
       const vehicle = fixture.vehicles.find((v) => v.id === vehicleId)
       const visit = visits.find((v) => v.vehicleId === vehicleId && visitCoversDate(v, forDate))
       if (vehicle && isHeldOn(vehicle, forDate)) {
-        return { vehicleId, reason: `Held out of service: ${vehicle.hold!.reason.toLowerCase()}` }
+        // The reason is shown as recorded. Lowercasing it to blend into the
+        // sentence also mangled domain terms: UVV became uvv.
+        return { vehicleId, reason: `Held out of service: ${vehicle.hold.reason}` }
       }
       return { vehicleId, reason: `In for a visit: ${visit?.scope ?? 'scheduled work'}` }
     })
