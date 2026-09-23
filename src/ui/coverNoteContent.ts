@@ -6,15 +6,14 @@
  * spec's order, with section 3.1's placement rule applied ("What you are
  * about to see" is the fourth block).
  *
- * Two copy-fidelity notes, both called out in the spec itself:
+ * Two copy-fidelity notes:
  *
- * - The spec's blockquote markers (`>`) and markdown bold are formatting of
- *   the spec document, not content, and are not reproduced here. One bolded
- *   sentence in "What is simulated" ("Nothing is sent anywhere, and no
- *   external booking exists.") is called out by the spec as worth keeping
- *   visually emphasised, with plain text offered as a fallback if that proves
- *   awkward against the "no content literals" rule for CoverNote.tsx. It is
- *   plain here; see the task report for why.
+ * - The spec's blockquote markers (`>`) are formatting of the spec document
+ *   and are stripped. Its bold spans are content and are preserved with
+ *   inline `**...**` markers, which CoverNote.tsx renders as <strong>. Four
+ *   spans carry them, exactly the spans the spec bolds inside copy: the
+ *   lead-ins "The user." and "The problem.", the sentence "Nothing is sent
+ *   anywhere, and no external booking exists.", and "Paths, not hyperlinks."
  * - Backticked ids and paths in the spec's prose (`V-012`, `V-041`, `` `npm
  *   run dev` ``, and similar) render as plain text throughout, one of the two
  *   choices the spec allows, applied consistently. The one exception is the
@@ -59,8 +58,8 @@ export const coverNoteContent: CoverNoteContent = {
       id: 'user-and-problem',
       heading: 'The user and problem I chose',
       paragraphs: [
-        'The user. The part-time Fuhrparkverantwortliche at one depot of 45 vans. Fleet is a fraction of their job. They carry personal liability under UVV, and they have the authority to pull a vehicle off the road.',
-        'The problem. Decide what to service this week and what can reasonably wait, while seeing what that decision does to work already committed.',
+        '**The user.** The part-time Fuhrparkverantwortliche at one depot of 45 vans. Fleet is a fraction of their job. They carry personal liability under UVV, and they have the authority to pull a vehicle off the road.',
+        '**The problem.** Decide what to service this week and what can reasonably wait, while seeing what that decision does to work already committed.',
         'Not every maintenance problem. One weekly decision, made under a capacity ceiling, by someone who is accountable for it and does not have all day.',
       ],
     },
@@ -149,14 +148,14 @@ export const coverNoteContent: CoverNoteContent = {
       heading: 'What is simulated',
       paragraphs: [
         'Everything outside the depot. Vehicle data, telematics, inspection findings, garage slots, parts lead times, rental cover and prices are all fixtures, and they are labelled in the product.',
-        'Commit is a simulated commitment. The scenario guarantees the selected slots and confirms them. Nothing is sent anywhere, and no external booking exists. Every price is a scenario price.',
+        'Commit is a simulated commitment. The scenario guarantees the selected slots and confirms them. **Nothing is sent anywhere, and no external booking exists.** Every price is a scenario price.',
       ],
     },
     {
       kind: 'paths',
       id: 'thinking',
       heading: 'Where the thinking lives',
-      note: 'Paths, not hyperlinks. A relative link resolves differently under npm run dev, under a served dist/, and under a dist/index.html opened from the filesystem, so hyperlinking introduces a broken-link failure mode for no benefit. The reader has the repository.',
+      note: '**Paths, not hyperlinks.** A relative link resolves differently under npm run dev, under a served dist/, and under a dist/index.html opened from the filesystem, so hyperlinking introduces a broken-link failure mode for no benefit. The reader has the repository.',
       paths: [
         {
           path: 'docs/fleet-maintenance-work-packages.md',

@@ -7,13 +7,26 @@ import { coverNoteContent, type CoverBlock } from './coverNoteContent'
  * kind without handling it here is a compile error, not a silently dropped
  * section.
  */
+/**
+ * The content module preserves the spec's bold spans as inline **...**
+ * markers. Odd-indexed segments after splitting on the marker are those
+ * spans. This is deliberately the whole grammar: no nesting, no other marks.
+ */
+function renderEmphasis(text: string) {
+  const segments = text.split('**')
+  if (segments.length === 1) return text
+  return segments.map((segment, index) =>
+    index % 2 === 1 ? <strong key={index}>{segment}</strong> : segment,
+  )
+}
+
 function renderBlockBody(block: CoverBlock) {
   switch (block.kind) {
     case 'prose':
       return (
         <>
           {block.paragraphs.map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
+            <p key={index}>{renderEmphasis(paragraph)}</p>
           ))}
         </>
       )
@@ -31,7 +44,7 @@ function renderBlockBody(block: CoverBlock) {
     case 'paths':
       return (
         <>
-          <p className="covernote-note">{block.note}</p>
+          <p className="covernote-note">{renderEmphasis(block.note)}</p>
           <ul className="covernote-paths">
             {block.paths.map((entry) => (
               <li key={entry.path}>
