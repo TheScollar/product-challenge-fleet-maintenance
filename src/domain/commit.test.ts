@@ -75,6 +75,7 @@ describe('the commit summary', () => {
   it('states the cover assumptions explicitly', () => {
     expect(summary.coverAssumptions.join(' ')).toContain('R-1')
     expect(summary.coverAssumptions.join(' ')).toContain('R-2')
+    expect(summary.coverAssumptions.join(' ')).toContain('No specialist cover')
   })
 
   it('lists both deferred follow-ups with their review date and trigger', () => {
@@ -119,5 +120,18 @@ describe('the daily confirmation is a read-only projection', () => {
     const view = dailyConfirmation({ fixture, plan, forDate: '2026-09-29' })
     expect(view.rows).toHaveLength(2)
     expect(view.rows.every((r) => r.shortfall === 0)).toBe(true)
+  })
+})
+
+describe('a released hold does not overshadow a later visit', () => {
+  it('labels a released van by its visit, not by its stale hold record', () => {
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v012': { itemId: 'item-v012', treatment: 'act-now', slotDate: '2026-10-06', deferral: null },
+    }
+    const plan = commitPlan({ weekId: '2026-10-05', decisions, demoDate: '2026-10-05' })
+    const view = dailyConfirmation({ fixture, plan, forDate: '2026-10-06' })
+    const v012 = view.offRoad.find((o) => o.vehicleId === 'V-012')!
+    expect(v012.reason).toContain('In for a visit')
+    expect(v012.reason).not.toContain('Held')
   })
 })

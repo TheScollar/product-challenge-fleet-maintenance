@@ -28,6 +28,13 @@ export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
   }
 }
 
+/** A hold is never cleared, only stamped with a release, so "held" is always
+ *  a question about a specific date. */
+export function isHeldOn(vehicle: Vehicle, date: ISODate): boolean {
+  const hold = vehicle.hold
+  return hold !== null && (hold.releaseRecordedOn === null || date < hold.releaseRecordedOn)
+}
+
 /**
  * One Set, so a vehicle that is both held and booked counts once. [S 3.1]
  * A hold persists until the fixture records a release on or before the day.
@@ -39,8 +46,7 @@ export function unavailableOn(
 ): Set<VehicleId> {
   const out = new Set<VehicleId>()
   for (const vehicle of vehicles) {
-    const hold = vehicle.hold
-    if (hold && (hold.releaseRecordedOn === null || date < hold.releaseRecordedOn)) {
+    if (isHeldOn(vehicle, date)) {
       out.add(vehicle.id)
     }
   }

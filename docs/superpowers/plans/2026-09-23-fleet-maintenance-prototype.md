@@ -1261,6 +1261,13 @@ export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
   }
 }
 
+/** A hold is never cleared, only stamped with a release, so "held" is always
+ *  a question about a specific date. */
+export function isHeldOn(vehicle: Vehicle, date: ISODate): boolean {
+  const hold = vehicle.hold
+  return hold !== null && (hold.releaseRecordedOn === null || date < hold.releaseRecordedOn)
+}
+
 /**
  * One Set, so a vehicle that is both held and booked counts once. [S 3.1]
  * A hold persists until the fixture records a release on or before the day.
@@ -1272,8 +1279,7 @@ export function unavailableOn(
 ): Set<VehicleId> {
   const out = new Set<VehicleId>()
   for (const vehicle of vehicles) {
-    const hold = vehicle.hold
-    if (hold && (hold.releaseRecordedOn === null || date < hold.releaseRecordedOn)) {
+    if (isHeldOn(vehicle, date)) {
       out.add(vehicle.id)
     }
   }
@@ -2609,7 +2615,7 @@ Expected: FAIL, `Failed to resolve import "./commit"`.
 - [ ] **Step 3: Write `src/domain/commit.ts`**
 
 ```ts
-import { computeDayCapacity, computeWeekCapacity, unavailableOn, weekFixtureFor } from './capacity'
+import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
 import { formatDay, formatLongDay } from './clock'
 import type {
   CommittedPlan,
@@ -2755,8 +2761,8 @@ export function dailyConfirmation(args: {
     .map((vehicleId) => {
       const vehicle = fixture.vehicles.find((v) => v.id === vehicleId)
       const visit = visits.find((v) => v.vehicleId === vehicleId && visitCoversDate(v, forDate))
-      if (vehicle?.hold) {
-        return { vehicleId, reason: `Held out of service: ${vehicle.hold.reason.toLowerCase()}` }
+      if (vehicle && isHeldOn(vehicle, forDate)) {
+        return { vehicleId, reason: `Held out of service: ${vehicle.hold!.reason.toLowerCase()}` }
       }
       return { vehicleId, reason: `In for a visit: ${visit?.scope ?? 'scheduled work'}` }
     })

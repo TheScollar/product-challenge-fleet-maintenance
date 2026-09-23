@@ -1,4 +1,4 @@
-import { computeDayCapacity, computeWeekCapacity, unavailableOn, weekFixtureFor } from './capacity'
+import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
 import { formatDay, formatLongDay } from './clock'
 import type {
   CommittedPlan,
@@ -144,8 +144,8 @@ export function dailyConfirmation(args: {
     .map((vehicleId) => {
       const vehicle = fixture.vehicles.find((v) => v.id === vehicleId)
       const visit = visits.find((v) => v.vehicleId === vehicleId && visitCoversDate(v, forDate))
-      if (vehicle?.hold) {
-        return { vehicleId, reason: `Held out of service: ${vehicle.hold.reason.toLowerCase()}` }
+      if (vehicle && isHeldOn(vehicle, forDate)) {
+        return { vehicleId, reason: `Held out of service: ${vehicle.hold!.reason.toLowerCase()}` }
       }
       return { vehicleId, reason: `In for a visit: ${visit?.scope ?? 'scheduled work'}` }
     })

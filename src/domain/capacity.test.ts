@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { computeDayCapacity, computeWeekCapacity, unavailableOn, weekFixtureFor } from './capacity'
+import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
 import { fixture } from './fixture'
 import { visitCoversDate, visitsFromDecisions } from './visits'
-import { coldOpenDecisions } from './testSupport'
+import { coldOpenDecisions, vehicle } from './testSupport'
 import type { ItemId, Visit } from './types'
 
 const WEEK_40 = '2026-09-28'
@@ -63,6 +63,17 @@ describe('unavailability is a set, so nothing is subtracted twice', () => {
   it('releases it only on the date the fixture records, not before', () => {
     expect(unavailableOn('2026-10-05', fixture.vehicles, []).has('V-012')).toBe(true)
     expect(unavailableOn('2026-10-06', fixture.vehicles, []).has('V-012')).toBe(false)
+  })
+})
+
+describe('isHeldOn is the single definition of "held on a date"', () => {
+  it('is true the day before the recorded release and false from the release date on', () => {
+    expect(isHeldOn(vehicle('V-012'), '2026-10-05')).toBe(true)
+    expect(isHeldOn(vehicle('V-012'), '2026-10-06')).toBe(false)
+  })
+
+  it('is false for a vehicle that has never been held', () => {
+    expect(isHeldOn(vehicle('V-103'), '2026-10-05')).toBe(false)
   })
 })
 
