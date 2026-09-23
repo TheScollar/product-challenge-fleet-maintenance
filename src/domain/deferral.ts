@@ -25,6 +25,23 @@ export function triggerFired(trigger: Trigger, fixture: Fixture, demoDate: ISODa
   return projectedOdometerKm(vehicle, demoDate) >= trigger.thresholdKm
 }
 
+/**
+ * Recency is weekId first, then decidedOn. The commit reducer maintains at most
+ * one record per item per week, which is a precondition it enforces rather than
+ * a property of any history value: loadState rehydrates the history from
+ * storage without validating it. decidedOn is a real secondary key, not a
+ * function of weekId, so it still breaks a tie if a stored history ever arrives
+ * with two records for one week.
+ *
+ * Every caller must use this. Two definitions of "latest" in one module can
+ * disagree about which decision is canonical.
+ */
+export function latestRecord(records: DeferralRecord[]): DeferralRecord | undefined {
+  return [...records]
+    .sort((a, b) => a.weekId.localeCompare(b.weekId) || a.decidedOn.localeCompare(b.decidedOn))
+    .at(-1)
+}
+
 export function resurfacing(
   record: DeferralRecord,
   fixture: Fixture,
@@ -54,15 +71,7 @@ export function resurfacedItems(args: {
 
   for (const [itemId, records] of Object.entries(history)) {
     if (records.length === 0) continue
-    // Recency is weekId first, then decidedOn. The commit reducer maintains at
-    // most one record per item per week, which is a precondition it enforces
-    // rather than a property of any history value: loadState rehydrates this
-    // map from storage without validating it. decidedOn is a real secondary
-    // key, not a function of weekId, so it still breaks a tie if a stored
-    // history ever arrives with two records for one week.
-    const latest = [...records]
-      .sort((a, b) => a.weekId.localeCompare(b.weekId) || a.decidedOn.localeCompare(b.decidedOn))
-      .at(-1) as DeferralRecord
+    const latest = latestRecord(records) as DeferralRecord
     const item = fixture.items.find((i) => i.id === itemId)
     if (!item) continue
     const { resurfaced, because } = resurfacing(latest, fixture, demoDate)
@@ -85,7 +94,7 @@ export function nextResurfaceDate(args: {
   const candidates: ISODate[] = []
 
   for (const records of Object.values(history)) {
-    const latest = [...records].sort((a, b) => a.decidedOn.localeCompare(b.decidedOn)).at(-1)
+    const latest = latestRecord(records)
     if (!latest) continue
     if (latest.deferral.reviewDate > after) candidates.push(latest.deferral.reviewDate)
     const trigger = latest.deferral.trigger

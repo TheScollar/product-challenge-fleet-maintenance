@@ -2988,7 +2988,7 @@ export function nextResurfaceDate(args: {
   const candidates: ISODate[] = []
 
   for (const records of Object.values(history)) {
-    const latest = [...records].sort((a, b) => a.decidedOn.localeCompare(b.decidedOn)).at(-1)
+    const latest = latestRecord(records)
     if (!latest) continue
     if (latest.deferral.reviewDate > after) candidates.push(latest.deferral.reviewDate)
     const trigger = latest.deferral.trigger
