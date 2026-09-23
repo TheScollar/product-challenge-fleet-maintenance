@@ -54,11 +54,15 @@ export function resurfacedItems(args: {
 
   for (const [itemId, records] of Object.entries(history)) {
     if (records.length === 0) continue
-    // The history holds at most one record per item per week, so weekId is
-    // unique within this array and orders it totally. decidedOn is descriptive
-    // metadata and is deliberately not the sort key: two same-day records would
-    // tie on it and fall through to array order.
-    const latest = [...records].sort((a, b) => a.weekId.localeCompare(b.weekId)).at(-1) as DeferralRecord
+    // Recency is weekId first, then decidedOn. The commit reducer maintains at
+    // most one record per item per week, which is a precondition it enforces
+    // rather than a property of any history value: loadState rehydrates this
+    // map from storage without validating it. decidedOn is a real secondary
+    // key, not a function of weekId, so it still breaks a tie if a stored
+    // history ever arrives with two records for one week.
+    const latest = [...records]
+      .sort((a, b) => a.weekId.localeCompare(b.weekId) || a.decidedOn.localeCompare(b.decidedOn))
+      .at(-1) as DeferralRecord
     const item = fixture.items.find((i) => i.id === itemId)
     if (!item) continue
     const { resurfaced, because } = resurfacing(latest, fixture, demoDate)
