@@ -4700,6 +4700,7 @@ Replace the right pane contents with:
     <p className="empty">Select an item to see its evidence and options.</p>
   ) : (
     <ItemDetail
+      key={selectedItem.id}
       item={selectedItem}
       decisions={decisions}
       onChange={(decision) => dispatch({ type: 'set-decision', weekId, decision })}

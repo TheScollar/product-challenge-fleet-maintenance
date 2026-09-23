@@ -6,6 +6,7 @@ import { activeWeekId, draftFor } from './state/planReducer'
 import { CapacityBand } from './ui/CapacityBand'
 import { DecisionQueue } from './ui/DecisionQueue'
 import { DemoBar } from './ui/DemoBar'
+import { ItemDetail } from './ui/ItemDetail'
 import { PlanHeader } from './ui/PlanHeader'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
     () => validatePlan({ fixture, weekId, decisions }),
     [fixture, weekId, decisions],
   )
+  const selectedItem = fixture.items.find((i) => i.id === selectedItemId) ?? null
 
   return (
     <>
@@ -32,8 +34,16 @@ export default function App() {
           onSelect={setSelectedItemId}
         />
         <div className="pane right">
-          {/* ItemDetail mounts here in Task 13 */}
-          {selectedItemId === null && <p className="empty">Select an item to see its evidence and options.</p>}
+          {selectedItem === null ? (
+            <p className="empty">Select an item to see its evidence and options.</p>
+          ) : (
+            <ItemDetail
+              key={selectedItem.id}
+              item={selectedItem}
+              decisions={decisions}
+              onChange={(decision) => dispatch({ type: 'set-decision', weekId, decision })}
+            />
+          )}
         </div>
       </div>
     </>
