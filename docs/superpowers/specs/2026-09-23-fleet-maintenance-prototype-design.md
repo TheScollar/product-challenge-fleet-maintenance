@@ -523,14 +523,17 @@ This satisfies [WP §3]'s one-screen-plus-detail requirement while giving the su
 
 G1 turns on what the queue puts first, so the order is fixed rather than left to urgency alone **[new]**:
 
-1. Safety class and `deadline` urgency
-2. Items currently contributing to a blocker, blocking item first
-3. Everything else by urgency: `deadline`, then `estimate`, then `assessment-needed`
-4. Items already disposed, last
+1. Safety class
+2. Undisposed, a required decision is missing
+3. Contributing to a capacity shortfall
+4. Everything else
 
-At cold open this yields `V-012`, `V-118`, `V-041`, `V-103`, `V-027`. `V-041` ranks third despite
-`assessment-needed` urgency because it is an `UndisposedItem` blocker, which is the behaviour G1 wants:
-the queue surfaces what stops the week, not just what is urgent.
+Ties break on urgency rank (`deadline`, `estimate`, `assessment-needed`), then on item ID, so the
+order is deterministic.
+
+At cold open this yields `V-012`, `V-041`, `V-103`, `V-118`, `V-027`. `V-041` ranks second despite
+`assessment-needed` urgency because it is the one decision the product is actively asking for, which
+is the behaviour G1 wants: the queue surfaces what stops the week, not just what is urgent.
 
 ### 6.5 Failure behaviour is never a dialog
 
