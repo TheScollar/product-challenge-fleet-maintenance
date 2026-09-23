@@ -83,6 +83,25 @@ const CORRUPT_PAYLOADS: Array<{ name: string; payload: string }> = [
     payload: validEnvelope({ deferralHistory: 'garbage' }),
   },
   {
+    name: 'odometer trigger with a finite but absurd thresholdKm',
+    payload: validEnvelope({
+      deferralHistory: {
+        'item-v041': [
+          {
+            itemId: 'item-v041',
+            weekId: '2026-09-28',
+            decidedOn: '2026-09-28',
+            deferral: {
+              reason: 'corrupted threshold',
+              reviewDate: '2026-10-05',
+              trigger: { kind: 'odometer', vehicleId: 'V-118', thresholdKm: 1e12, label: 'x' },
+            },
+          },
+        ],
+      },
+    }),
+  },
+  {
     name: 'a deferral record missing every field',
     payload: validEnvelope({ deferralHistory: { 'item-v041': [{ x: 1 }] } }),
   },

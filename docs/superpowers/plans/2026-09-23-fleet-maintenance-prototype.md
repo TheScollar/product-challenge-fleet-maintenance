@@ -3216,6 +3216,8 @@ function isISODate(x: unknown): x is ISODate {
   }
 }
 
+const MAX_PLAUSIBLE_THRESHOLD_KM = 2_000_000
+
 function isTrigger(value: unknown): value is Trigger {
   if (!isPlainObject(value)) return false
   if (value.kind === 'event') {
@@ -3225,7 +3227,13 @@ function isTrigger(value: unknown): value is Trigger {
     return (
       typeof value.vehicleId === 'string' &&
       typeof value.thresholdKm === 'number' &&
-      Number.isFinite(value.thresholdKm) &&
+      // Bounded, not merely finite. nextResurfaceDate turns the threshold
+      // into a day count for addDays, and a finite-but-absurd value (around
+      // 1e10 km) pushes the projected date past what Date can represent,
+      // which throws. No real odometer threshold approaches 2,000,000 km,
+      // so anything above it is corrupt data, not a big fleet.
+      value.thresholdKm > 0 &&
+      value.thresholdKm <= MAX_PLAUSIBLE_THRESHOLD_KM &&
       typeof value.label === 'string'
     )
   }
@@ -3290,8 +3298,9 @@ function isValidState(value: Partial<AppState>): value is AppState {
  * is what catches a calendar-invalid date such as 2026-02-30 that parseISO
  * alone would silently normalise into the following month rather than
  * reject. So every date string that later flows into parseISO, formatDay,
- * addDays, or a date comparison has been round-trip checked here: no stored
- * value can reach date arithmetic uninspected.
+ * addDays, or a date comparison has been round-trip checked here, and the
+ * one stored number that feeds date arithmetic, an odometer trigger's
+ * thresholdKm, is bounded so its projected date stays representable.
  *
  * Everything else about the payload, treatments, reasons, trigger kinds and
  * the ids they name, is checked only for shape, not for whether the event or
