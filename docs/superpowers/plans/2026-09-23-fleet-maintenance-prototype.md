@@ -5155,14 +5155,19 @@ describe('4. Aggregate capacity hides a specialist gap', () => {
     const spec = blockers.find((b) => b.kind === 'capacity-shortfall' && b.vehicleClass === 'specialist')
     expect(spec).toBeDefined()
 
-    // The aggregate over both classes still looks healthy.
+    // The aggregate reads one van short of 45, which a glance forgives. Per
+    // class is what shows the real problem: standard is fully covered, and
+    // the specialist gap has no cover at all to close it. The aggregate
+    // neither names the van nor shows that nothing available can fill it.
     const week = weekFixtureFor(fixture, WEEK_40)
     const visits = visitsFromDecisions(draftOf(s), fixture.items)
     const std = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'standard', fixture, visits, week })
     const sp = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits, week })
-    expect(std.available + sp.available).toBeGreaterThanOrEqual(std.demand + sp.demand)
+    expect(std.shortfall).toBe(0)
+    expect(std.available).toBe(std.demand)
     expect(sp.shortfall).toBe(1)
     expect(sp.cover).toBe(0)
+    expect(std.available + sp.available).toBe(std.demand + sp.demand - 1)
   })
 })
 
