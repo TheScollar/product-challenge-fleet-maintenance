@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { validatePlan } from './domain/validation'
 import { usePlan } from './state/PlanProvider'
 import { activeWeekId, draftFor } from './state/planReducer'
+import { CapacityBand } from './ui/CapacityBand'
 import { DemoBar } from './ui/DemoBar'
 import { PlanHeader } from './ui/PlanHeader'
 
@@ -18,7 +19,7 @@ export default function App() {
     <>
       <DemoBar />
       <PlanHeader blockers={blockers} onCommit={() => dispatch({ type: 'commit', weekId })} />
-      {/* CapacityBand mounts here in Task 11 */}
+      <CapacityBand decisions={decisions} selectedItemId={null} />
       {/* DecisionQueue and ItemDetail mount here in Tasks 12 and 13 */}
     </>
   )
