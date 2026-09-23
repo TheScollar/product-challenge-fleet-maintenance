@@ -54,7 +54,12 @@ export function resurfacedItems(args: {
 
   for (const [itemId, records] of Object.entries(history)) {
     if (records.length === 0) continue
-    const latest = [...records].sort((a, b) => a.decidedOn.localeCompare(b.decidedOn)).at(-1) as DeferralRecord
+    // Recency is (decidedOn, weekId). The date alone can tie when an item is
+    // re-deferred inside one simulated day, and falling through to array order
+    // would make the answer depend on how the caller built the list.
+    const latest = [...records].sort(
+      (a, b) => a.decidedOn.localeCompare(b.decidedOn) || a.weekId.localeCompare(b.weekId),
+    ).at(-1) as DeferralRecord
     const item = fixture.items.find((i) => i.id === itemId)
     if (!item) continue
     const { resurfaced, because } = resurfacing(latest, fixture, demoDate)

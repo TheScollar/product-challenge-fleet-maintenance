@@ -62,7 +62,9 @@ describe('triggers fire by advancing the clock, with no cheat button', () => {
 
 describe('resurfacing', () => {
   it('stays down before the review date', () => {
-    expect(resurfacing(v041Record, fixture, '2026-10-02').resurfaced).toBe(false)
+    const r = resurfacing(v041Record, fixture, '2026-10-02')
+    expect(r.resurfaced).toBe(false)
+    expect(r.because).toBe(null)
   })
 
   it('comes back when the review date arrives, and says why', () => {
@@ -95,6 +97,14 @@ describe('resurfacing', () => {
     const history: Record<ItemId, DeferralRecord[]> = { 'item-v041': [older, v041Record] }
     const out = resurfacedItems({ fixture, history, demoDate: '2026-10-05' })
     expect(out[0].record.deferral.reason).toContain('No specialist cover')
+  })
+
+  it('breaks a same-day tie on the later week, not on array order', () => {
+    const firstByArray: DeferralRecord = { ...v041Record, decidedOn: '2026-09-28', weekId: '2026-10-05', deferral: { ...v041Record.deferral, reason: 'first in array' } }
+    const secondByArray: DeferralRecord = { ...v041Record, decidedOn: '2026-09-28', weekId: '2026-09-28', deferral: { ...v041Record.deferral, reason: 'second in array' } }
+    const history: Record<ItemId, DeferralRecord[]> = { 'item-v041': [firstByArray, secondByArray] }
+    const out = resurfacedItems({ fixture, history, demoDate: '2026-10-05' })
+    expect(out[0].record.deferral.reason).toContain('first in array')
   })
 
   it('keeps V-027 down, since neither its date nor its trigger has arrived', () => {
