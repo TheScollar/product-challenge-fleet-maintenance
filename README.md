@@ -27,7 +27,7 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 252 tests over the domain and state layers, including the ten
+npm test        # 294 tests over the domain and state layers, including the ten
                 # verification scenarios end to end
 ```
 
@@ -41,21 +41,28 @@ resurrect it.
 
 ## The five-minute walkthrough
 
-1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road, four more
-   needing a decision, and tomorrow's shortfall flagged. Click any quiet van to inspect it.
-2. Switch to the week plan. Week 40 carries five decisions and two blockers. `V-012` is already out
-   of service, before anything is committed.
-3. Open `V-118`. Tuesday is red because of it. Switch the slot to Thursday and watch Tuesday clear in
-   the band above. Try Wednesday instead to see the shortage land there rather than disappear.
-4. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
+1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road and four more
+   needing a decision. Nothing is planned yet, so every day reads covered. Click any quiet van to
+   inspect it.
+2. Switch to the week plan. Week 40 opens with five decisions and none taken: every item carries the
+   system's proposal, and the band reads own vans plus rentals against demand, `37 + 2 / 38` on
+   Tuesday and Thursday. `V-012` is already out of service, before anything is committed.
+3. Open `V-012`, `V-103` and `V-118` in turn, click **Use proposal**, then **Apply to draft**. All
+   three land on Tuesday and the band turns Tuesday red: three vans off the road, two rentals. Open
+   `V-118` again, switch the slot to Thursday and watch Tuesday clear. Try Wednesday instead to see
+   the shortage land there rather than disappear.
+4. Open `V-012` once more and request a replacement for five days from Monday. Its Consequence tile
+   moves from `not requested` to EUR 700, and the fleet dashboard's weekly cost with it.
+5. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
    No lever closes it: a standard rental is not a specialist van.
-5. Defer `V-041` with a reason, a review date and a trigger. The second blocker clears.
-6. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
-7. Commit. The summary carries the visits, forward availability, the cover assumptions including the
-   absence of specialist cover, and the deferred follow-ups.
-8. Advance the clock to the next review date. `V-041` returns with its rationale intact, and week 41
+6. Defer `V-041` with a reason, a review date and a trigger. The second blocker clears.
+7. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
+8. Commit. The summary carries the visits, forward availability, the cover assumptions including the
+   absence of specialist cover, and the deferred follow-ups. On the fleet dashboard, V-012's card now
+   also reads Replacement on site · day 1 of 5.
+9. Advance the clock to the next review date. `V-041` returns with its rationale intact, and week 41
    opens with two new cases of its own: `V-105`'s HU deadline and `V-024`'s tyre tread, both
-   proposed for the same Thursday and leaving it one standard van short. Reset.
+   proposing the same Thursday: adopt both and Thursday is one standard van short. Reset.
 
 ## What is simulated
 
@@ -79,6 +86,11 @@ and no external booking exists.** Prices are scenario prices.
   compatible. Service cost and replacement-cover cost are different: both are spend, so the
   replacement cover feature combines them into one weekly total tracked against a budget
   (`docs/superpowers/specs/2026-09-24-replacement-cover-design.md` §4.2).
+- **The system proposes, the user decides.** Every item opens undecided. The proposal is one click
+  away and never adopted for you. A replacement is a consequence of a visit you have applied, never
+  a freestanding purchase, and cover cost exists only where cover was requested: the pre-confirmed
+  rentals R-1 and R-2 are inputs, not spend against the week's budget
+  (`docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`).
 - **Deferral is a record, not a gut call.** Reason, review date and trigger are all required, and the
   item comes back carrying them.
 - **A blocked plan is a legitimate outcome.** The draft survives and the blocker is named. The UI never
@@ -135,6 +147,8 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 - `docs/superpowers/specs/2026-09-23-cover-note-design.md`: the in-app cover note, specified separately
 - `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`: the fleet overview landing screen, specified separately
 - `docs/superpowers/specs/2026-09-24-replacement-cover-design.md`: requesting and costing replacement cover, specified separately
+- `docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`: the undecided
+  backlog, visit-bound replacement cover, and the own-plus-rental capacity figures
 - `docs/fleet-maintenance-research-findings.md`: research and framing
 - `docs/mockups/`: layout decisions and the alternatives they were made from, including the
   guided-queue declutter proposal the current surface follows

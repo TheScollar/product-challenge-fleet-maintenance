@@ -97,6 +97,11 @@ invented where the evidence supports none (README, "Decisions taken").
 | `proposal` | `act-now`, slot 2026-10-08 |
 | `triggerOptions` | One odometer trigger, framed as a recheck point rather than a failure prediction: `{ vehicleId: 'V-024', thresholdKm: 64_000, label: 'Odometer passes 64,000 km' }`, computed against V-024's ordinary fixture-default odometer (no `NAMED_ODOMETER` override needed; tread is not cited against an odometer figure in the evidence, so none is implied). |
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §5.5). Both
+items' `consequence.coverCostEur` row above is superseded: the field is deleted from `Consequence`
+for all seven authored items, `V-024` and `V-105` included. Cover cost for either van now exists
+only if the user requests a replacement booking after applying its visit.
+
 `fixture.weeks[1].itemIds` moves from `[]` to `['item-v024', 'item-v105']` (order does not affect
 display order, which `orderQueue` computes fully; see §4).
 

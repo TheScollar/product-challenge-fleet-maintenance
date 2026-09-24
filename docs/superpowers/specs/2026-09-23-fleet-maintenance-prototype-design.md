@@ -415,6 +415,11 @@ this is the side that stays defensible. Service is never forced merely to clear 
 
 Cold open, after the system proposals and before any user action:
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3). The backlog
+now opens undecided, so this table describes the week after every proposal has been adopted with
+**Use proposal**, not the cold open. At the true cold open no visit is planned, every day is met, and
+Tuesday and Thursday each carry one spare, which the band renders as `37 + 2 / 38`.
+
 > **Notation.** `unavail{...}` is the count of distinct unavailable vehicles, the `Set` from §3.1.
 > Pipes are avoided deliberately: escaped pipes inside a markdown table cell get mangled by some
 > editors, and the corruption silently flipped `+ R-1` to `- R-1` once already.

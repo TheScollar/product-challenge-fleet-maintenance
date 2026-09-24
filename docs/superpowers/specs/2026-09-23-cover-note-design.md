@@ -110,15 +110,18 @@ Promise, set apart from the body:
 > One planning week. A capacity band across the top that stays visible while you work, because it is
 > the thing every decision moves. Below it, five decisions waiting on you.
 >
-> Two things block the week. Tuesday is one van short, because three standard vans are off the road at
-> once and the rental cover only stretches to two of them: moving one visit clears it. And `V-041`, the
-> only specialist van in the queue, still needs a decision. No specialist cover exists this week, so
-> scheduling it leaves an assignment uncovered that nothing available can fill.
+> Five decisions wait, and none is taken for you. Each carries the system's proposal; adopt it or
+> choose differently. Take the three Tuesday proposals as they come and Tuesday goes one van short,
+> because three standard vans would be off the road at once and the rental cover only stretches to
+> two of them: moving one visit clears it. `V-041`, the only specialist van in the queue, has no
+> proposed day at all. No specialist cover exists this week, so scheduling it leaves an assignment
+> uncovered that nothing available can fill.
 >
 > `V-012` is already out of service before you commit anything, on a brake defect found at inspection.
 > It stays out until a release is recorded, and the week plans around it.
 >
-> The plan cannot be committed until the blockers are cleared. That is deliberate.
+> The plan cannot be committed until every item is decided and the blockers are cleared. That is
+> deliberate.
 
 **Implementation note.** This block was verified against the built surface on 2026-09-23 and corrected
 per the rule below: the original draft named `V-012` and `V-041` as the two blockers, but on the built
@@ -128,6 +131,10 @@ surface, and correct the copy rather than the screen.
 Amended again on the same date for the fleet overview
 (`docs/superpowers/specs/2026-09-23-fleet-overview-design.md`): the click-through now lands on the
 fleet view, the action label is **Open the fleet**, and the block gains the bridge paragraph above.
+**Amended 2026-09-24 for the scenario and cover accounting fixes**
+(`docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3, §12): the
+backlog opens undecided, so the block no longer claims that Tuesday is short before the user acts.
+The Tuesday shortfall appears once the three Tuesday proposals are adopted, and the copy says so.
 
 ### 3.6 The decisions worth knowing about
 

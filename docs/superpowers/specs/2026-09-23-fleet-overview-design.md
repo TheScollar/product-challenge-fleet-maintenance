@@ -90,6 +90,11 @@ urgency chip and its one-line because, reusing the queue's own wording.
 it remains a true statement about the committed plan), `Watching · review <date>` for an active
 deferral (latest record, review date still ahead). Plain green has no sub-label.
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §6). Two more
+committed-state sub-labels, shown on red and green vans alike: `Replacement on site · day n of m`
+while a committed booking runs, and `Replacement booked <day> · m days` before it starts. A draft
+request produces no sub-label; the dashboard reports what has been committed.
+
 The three counts sum to 45 and feed the stat strip. Attention cards (red plus amber) are ordered by
 `orderQueue`, the same function the week plan's queue orders within.
 
@@ -190,6 +195,10 @@ Content, all straight from the fixture and derived state: vehicle id, class badg
 odometer with its read date, typical weekly km, and the status line including any sub-label fact.
 Footer: for a plain green van, `Nothing open for this van`; for a booked or watching van, the
 committed fact plus a `View in week plan` link that navigates with the item selected.
+
+**Amended 2026-09-24** (scenario spec §5.1). The popover carries no replacement request control. One
+was mounted here by the replacement cover feature and removed by the scenario and cover accounting
+fixes; the popover is read-only again, as first specified.
 
 Tiles are buttons: focusable, Enter opens, Escape closes and returns focus, `aria-expanded` set.
 **Only Escape returns focus.** The popover also closes on a mousedown anywhere outside it,

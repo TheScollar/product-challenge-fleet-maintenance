@@ -6,7 +6,7 @@
  * spec's order, with section 3.1's placement rule applied ("What you are
  * about to see" is the fourth block).
  *
- * Three copy-fidelity notes:
+ * Four copy-fidelity notes:
  *
  * - The spec's blockquote markers (`>`) are formatting of the spec document
  *   and are stripped. Its bold spans are content and are preserved with
@@ -25,6 +25,11 @@
  *   spec's amendment to that section, dated 2026-09-24. Re-syncing this pair
  *   against section 3.6 without reading that amendment first would reinstate
  *   the superseded, now-false "three cost figures stay apart" claim.
+ * - The "What you are about to see" block follows section 3.5 as amended on
+ *   2026-09-24 for the scenario and cover accounting fixes: the backlog opens
+ *   undecided, so the third paragraph no longer claims Tuesday is short at
+ *   cold open. Re-syncing against the unamended block would reinstate that
+ *   now-false claim.
  */
 
 export type CoverBlock =
@@ -75,9 +80,9 @@ export const coverNoteContent: CoverNoteContent = {
       paragraphs: [
         'You land on the fleet first: 45 vans, one already off the road, and a short list of what needs you. It answers the daily question, is today fine, before you plan the week. The weekly plan is one tab over, and everything below describes it.',
         'One planning week. A capacity band across the top that stays visible while you work, because it is the thing every decision moves. Below it, five decisions waiting on you.',
-        'Two things block the week. Tuesday is one van short, because three standard vans are off the road at once and the rental cover only stretches to two of them: moving one visit clears it. And V-041, the only specialist van in the queue, still needs a decision. No specialist cover exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.',
+        'Five decisions wait, and none is taken for you. Each carries the system\'s proposal; adopt it or choose differently. Take the three Tuesday proposals as they come and Tuesday goes one van short, because three standard vans would be off the road at once and the rental cover only stretches to two of them: moving one visit clears it. V-041, the only specialist van in the queue, has no proposed day at all. No specialist cover exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.',
         'V-012 is already out of service before you commit anything, on a brake defect found at inspection. It stays out until a release is recorded, and the week plans around it.',
-        'The plan cannot be committed until the blockers are cleared. That is deliberate.',
+        'The plan cannot be committed until every item is decided and the blockers are cleared. That is deliberate.',
       ],
     },
     {

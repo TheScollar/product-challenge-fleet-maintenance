@@ -87,6 +87,12 @@ without a reason and a follow-up"), so undecided always means blocking. The grou
 still classifies exhaustively (blocking / open / settled) so a future relaxation of validation
 gets a third group for free, but the current UI can only ever render two.
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §4). The third
+state now occurs. An undecided or incomplete item is `To decide`, in the dashboard's amber, and only
+capacity, slot and parts blockers make an item `Blocking the week`. Two or more undecided items
+collapse into one amber header chip, `n to decide`. Validation is unchanged: an undecided item still
+blocks Commit.
+
 Group headers use the existing pane-title style with a count: `Blocking the week · 3`,
 `Settled · 2`. Ordering within a group is the existing `orderQueue` order, filtered; the pane
 title "Decisions needing attention · 5" is replaced by the group headers, which carry the counts.
