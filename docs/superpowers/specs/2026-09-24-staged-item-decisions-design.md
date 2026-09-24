@@ -54,6 +54,10 @@ committed, so clicking it with nothing new to say is still a harmless no-op, sam
   the plain committed `decisions` and `blockers` exactly as today (`App.tsx:88-89, 101-103`). An item
   changes bucket, and the pill counts change, only once `Apply to draft` is clicked.
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §4). The queue now
+renders three groups, `Blocking the week`, `To decide` and `Settled`, per the scenario spec's grouping
+rule. The staging model this section describes is unchanged.
+
 No change to `src/domain/*` or `src/state/planReducer.ts`. `set-decision` continues to receive one
 complete `DraftDecision`, so the write-side contract is untouched.
 

@@ -277,7 +277,7 @@ replacement, so an evaluator following only that script will not encounter this 
 
 ## Addendum: scenario and cover accounting fixes (2026-09-24)
 
-**Commands:** `npm test` (294 tests, 17 files, all passing), `npx tsc --noEmit` (clean), `npm run build`
+**Commands:** `npm test` (296 tests, 17 files, all passing), `npx tsc --noEmit` (clean), `npm run build`
 (clean), plus the live browser pass listed in the plan's Task 10.
 
 **What changed, against `docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`.**
@@ -327,3 +327,22 @@ The earlier addendum's two open follow-ups are both closed by this branch: the R
 now requests a replacement (item 4), and the replacement-cover control now carries its own key
 (commit `0a044d5`). The Codex attempt at the same fixes, reverted before any commit, is preserved as
 `.superpowers/sdd/codex-fleet-scenario-fixes-2026-09-24.patch` for reference only.
+
+**Final whole-branch review.** It found one Important issue: the commit summary's booking list read
+the committed bookings unfiltered, the one reader that skipped `bookingsForVisits` while every other
+reader, including `costSummaryFor` right beside it, filtered through it. Fixed at the domain
+boundary so `summaryFor` computes the filtered map once and exposes it as `bookings`, sorted by
+vehicle, so both capacity/cost and the summary's own list read the same filtered set (commit
+`2921e9f`), pinned by a new test. The same commit also renamed one misleading test title, shared one
+visit-treatment predicate between the domain rule and the slot-picker gate, and amended three more
+spec passages that still described the seeded cold open.
+
+Left as follow-up, all Minor: an open, unsubmitted request form keeps the previous visit's default
+start date if the applied visit moves day; `isReplacementBookingComplete` remains an unused export;
+direct assertions for "a resurfaced item opens undecided" and "the persisted version is 2" would be
+cheaper than the indirect ones that pin them today; the `useState` initial value in
+`ReplacementBookingControl` is never read; the day/days pluralisation idiom is repeated in four
+places; no test collapses undecided chips interleaved with a hard blocker; no test covers
+watch-then-back-to-visit leaving a booking absent; the detail pane resolves the visit per item and
+the booking per vehicle, safe while the fixture has one item per vehicle per week; and
+`fleetStatus.test.ts` has grown to five scenario families.

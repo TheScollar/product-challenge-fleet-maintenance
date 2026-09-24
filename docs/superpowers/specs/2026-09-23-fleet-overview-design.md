@@ -274,6 +274,12 @@ Domain suite, `src/domain/fleetStatus.test.ts`, against the seeded fixture:
 1. Cold open: counts 1 / 4 / 40; V-012 red with the held fact; attention order matches
    `orderQueue`; today covered with R-1 on site; tomorrow line flags Tuesday, standard, short
    by 1.
+
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3.4). At the true
+cold open the tomorrow line is quiet; it flags Tuesday, standard, short by 1 once the three Tuesday
+proposals are adopted, which is what `fleetStatus.test.ts` now pins in its `once every proposal is
+adopted` describe.
+
 2. Committed walkthrough decisions: no ambers; V-118 `Booked Thu 1 Oct`; V-027 and V-041 watching
    with their review dates; V-012 still red; CTA state flips to committed.
 3. Advanced to Tuesday, committed: V-012 and V-103 both off the road, each exactly once; on-road
