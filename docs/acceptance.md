@@ -91,6 +91,15 @@ All ten recorded as **passed**, each with an automated home plus the live pass:
 7. The daily confirmation renders demand figures for whatever "tomorrow" is, including a weekend if
    the clock is advanced to Friday before committing. The seeded walkthrough never reaches that path;
    making the domain weekend-aware is future work.
+8. `dist/index.html` cannot be opened as a literal `file://` URL. Vite's build puts a `crossorigin`
+   attribute on the module script and stylesheet tags, which Chrome disallows under the `file:`
+   scheme, so the app never boots that way. This is pre-existing behaviour of the whole project's
+   build, not specific to any one feature, and the fix would be a build-config change. Serve `dist/`
+   over HTTP (any static server) or use `npm run dev`.
+9. The multi-day visit fact (`In workshop · day n of m`) is correct but unreachable through the
+   running UI: nothing in the interface extends a visit's duration, so `canExtendToDays` has no
+   consumer in `src/`. It is verified only by domain-level tests against a synthetic two-day
+   fixture. Pre-existing, and out of scope of the fleet overview work.
 
 ## Addendum: guided-queue declutter re-verification
 
@@ -111,8 +120,9 @@ head, and reset. Limitation 6 stands: the view-model is unit-tested, the compone
 ## Addendum: the fleet overview landing screen (2026-09-23)
 
 **Build:** 1a3710e · **Commands:** `npm test` (209 tests, all passing), `npx tsc --noEmit`
-(clean), `npm run build` (succeeds; `dist/index.html` verified from a filesystem origin), plus the
-live browser checks below.
+(clean), `npm run build` (succeeds; the built `dist/` verified by serving it over HTTP from a local
+static server, **not** by opening `dist/index.html` as a literal `file://` URL, which does not work
+in Chrome, see limitation 8), plus the live browser checks below.
 
 The app now lands on a read-only fleet overview ahead of the weekly plan
 (`docs/superpowers/specs/2026-09-23-fleet-overview-design.md`). The weekly plan remains the only
@@ -128,5 +138,50 @@ with the V-012 release; reset and reload both landing on the fleet view.
 
 **G1 restated from the new landing.** The structural claim now starts one screen earlier: at cold
 open the fleet view shows the exception (V-012, held, safety) first among five attention cards,
-with the 45-van fleet represented without a 45-row list. The observed one-minute criterion remains
+with the 45-van fleet represented without a 45-row list. That is a claim about the fleet screen
+alone and it still holds. It is deliberately **not** a claim that the week plan leads with the same
+item: since the declutter redesign the plan groups by what blocks the commit, and V-012, held but
+already dispositioned, sits settled and dimmed there. The two orderings answer different questions
+and the fleet view now carries a legend saying so. The observed one-minute criterion remains
 **not run** (no unfamiliar observer), unchanged from the main record.
+
+## Addendum: final whole-branch review of the fleet overview (2026-09-24)
+
+**Commands:** `npm test` (214 tests, 14 files, all passing; 5 added), `npx tsc --noEmit` (clean),
+`npm run build` (clean), plus a live headless-browser pass in which each of the two behavioural
+defects below was reproduced on the pre-fix code and then confirmed dead on the fixed code.
+
+A review of the whole fleet-overview branch, deliberately off the scripted path, found one High and
+one Medium-High defect that every per-task gate had missed, plus eight smaller issues. All are
+fixed:
+
+- **Two capacity semantics (High).** The projection read today's coverage from committed visits
+  only while reading every other day, and the capacity band, from the draft. Reproduced live: in an
+  uncommitted week 41 with the resurfaced specialist item scheduled onto today, the fleet header
+  read "every assignment covered today" while the week plan one tab away read "Mon 5 Oct:
+  specialist short by 1" and held Commit disabled over it. Both lines now read the same effective
+  decisions. The van's red/amber/green colour is unchanged and still operational. Pinned by a new
+  test that fails if today's line is reverted to the committed set.
+- **A commit summary destroyed by tabbing (Medium-High).** Every route back to the plan side reset
+  it to the editable split view, so a user who committed, glanced at the fleet and came back lost
+  the summary and could only get it back by dispatching a second, needless commit. The view value
+  is now two independent values, a tab and a plan face, and the summary survives all four routes
+  back (the tab, the fleet's own button, an attention card, a popover link), verified live.
+- **A dead-end attention card.** A van red for a hold alone, with no item in the week's queue,
+  rendered a card promising "Open in week plan" that selected nothing. It now renders as
+  information only. The CTA sub-line counts undecided queue items rather than attention cards, so
+  it no longer overstates the work waiting (week 41 read "2 items waiting" where only one decision
+  existed).
+- **Cover note click-through.** **Open the fleet**, reached via About, now lands on the fleet from
+  either surface, matching what [C §4] already claimed.
+- **Popover robustness.** A stale open-request is reconciled against the quiet list and cleared, so
+  it cannot resurrect a day later; focus is returned to the tile only on the Escape path, not when
+  an outside click is already navigating away from it.
+- **Docs corrected, not papered over.** The fleet overview spec's claim that its first attention
+  card is the week plan's first item was true when written and is false since the declutter
+  redesign; it now states plainly that the two screens order by different questions and that their
+  reds mean different things. The acceptance record's claim that `dist/index.html` was verified
+  from a filesystem origin was false; see limitation 8.
+
+No colour value, queue ordering or sibling-owned component was changed. Limitation 6 still stands:
+the projection is unit-tested, the components are verified live.
