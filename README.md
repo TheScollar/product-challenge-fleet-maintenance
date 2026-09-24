@@ -127,5 +127,6 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 - `docs/superpowers/specs/2026-09-23-fleet-maintenance-prototype-design.md`: the technical design
 - `docs/superpowers/specs/2026-09-23-cover-note-design.md`: the in-app cover note, specified separately
 - `docs/fleet-maintenance-research-findings.md`: research and framing
-- `docs/mockups/`: the two layouts the layout decision was made from
+- `docs/mockups/`: the two layouts the layout decision was made from, and the guided-queue
+  declutter proposal the current surface follows
 - `docs/acceptance.md`: what was verified, how, and what was not

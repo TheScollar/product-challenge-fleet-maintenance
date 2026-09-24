@@ -192,7 +192,9 @@ button:disabled { cursor: not-allowed; }
 .empty { color: var(--muted); font-size: 12.5px; padding: 12px 0; }
 
 .detail .head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
-.detail .sub { font-size: 12.5px; color: var(--muted); margin-bottom: 11px; }
+.detail .sub { font-size: 12.5px; color: var(--muted); margin-bottom: 2px; }
+.detail .because { font-size: 12px; color: var(--muted); margin: 0 0 11px; }
+.detail .because + .because { margin-top: -7px; }
 .block {
   border: 1px solid var(--border); border-radius: var(--r);
   padding: 10px 11px; margin-bottom: 9px; background: var(--surface);

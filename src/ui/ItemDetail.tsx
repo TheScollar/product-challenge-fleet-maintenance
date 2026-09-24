@@ -1,7 +1,9 @@
+import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
 import { urgencyLabel } from '../domain/urgency'
 import type { DraftDecision, ItemId, OpenItem } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
+import { activeWeekId, queueFor } from '../state/planReducer'
 import { AssumptionBlock } from './AssumptionBlock'
 import { ConsequenceBlock } from './ConsequenceBlock'
 import { EvidenceBlock } from './EvidenceBlock'
@@ -17,8 +19,11 @@ export function ItemDetail({
   decisions: Record<ItemId, DraftDecision>
   onChange: (d: DraftDecision) => void
 }) {
-  const { fixture } = usePlan()
+  const { state, fixture } = usePlan()
   const vehicle = fixture.vehicles.find((v) => v.id === item.vehicleId)!
+  const entry = queueFor({ fixture, state, weekId: activeWeekId(state) }).find(
+    (e) => e.item.id === item.id,
+  )
   const recommendation = recommendationFor(item)
   const decision = decisions[item.id] ?? {
     itemId: item.id,
@@ -39,6 +44,13 @@ export function ItemDetail({
       <div className="sub">
         {item.title} · {vehicle.vehicleClass} class
       </div>
+      <div className="because">{item.urgency.because}</div>
+      {entry !== undefined && entry.priorDecision !== null && (
+        <div className="because">
+          Previously: watch, decided {formatDay(entry.priorDecision.decidedOn)}.{' '}
+          {entry.priorDecision.deferral.reason}
+        </div>
+      )}
 
       <EvidenceBlock recommendation={recommendation} />
       <AssumptionBlock recommendation={recommendation} />
