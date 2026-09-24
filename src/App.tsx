@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { validatePlan } from './domain/validation'
-import type { ItemId } from './domain/types'
+import type { DraftDecision, ItemId } from './domain/types'
 import { hasSeenCoverNote, markCoverNoteSeen } from './state/coverNoteSeen'
 import { usePlan } from './state/PlanProvider'
 import { activeWeekId, draftFor } from './state/planReducer'
@@ -17,6 +17,10 @@ import { PlanHeader } from './ui/PlanHeader'
 export default function App() {
   const { state, dispatch, fixture } = usePlan()
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null)
+  // The selected item's staged-but-not-yet-applied decision, kept here (not
+  // just inside ItemDetail) so the capacity band can preview it before Apply
+  // to draft is clicked. Reset whenever the selection changes, below.
+  const [pendingDecision, setPendingDecision] = useState<DraftDecision | null>(null)
   // Values, not a router: no URLs, no history entries. Two independent
   // pieces, because they answer different questions. `tab` is where the user
   // is; `planView` is which face the plan side is wearing. Keeping them apart
@@ -38,7 +42,17 @@ export default function App() {
     setSelectedItemId(null)
   }, [weekId])
 
+  // A stale preview must not survive past the item it previewed, whether the
+  // selection moves to another item or clears entirely.
+  useEffect(() => {
+    setPendingDecision(null)
+  }, [selectedItemId])
+
   const decisions = useMemo(() => draftFor({ fixture, state, weekId }), [fixture, state, weekId])
+  const previewDecisions = useMemo(
+    () => (pendingDecision ? { ...decisions, [pendingDecision.itemId]: pendingDecision } : decisions),
+    [decisions, pendingDecision],
+  )
   const blockers = useMemo(
     () => validatePlan({ fixture, weekId, decisions }),
     [fixture, weekId, decisions],
@@ -93,7 +107,7 @@ export default function App() {
             }}
             onSelectItem={setSelectedItemId}
           />
-          <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
+          <CapacityBand decisions={previewDecisions} selectedItemId={selectedItemId} />
           {planView === 'summary' && state.committedByWeek[weekId] ? (
             <CommitSummary onEdit={() => setPlanView('planning')} />
           ) : (
@@ -112,7 +126,8 @@ export default function App() {
                     key={selectedItem.id}
                     item={selectedItem}
                     decisions={decisions}
-                    onChange={(decision) => dispatch({ type: 'set-decision', weekId, decision })}
+                    onApply={(decision) => dispatch({ type: 'set-decision', weekId, decision })}
+                    onPendingChange={setPendingDecision}
                   />
                 )}
               </div>

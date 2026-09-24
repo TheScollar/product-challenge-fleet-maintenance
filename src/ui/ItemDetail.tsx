@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
 import { urgencyLabel } from '../domain/urgency'
@@ -13,11 +14,13 @@ import { TreatmentForm } from './TreatmentForm'
 export function ItemDetail({
   item,
   decisions,
-  onChange,
+  onApply,
+  onPendingChange,
 }: {
   item: OpenItem
   decisions: Record<ItemId, DraftDecision>
-  onChange: (d: DraftDecision) => void
+  onApply: (d: DraftDecision) => void
+  onPendingChange: (d: DraftDecision) => void
 }) {
   const { state, fixture } = usePlan()
   const vehicle = fixture.vehicles.find((v) => v.id === item.vehicleId)!
@@ -25,12 +28,20 @@ export function ItemDetail({
     (e) => e.item.id === item.id,
   )
   const recommendation = recommendationFor(item)
-  const decision = decisions[item.id] ?? {
+  const committed = decisions[item.id] ?? {
     itemId: item.id,
     treatment: null,
     slotDate: null,
     deferral: null,
   }
+  // App.tsx remounts this component via key={item.id}, so switching items
+  // always reseeds from the committed decision and discards whatever was
+  // staged here but never applied.
+  const [decision, setDecision] = useState<DraftDecision>(committed)
+
+  useEffect(() => {
+    onPendingChange(decision)
+  }, [decision, onPendingChange])
 
   return (
     <div className="detail">
@@ -61,11 +72,11 @@ export function ItemDetail({
           item={item}
           decisions={decisions}
           selectedDate={decision.slotDate}
-          onPick={(date) => onChange({ ...decision, slotDate: date })}
+          onPick={(date) => setDecision({ ...decision, slotDate: date })}
         />
       )}
 
-      <TreatmentForm item={item} vehicle={vehicle} decision={decision} onChange={onChange} />
+      <TreatmentForm item={item} vehicle={vehicle} decision={decision} onChange={setDecision} onApply={onApply} />
     </div>
   )
 }
