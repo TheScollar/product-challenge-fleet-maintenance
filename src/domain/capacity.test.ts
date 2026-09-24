@@ -3,7 +3,7 @@ import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekF
 import { fixture } from './fixture'
 import { visitCoversDate, visitsFromDecisions } from './visits'
 import { coldOpenDecisions, vehicle } from './testSupport'
-import type { ItemId, Visit } from './types'
+import type { Cover, ItemId, Visit } from './types'
 
 const WEEK_40 = '2026-09-28'
 
@@ -180,5 +180,57 @@ describe('computeWeekCapacity', () => {
     const rows = computeWeekCapacity({ fixture, weekId: WEEK_40, visits: [] })
     expect(rows).toHaveLength(10)
     expect(new Set(rows.map((r) => r.date)).size).toBe(5)
+  })
+})
+
+describe('an ad hoc cover clears a shortfall exactly like a pooled one', () => {
+  it('adds to the standard count on the days it confirms', () => {
+    const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+    const tue = standardFor(visits, '2026-09-29')
+    expect(tue.shortfall).toBe(1)
+
+    const extra: Cover = {
+      id: 'V-027 replacement',
+      vehicleClass: 'standard',
+      confirmedDates: ['2026-09-29'],
+      dayRateEur: 140,
+    }
+    const week = weekFixtureFor(fixture, WEEK_40)
+    const tueWithBooking = computeDayCapacity({
+      date: '2026-09-29',
+      vehicleClass: 'standard',
+      fixture,
+      visits,
+      week,
+      adHocCovers: [extra],
+    })
+    expect(tueWithBooking.cover).toBe(3)
+    expect(tueWithBooking.available).toBe(38)
+    expect(tueWithBooking.shortfall).toBe(0)
+  })
+
+  it('never contributes to a class it was not confirmed for', () => {
+    const week = weekFixtureFor(fixture, WEEK_40)
+    const specOnly: Cover = {
+      id: 'x',
+      vehicleClass: 'specialist',
+      confirmedDates: ['2026-09-29'],
+      dayRateEur: 140,
+    }
+    const tue = computeDayCapacity({
+      date: '2026-09-29',
+      vehicleClass: 'standard',
+      fixture,
+      visits: [],
+      week,
+      adHocCovers: [specOnly],
+    })
+    expect(tue.cover).toBe(2) // R-1 and R-2 only
+  })
+
+  it('defaults to no ad hoc cover when the argument is omitted', () => {
+    const week = weekFixtureFor(fixture, WEEK_40)
+    const tue = computeDayCapacity({ date: '2026-09-29', vehicleClass: 'standard', fixture, visits: [], week })
+    expect(tue.cover).toBe(2)
   })
 })
