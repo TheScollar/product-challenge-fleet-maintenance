@@ -43,7 +43,10 @@ export function adoptProposal(item: OpenItem): DraftDecision {
   }
 }
 
-export function recommendationFor(item: OpenItem): RecommendationView {
+export function recommendationFor(
+  item: OpenItem,
+  requestedCoverCostEur: number | null = null,
+): RecommendationView {
   return {
     urgency: item.urgency,
     observation: item.evidence.observation,
@@ -53,7 +56,7 @@ export function recommendationFor(item: OpenItem): RecommendationView {
     relevantDate: item.urgency.relevantDate,
     assumption: item.assumption,
     proposedAction: proposedAction(item),
-    consequence: consequenceView(item),
+    consequence: consequenceView(item, requestedCoverCostEur),
   }
 }
 

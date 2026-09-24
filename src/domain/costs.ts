@@ -1,5 +1,5 @@
 import { weekFixtureFor } from './capacity'
-import { bookingCostEur } from './replacementBooking'
+import { bookingCostEur, bookingsForVisits } from './replacementBooking'
 import type { DraftDecision, Fixture, ItemId, ReplacementBooking, VehicleId, WeekId } from './types'
 import { visitsFromDecisions } from './visits'
 
@@ -16,11 +16,12 @@ export interface CostSummary {
  * cost can never disagree with itself between the two surfaces the way
  * capacity once did (5bbdec1, 25dee47). [replacement cover spec §4.2]
  *
- * Operational disruption is not part of this total: it stays a count,
- * never money, matching the cover note's disruption-stays-apart principle
- * [C §3.6]. That principle originally kept all three figures apart; this
- * function deliberately narrows it to combine only service cost and cover
- * cost, which are both spend. [replacement cover spec §4.2]
+ * Service cost is charged for every item with a visit this week. Cover cost
+ * is charged only for a replacement the user actually requested, and only
+ * while its vehicle has a visit; the pre-confirmed rentals R-1 and R-2 are
+ * fixture inputs, like the budget itself, and never enter this total.
+ * Operational disruption is not part of it either: it stays a count, never
+ * money [C §3.6, as amended 2026-09-24]. [scenario spec §5.6]
  */
 export function costSummaryFor(args: {
   fixture: Fixture
@@ -30,16 +31,16 @@ export function costSummaryFor(args: {
 }): CostSummary {
   const { fixture, weekId, decisions, bookings } = args
   const week = weekFixtureFor(fixture, weekId)
-  const visitedItemIds = new Set(visitsFromDecisions(decisions, fixture.items).map((v) => v.itemId))
+  const visits = visitsFromDecisions(decisions, fixture.items)
+  const visitedItemIds = new Set(visits.map((v) => v.itemId))
 
   let serviceCostEur = 0
-  let coverCostEur = 0
   for (const item of fixture.items) {
-    if (!visitedItemIds.has(item.id)) continue
-    serviceCostEur += item.consequence.serviceCostEur ?? 0
-    coverCostEur += item.consequence.coverCostEur ?? 0
+    if (visitedItemIds.has(item.id)) serviceCostEur += item.consequence.serviceCostEur ?? 0
   }
-  for (const booking of Object.values(bookings)) {
+
+  let coverCostEur = 0
+  for (const booking of Object.values(bookingsForVisits(bookings, visits))) {
     coverCostEur += bookingCostEur(booking, fixture.replacementDayRateEur)
   }
 

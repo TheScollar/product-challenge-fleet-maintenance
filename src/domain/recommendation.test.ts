@@ -57,19 +57,25 @@ describe('queue ordering', () => {
   })
 })
 
-describe('consequence keeps three figures apart', () => {
-  it('shows a euro figure for cover where confirmed cover exists', () => {
-    expect(consequenceView(item('item-v012')).coverCost).toBe('EUR 700')
+describe('the cover figure comes only from a requested replacement', () => {
+  it('reads not requested until a booking exists, even for the held van', () => {
+    expect(consequenceView(item('item-v012')).coverCost).toBe('not requested')
+    expect(consequenceView(item('item-v027')).coverCost).toBe('not requested')
   })
 
-  it('shows not available, never zero, where no compatible cover exists', () => {
-    const view = consequenceView(item('item-v041'))
-    expect(view.coverCost).toBe('not available')
-    expect(view.coverCost).not.toContain('0')
+  it('reads the booking cost once one is requested', () => {
+    expect(consequenceView(item('item-v012'), 700).coverCost).toBe('EUR 700')
+    expect(consequenceView(item('item-v118'), 280).coverCost).toBe('EUR 280')
   })
 
-  it('shows a genuine zero where cover exists and costs nothing', () => {
-    expect(consequenceView(item('item-v027')).coverCost).toBe('EUR 0')
+  it('shows not available, never zero or a price, where no compatible cover exists', () => {
+    expect(consequenceView(item('item-v041')).coverCost).toBe('not available')
+    expect(consequenceView(item('item-v041'), 140).coverCost).toBe('not available')
+    expect(consequenceView(item('item-v041')).coverCost).not.toContain('0')
+  })
+
+  it('keeps service cost as the fixture estimate, shown before any decision', () => {
+    expect(consequenceView(item('item-v012')).serviceCost).toBe('EUR 480')
   })
 
   it('never renders operational disruption as money', () => {
@@ -89,6 +95,8 @@ describe('the recommendation contract', () => {
     expect(r.assumption).toContain('560 km')
     expect(r.proposedAction).toContain('Tue 29 Sep')
     expect(r.consequence.serviceCost).toBe('EUR 340')
+    expect(r.consequence.coverCost).toBe('not requested')
+    expect(recommendationFor(item('item-v118'), 140).consequence.coverCost).toBe('EUR 140')
   })
 
   it('proposes an assessment rather than a waiting period where evidence is thin', () => {

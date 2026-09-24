@@ -43,7 +43,6 @@ export interface PartRequirement {
 export interface Consequence {
   qualitative: string
   serviceCostEur: number | null
-  coverCostEur: number | null
   coverUnavailable: boolean
   uncoveredAssignmentsNote: string
 }
