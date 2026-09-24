@@ -308,6 +308,7 @@ const weeks: WeekFixture[] = [
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1', 'R-2'],
     itemIds: items.map((i) => i.id),
+    budgetEur: 3000,
   },
   {
     weekId: '2026-10-05',
@@ -315,6 +316,7 @@ const weeks: WeekFixture[] = [
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1'],
     itemIds: [],
+    budgetEur: 3000,
   },
 ]
 
@@ -328,4 +330,6 @@ export const fixture: Fixture = {
   defaultDemand: { standard: 38, specialist: 7 },
   defaultCoverIds: ['R-1'],
   events,
+  replacementDayRateEur: 140,
+  defaultBudgetEur: 3000,
 }

@@ -25,6 +25,7 @@ export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
     demand: fixture.defaultDemand,
     coverIds: fixture.defaultCoverIds,
     itemIds: [],
+    budgetEur: fixture.defaultBudgetEur,
   }
 }
 

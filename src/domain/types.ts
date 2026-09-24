@@ -106,6 +106,12 @@ export interface Cover {
   dayRateEur: number
 }
 
+export interface ReplacementBooking {
+  vehicleId: VehicleId
+  startDate: ISODate
+  days: number
+}
+
 export interface GarageDay {
   date: ISODate
   freeBays: number
@@ -128,6 +134,7 @@ export interface WeekFixture {
   demand: Demand
   coverIds: string[]
   itemIds: ItemId[]
+  budgetEur: number
 }
 
 export interface ScheduledEvent {
@@ -145,6 +152,8 @@ export interface Fixture {
   defaultDemand: Demand
   defaultCoverIds: string[]
   events: ScheduledEvent[]
+  replacementDayRateEur: number
+  defaultBudgetEur: number
 }
 
 export interface DayCapacity {

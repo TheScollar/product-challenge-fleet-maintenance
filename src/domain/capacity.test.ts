@@ -164,6 +164,7 @@ describe('the levers behave as the scenario requires', () => {
     const week = weekFixtureFor(fixture, '2026-11-02')
     expect(week.itemIds).toEqual([])
     expect(week.coverIds).toEqual(['R-1'])
+    expect(week.budgetEur).toBe(fixture.defaultBudgetEur)
     expect(week.days).toEqual([
       '2026-11-02',
       '2026-11-03',
