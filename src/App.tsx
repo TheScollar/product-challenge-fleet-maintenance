@@ -53,10 +53,12 @@ export default function App() {
       <DemoBar onAbout={() => setShowCoverNote(true)} />
       <PlanHeader
         blockers={blockers}
+        decisions={decisions}
         onCommit={() => {
           dispatch({ type: 'commit', weekId })
           setView('summary')
         }}
+        onSelectItem={setSelectedItemId}
       />
       <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
       {view === 'summary' && state.committedByWeek[weekId] ? (
