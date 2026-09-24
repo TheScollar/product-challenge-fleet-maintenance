@@ -17,10 +17,15 @@ import { PlanHeader } from './ui/PlanHeader'
 export default function App() {
   const { state, dispatch, fixture } = usePlan()
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null)
-  // A value, not a router: three states, no URLs, no history entries. The
-  // fleet view is the landing surface; decisions stay on the week plan.
-  // [FO spec 3]
-  const [view, setView] = useState<'fleet' | 'planning' | 'summary'>('fleet')
+  // Values, not a router: no URLs, no history entries. Two independent
+  // pieces, because they answer different questions. `tab` is where the user
+  // is; `planView` is which face the plan side is wearing. Keeping them apart
+  // is what lets every route back to the plan (the tab, the fleet's button, an
+  // attention card, a popover link) restore the summary instead of destroying
+  // it and inviting a needless recommit. Only a commit, a week change or a
+  // reset moves `planView`. [FO spec 3]
+  const [tab, setTab] = useState<'fleet' | 'plan'>('fleet')
+  const [planView, setPlanView] = useState<'planning' | 'summary'>('planning')
   // [cover note spec 5.4] Lazy-initialised so the synchronous localStorage
   // read only happens once, on mount, not on every render.
   const [showCoverNote, setShowCoverNote] = useState(() => !hasSeenCoverNote())
@@ -28,7 +33,8 @@ export default function App() {
   const weekId = activeWeekId(state)
 
   useEffect(() => {
-    setView('fleet')
+    setTab('fleet')
+    setPlanView('planning')
     setSelectedItemId(null)
   }, [weekId])
 
@@ -39,9 +45,11 @@ export default function App() {
   )
   const selectedItem = fixture.items.find((i) => i.id === selectedItemId) ?? null
 
+  // Crossing to the plan side never decides which face it wears: an untouched
+  // committed week keeps showing its summary. Only selection moves. [FO spec 3]
   const openPlan = (itemId: ItemId | null) => {
     if (itemId !== null) setSelectedItemId(itemId)
-    setView('planning')
+    setTab('plan')
   }
 
   // The cover note is a full screen, not chrome over the plan: the demo bar
@@ -52,6 +60,10 @@ export default function App() {
         onOpenPlan={() => {
           markCoverNoteSeen()
           setShowCoverNote(false)
+          // Its click-through always lands on the fleet, whichever surface
+          // About was opened from. `planView` is untouched, so a summary left
+          // behind on the plan side is still there. [cover note spec 4]
+          setTab('fleet')
         }}
       />
     )
@@ -62,20 +74,13 @@ export default function App() {
       <DemoBar
         onAbout={() => setShowCoverNote(true)}
         onReset={() => {
-          setView('fleet')
+          setTab('fleet')
+          setPlanView('planning')
           setSelectedItemId(null)
         }}
       />
-      <NavTabs
-        active={view === 'fleet' ? 'fleet' : 'plan'}
-        onNavigate={(tab) => {
-          if (tab === 'fleet') setView('fleet')
-          // Clicking the already-active plan tab must not yank summary back
-          // to planning. [FO spec 3]
-          else if (view === 'fleet') setView('planning')
-        }}
-      />
-      {view === 'fleet' ? (
+      <NavTabs active={tab} onNavigate={setTab} />
+      {tab === 'fleet' ? (
         <FleetView decisions={decisions} blockers={blockers} onOpenPlan={openPlan} />
       ) : (
         <>
@@ -84,13 +89,13 @@ export default function App() {
             decisions={decisions}
             onCommit={() => {
               dispatch({ type: 'commit', weekId })
-              setView('summary')
+              setPlanView('summary')
             }}
             onSelectItem={setSelectedItemId}
           />
           <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
-          {view === 'summary' && state.committedByWeek[weekId] ? (
-            <CommitSummary onEdit={() => setView('planning')} />
+          {planView === 'summary' && state.committedByWeek[weekId] ? (
+            <CommitSummary onEdit={() => setPlanView('planning')} />
           ) : (
             <div className="split">
               <DecisionQueue
