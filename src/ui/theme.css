@@ -34,8 +34,8 @@ button:disabled { cursor: not-allowed; }
 
 .demobar {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 7px 18px; background: #fff8e6;
-  border-bottom: 1px solid #f0dfb4; font-size: 12px;
+  padding: 5px 18px; background: #fffbef;
+  border-bottom: 1px solid #f0e4c0; font-size: 11.5px;
 }
 .demobar .tag {
   background: var(--warn); color: #fff; padding: 2px 7px; border-radius: 3px;
@@ -81,7 +81,7 @@ button:disabled { cursor: not-allowed; }
   display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px;
   border-radius: 3px; border: 1px solid; letter-spacing: 0.03em; white-space: nowrap;
 }
-.urg.deadline { color: var(--crit); border-color: #e8bdb9; background: var(--crit-soft); }
+.urg.deadline { color: #fff; border-color: #2b3138; background: #2b3138; }
 .urg.estimate { color: var(--warn); border-color: #ecd5a6; background: var(--warn-soft); }
 .urg.assessment-needed { color: #4a525c; border-color: var(--border-strong); background: #f2f4f6; }
 
@@ -111,7 +111,7 @@ button:disabled { cursor: not-allowed; }
   background: var(--accent-soft); padding: 2px 7px; border-radius: 3px;
 }
 .band .head .spacer { flex: 1; }
-.band .cover { font-size: 11px; color: var(--muted); }
+.band .cover { font-size: 11px; color: var(--faint); }
 .band .cover b { color: var(--text); }
 .band .cover .none { color: var(--crit); font-weight: 600; }
 
@@ -121,25 +121,26 @@ button:disabled { cursor: not-allowed; }
   font-size: 11px; font-weight: 600; color: var(--muted); padding-bottom: 2px;
 }
 .band .rowlab .top { margin-top: auto; }
-.band .day {
-  border: 1px solid var(--border); border-radius: var(--r);
-  overflow: hidden; background: #fbfcfd;
-}
+.band .day { border: 1px solid transparent; border-radius: var(--r); overflow: hidden; }
+.band .day.exc { border-color: var(--border); background: #fbfcfd; }
 .band .day.impacted { border-color: var(--crit); box-shadow: 0 0 0 2px var(--crit-soft); }
 .band .day.candidate { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok-soft); }
 .band .day .dh {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--faint); text-align: center; padding: 4px 0 3px;
-  border-bottom: 1px solid var(--border); background: #fff;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--faint); text-align: center; padding: 3px 0 2px;
 }
 .band .c {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 6px 4px; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 600;
+  padding: 4px; font-size: 12px; font-variant-numeric: tabular-nums;
 }
-.band .c + .c { border-top: 1px solid var(--border); }
-.band .c .sub { font-size: 10px; font-weight: 600; }
-.band .c.short { background: var(--crit-soft); color: var(--crit); }
-.band .c.spare { background: var(--ok-soft); color: var(--ok); }
+.band .c .n { color: var(--faint); font-weight: 500; }
+.band .c .sub { font-size: 10px; font-weight: 700; }
+.band .c.short { background: var(--crit-soft); }
+.band .c.short .n, .band .c.short .sub { color: var(--crit); }
+.band .c.short .n { font-weight: 700; }
+.band .c.spare { background: var(--ok-soft); }
+.band .c.spare .n, .band .c.spare .sub { color: var(--ok); }
+.band .c.spare .n { font-weight: 700; }
 .band .flagline {
   display: flex; gap: 16px; margin-top: 8px; font-size: 11.5px; flex-wrap: wrap;
 }

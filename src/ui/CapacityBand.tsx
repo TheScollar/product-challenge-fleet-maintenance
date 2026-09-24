@@ -54,10 +54,11 @@ export function CapacityBand({
           const spec = cellFor(date, 'specialist')
           const impacted = std.shortfall > 0 || spec.shortfall > 0
           const candidate = !impacted && (std.available > std.demand || spec.available > spec.demand)
+          const exception = impacted || candidate
           return (
             <div
               key={date}
-              className={`day${impacted ? ' impacted' : ''}${candidate ? ' candidate' : ''}`}
+              className={`day${exception ? ' exc' : ''}${impacted ? ' impacted' : ''}${candidate ? ' candidate' : ''}`}
             >
               <div className="dh">{formatDay(date)}</div>
               <Cell capacity={std} />
@@ -98,7 +99,9 @@ function Cell({ capacity }: { capacity: DayCapacity }) {
   const spare = capacity.available > capacity.demand
   return (
     <div className={`c${short ? ' short' : spare ? ' spare' : ''}`}>
-      {capacity.available} / {capacity.demand}
+      <span className="n">
+        {capacity.available} / {capacity.demand}
+      </span>
       {short && <span className="sub">short {capacity.shortfall}</span>}
       {spare && <span className="sub">+{capacity.available - capacity.demand}</span>}
     </div>
