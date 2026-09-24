@@ -8,6 +8,7 @@ import type {
   Fixture,
   ISODate,
   ItemId,
+  ReplacementBooking,
   VehicleClass,
   VehicleId,
   WeekId,
@@ -16,18 +17,22 @@ import { visitCoversDate, visitsFromDecisions } from './visits'
 
 /**
  * The snapshot is a deep copy, so editing the draft afterwards leaves the
- * last committed plan intact until recommit. [S 2.3]
+ * last committed plan intact until recommit. [S 2.3] `bookings` defaults to
+ * empty so every existing caller keeps compiling unchanged. [replacement
+ * cover spec §5]
  */
 export function commitPlan(args: {
   weekId: WeekId
   decisions: Record<ItemId, DraftDecision>
+  bookings?: Record<VehicleId, ReplacementBooking>
   demoDate: ISODate
 }): CommittedPlan {
-  const { weekId, decisions, demoDate } = args
+  const { weekId, decisions, bookings = {}, demoDate } = args
   return {
     weekId,
     committedOn: demoDate,
     decisions: JSON.parse(JSON.stringify(decisions)) as Record<ItemId, DraftDecision>,
+    bookings: JSON.parse(JSON.stringify(bookings)) as Record<VehicleId, ReplacementBooking>,
   }
 }
 

@@ -183,6 +183,7 @@ export interface CommittedPlan {
   weekId: WeekId
   committedOn: ISODate
   decisions: Record<ItemId, DraftDecision>
+  bookings: Record<VehicleId, ReplacementBooking>
 }
 
 export interface DeferralRecord {

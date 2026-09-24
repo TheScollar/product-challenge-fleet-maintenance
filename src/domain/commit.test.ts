@@ -59,6 +59,26 @@ describe('committing', () => {
   })
 })
 
+describe('bookings travel with the commit', () => {
+  it('snapshots a booking', () => {
+    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 2 } }
+    const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), bookings, demoDate: '2026-09-28' })
+    expect(plan.bookings['V-027']).toEqual(bookings['V-027'])
+  })
+
+  it('defaults to no bookings when none are given', () => {
+    const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), demoDate: '2026-09-28' })
+    expect(plan.bookings).toEqual({})
+  })
+
+  it('leaves the committed booking intact when the draft is edited afterwards', () => {
+    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+    const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), bookings, demoDate: '2026-09-28' })
+    bookings['V-027'] = { vehicleId: 'V-027', startDate: '2026-09-30', days: 3 }
+    expect(plan.bookings['V-027'].startDate).toBe('2026-09-29')
+  })
+})
+
 describe('the commit summary', () => {
   const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), demoDate: '2026-09-28' })
   const summary = summaryFor({ fixture, plan })

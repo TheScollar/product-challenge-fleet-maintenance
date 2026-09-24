@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { fixture } from './fixture'
 import { deferralRecordsFrom, summaryFor } from './commit'
 import { nextResurfaceDate } from './deferral'
-import { activeWeekId, draftFor, initialState, planReducer, queueFor } from '../state/planReducer'
+import {
+  activeWeekId,
+  bookingsFor,
+  draftFor,
+  initialState,
+  planReducer,
+  queueFor,
+} from '../state/planReducer'
 import type { AppState } from '../state/planReducer'
 import type { Deferral } from './types'
 
@@ -237,6 +244,77 @@ describe('a deferral exists only while the treatment is watch', () => {
 describe('reset', () => {
   it('restores the seed and the demo date', () => {
     const s = reduce(committedWeek40(), { type: 'reset' })
+    expect(s).toEqual(initialState(fixture))
+  })
+})
+
+describe('booking a replacement', () => {
+  it('records a draft booking, scoped to its own week', () => {
+    const s = reduce(initialState(fixture), {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    expect(bookingsFor({ state: s, weekId: '2026-10-05' })).toEqual({})
+  })
+
+  it('replaces a prior draft booking for the same vehicle rather than accumulating', () => {
+    let s = reduce(initialState(fixture), {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    s = reduce(s, {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-30', days: 3 },
+    })
+    expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-30', days: 3 },
+    })
+  })
+
+  it('clears a booking', () => {
+    let s = reduce(initialState(fixture), {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    s = reduce(s, { type: 'clear-booking', weekId: '2026-09-28', vehicleId: 'V-027' })
+    expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({})
+  })
+
+  it('snapshots the booking on commit and survives a later draft edit', () => {
+    let s = reduce(initialState(fixture), {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    s = reduce(s, { type: 'commit', weekId: '2026-09-28' })
+    expect(s.committedByWeek['2026-09-28']!.bookings['V-027']).toEqual({
+      vehicleId: 'V-027',
+      startDate: '2026-09-29',
+      days: 1,
+    })
+
+    s = reduce(s, {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-30', days: 2 },
+    })
+    expect(s.committedByWeek['2026-09-28']!.bookings['V-027'].startDate).toBe('2026-09-29')
+  })
+
+  it('clears every booking on reset', () => {
+    let s = reduce(initialState(fixture), {
+      type: 'set-booking',
+      weekId: '2026-09-28',
+      booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    })
+    s = reduce(s, { type: 'reset' })
     expect(s).toEqual(initialState(fixture))
   })
 })
