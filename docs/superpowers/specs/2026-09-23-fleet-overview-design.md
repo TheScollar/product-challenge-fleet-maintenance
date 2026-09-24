@@ -59,8 +59,9 @@ button, capacity band, queue and detail panel stay on the week plan, unchanged.
 | --- | --- |
 | First load, cover-note flag absent | Cover note, per [C §4]. Its action now lands on the fleet view (§10) |
 | Any later load, flag set | Fleet view directly |
-| **Open the week plan** button, or the Week plan tab | Week plan, current draft and selection untouched |
-| Click an attention card | Week plan with that card's item selected in the queue and detail panel |
+| **Open the week plan** button, or the Week plan tab | Week plan, current draft and selection untouched. Whichever face the plan side last wore, planning or summary, is the face it wears again: crossing tabs is not an edit, and must not cost the user their commit summary or tempt a pointless recommit |
+| Click an attention card | Week plan with that card's item selected in the queue and detail panel. A card for a van with no item in this week's queue does not navigate at all (§5) |
+| **Open the fleet** on the cover note, reached via About from either surface | Fleet view, always. Deliberately not "wherever you were": the button says fleet and lands on the fleet [C §4]. The plan side's planning-or-summary face is left untouched, so returning to it restores it |
 | Fleet today tab from the week plan | Fleet view; draft, selection and committed state untouched |
 | Commit | Unchanged: summary within the week plan. The fleet view reflects the committed plan from then on |
 | Week change (advance to review), and reset | Lands on the fleet view with selection cleared. The week-change effect covers the advance; reset sets the view explicitly, since resetting inside week 40 changes no week id |
@@ -89,8 +90,29 @@ urgency chip and its one-line because, reusing the queue's own wording.
 it remains a true statement about the committed plan), `Watching · review <date>` for an active
 deferral (latest record, review date still ahead). Plain green has no sub-label.
 
-The three counts sum to 45 and feed the stat strip. Attention cards (red plus amber) keep the week
-plan queue's order via `orderQueue`, so the top card here is the same top item G1 asks about.
+The three counts sum to 45 and feed the stat strip. Attention cards (red plus amber) are ordered by
+`orderQueue`, the same function the week plan's queue orders within.
+
+**The two screens do not promise the same first item, and their reds are not the same red.** An
+earlier revision of this section claimed "the top card here is the same top item G1 asks about".
+That was true when it was written and is no longer. The concurrent declutter redesign changed the
+week plan from a flat `orderQueue` list to groups built by `groupQueue` (blocking the week, open,
+settled), and reserved its red for *blocks the commit*. This screen's red is a different axis: *off
+the road today*, meaning a hold or a committed visit. The consequences, stated plainly rather than
+smoothed over:
+
+- The fleet's first (reddest) card can be an item the week plan draws dimmed and settled at the
+  bottom of its list. At cold open that is exactly what happens to V-012: off the road on a hold,
+  and already dispositioned, so nothing about it blocks the week.
+- A card can be amber here and red over there, or the reverse. Neither screen is wrong; they answer
+  different questions, and only `orderQueue` is shared.
+
+The fleet view carries a one-line legend under its **Needs attention** heading naming what its own
+red and amber mean, and saying the week plan groups by what blocks the commit. That is the whole
+mitigation: no colour is changed and no list is reordered, because both orderings are correct for
+the question their own screen asks.
+
+**Header facts.**
 
 **Header facts.**
 
@@ -98,18 +120,37 @@ plan queue's order via `orderQueue`, so the top card here is the same top item G
   (from `computeDayCapacity` for both classes; a gap is named by class and count), and which cover
   vehicles are on site today (covers whose confirmed dates include today).
 - Tomorrow line: rendered only when the **next business day** has a shortfall, naming day, class
-  and count, with a link that switches to the week plan. It reads from the same
-  `computeWeekCapacity` result the band renders, so drafts and proposals affect it exactly as they
-  affect the band; there is no second capacity semantics. Next business day means the next date in
+  and count, with a link that switches to the week plan. Next business day means the next date in
   the active week's day list, else the following week's Monday.
-- CTA sub-line: `<attention count> items waiting for week <n>` while the week is uncommitted;
-  `Week <n> committed` afterwards.
+- **One capacity semantics, for every day of the week, today included.** Both coverage lines read
+  the same effective decisions the capacity band renders, drafts and proposals included, so a
+  still-uncommitted plan that strands a day shows that gap here too. There is no
+  operational-versus-planning split for any day of the active week: the week is one draft until it
+  is committed, and the band has never drawn such a split either.
+
+  An earlier revision of this section framed the today line as operational reality, committed
+  visits only. That was a design error, not a product distinction, and the code that implemented
+  it produced the defect it invites: this screen's header read "every assignment covered today"
+  while the week plan, one tab away, showed that same day short by one and refused to commit over
+  it, because the shortfall existed only in the still-uncommitted draft. Corrected in the final
+  fix wave; pinned by `fleetStatus.test.ts`'s "reads today from the draft, exactly as the band
+  does".
+
+  Note what this does *not* change: the red/amber/green status of a van is still decided on
+  operational facts (a hold, or a **committed** visit), per the three rules above. Colour answers
+  "where is this van today"; the coverage lines answer "does the plan as it now stands leave a day
+  uncovered". A van can therefore sit amber while already being counted out of the day's capacity,
+  exactly as the band counts it.
+- CTA sub-line: `<n> item(s) waiting for week <n>` while the week is uncommitted; `Week <n>
+  committed` afterwards. The count is queue items carrying no committed disposition, not the length
+  of the attention list: a van red for a hold alone has no item in this week's queue and nothing
+  left to decide, and counting it would overstate the work waiting.
 
 **Divergences from the mockup, resolved in this spec's favour.** The mockup's CTA sub-line reads
-"4 decisions waiting"; the spec counts all attention items (5 at cold open), matching the cover
-note's "five decisions waiting on you". Sample values in the mockups (green-tile ids, the hold
-date, odometer figures, the watching example) are illustrative; the implementation renders fixture
-values only.
+"4 decisions waiting"; the spec counts every undecided queue item (5 at cold open, V-012's included
+even though its van is red), matching the cover note's "five decisions waiting on you". Sample
+values in the mockups (green-tile ids, the hold date, odometer figures, the watching example) are
+illustrative; the implementation renders fixture values only.
 
 ## 5. Surface layout
 
@@ -121,10 +162,17 @@ Top to bottom, per the chosen mockup:
    full-width beneath when it applies.
 3. **Stat strip**: three tiles (off the road, need a decision, in service with nothing open), each
    a count with a label, colour-railed. Not clickable; the sections below are the detail.
-4. **Needs attention**: one card per red or amber van, in queue order. Card content: vehicle id,
-   badges (safety, held, specialist), urgency chip, item title, the one-line why, and an
-   `Open in week plan` affordance. The whole card is one button that navigates (§3); no popover
-   here, the card already carries its facts.
+4. **Needs attention**: one card per red or amber van, in queue order, under a legend naming what
+   red and amber mean here (§4). Card content: vehicle id, badges (safety, off the road,
+   specialist), urgency chip, item title, the one-line why, and an `Open in week plan` affordance.
+   The whole card is one button that navigates (§3); no popover here, the card already carries its
+   facts.
+   **Unless the van has no item in this week's queue.** A van red for a hold alone (V-012 in
+   week 41, once its week-40 item is committed and gone from the queue) has no destination on the
+   week plan: navigating there would select nothing and land the user on an empty detail pane
+   under a promise that led nowhere. Such a card renders as information only, a plain `div` with
+   the vehicle id, the off-the-road badge and its facts as the why, with no `Open in week plan`
+   line and no click behaviour, like the stat tiles above it.
    Empty state (reachable in a committed week 41): `Nothing needs attention. All 45 vans in
    service.`
 5. **In service, nothing open (N)**: a compact tile grid of the remaining vans, id only, specialist
@@ -146,6 +194,18 @@ Footer: for a plain green van, `Nothing open for this van`; for a booked or watc
 committed fact plus a `View in week plan` link that navigates with the item selected.
 
 Tiles are buttons: focusable, Enter opens, Escape closes and returns focus, `aria-expanded` set.
+**Only Escape returns focus.** The popover also closes on a mousedown anywhere outside it,
+including on the tabs and the demo bar, which navigate away; restoring focus to the tile on that
+path scrolls to an element about to unmount, so the close handler is told which path fired it and
+restores focus for the keyboard one alone. Re-clicking the tile leaves focus on the tile already.
+
+**Open-ness is a request, not a fact.** The stored vehicle id is reconciled against the quiet list
+on every render, and dropped when the van is no longer in it. A van can leave the quiet list with
+no mousedown ever reaching the close handler (keyboard-only use of the demo bar, say, advancing the
+clock into a day the van spends in the workshop). Gating the render on that reconciliation is not
+sufficient on its own: the stale id has to be cleared, or the popover reopens unbidden when the
+same van turns quiet again a day later.
+
 No further a11y scope; the broader pass remains unscoped, as recorded in the progress notes.
 
 ## 7. Architecture
@@ -157,7 +217,7 @@ No further a11y scope; the broader pass remains unscoped, as recorded in the pro
 | `src/ui/FleetView.tsx` | Glance header, stat strip, attention cards, tile grid. Renders the projection; computes nothing itself. |
 | `src/ui/InspectPopover.tsx` | The popover: content, open/close, edge flip, focus handling. |
 | `src/ui/NavTabs.tsx` | The two tabs; presentation over a `view` value and an `onNavigate` callback. |
-| `src/App.tsx` | View union grows to `'fleet' \| 'planning' \| 'summary'`, default `'fleet'`; week-change effect resets to `'fleet'`. Still a value, not a router. |
+| `src/App.tsx` | Two independent values, not a router: `tab: 'fleet' \| 'plan'` (default `'fleet'`) and `planView: 'planning' \| 'summary'` (default `'planning'`). Crossing between tabs never touches `planView`, so a commit summary survives any number of trips to the fleet and back, by the tab, the fleet's button, an attention card or a popover link. Only a commit, the week-change effect or reset moves `planView`. |
 | `src/ui/theme.css` | Gains `.tabs`, `.glance`, `.stats`, `.tile`, `.popover` blocks. |
 
 The per-van shape; the projection returns these plus the three counts and the coverage facts of §4:
@@ -176,9 +236,15 @@ export interface VanStatus {
 
 Reused, not duplicated: `orderQueue` for attention order, `computeDayCapacity` and
 `computeWeekCapacity` for the coverage lines, `isHeldOn` for holds, the existing visit derivation
-for workshop days, and the queue's urgency and because wording. The projection takes the same
-effective decisions `App.tsx` already computes for the band, so the two surfaces can never
-disagree about the same date.
+for workshop days, and the queue's urgency and because wording.
+
+`fleetOverview` takes the same effective decisions `App.tsx` already computes for the band, and
+**every** coverage line it returns is derived from them, today's included. That is what makes the
+"two surfaces can never disagree about the same date" claim true rather than aspirational; it was
+aspirational until the final fix wave, because today's line alone read the committed set. The
+function derives its week from `today` via `mondayOf` and takes no `weekId` argument: a second,
+independently-supplied week id would only be a chance to pass a mismatched one and get answers
+derived from `today` anyway, silently.
 
 ## 8. Edge cases
 
@@ -207,13 +273,26 @@ Domain suite, `src/domain/fleetStatus.test.ts`, against the seeded fixture:
 4. Multi-day scope extension on V-103: Wednesday shows `day 2 of 2`.
 5. Week 41: V-041 resurfaced amber; V-012 green after the recorded release.
 6. Friday: the tomorrow line targets Monday of week 41 with its real date.
+7. One capacity semantics: in an uncommitted week 41, scheduling the resurfaced specialist item
+   onto today in draft alone makes `today.covered` false with a specialist shortfall of 1, where
+   a committed-only reading would call the day covered (§4).
+8. Decisions waiting: 5 at cold open, 0 once every item carries a committed disposition, and the
+   held van with no queue item contributes none (§4).
+9. A red van with `itemId === null` is reachable and exercised: week 41's V-012, held, with its
+   week-40 item committed and out of the queue. This is the shape the non-navigating attention
+   card depends on (§5).
 
 UI stays browser-verified live, per the project's no-component-tests precedent [S §1]. Manual
 checks at the end of the task: land on the fleet view after the cover note and after reload;
 tab switch preserves an in-progress draft; card click selects the right item; popover open, close,
 Escape, edge flip; commit then return to the fleet view and see booked, watching and the committed
-CTA state; reset restores the cold-open board; `npm test`, `npx tsc --noEmit`, `npm run build`,
-and `dist/index.html` from a filesystem origin still behave.
+CTA state; commit then cross to the fleet and back by all four routes and find the summary still
+there; **Open the fleet** from About lands on the fleet from either surface; reset restores the
+cold-open board; `npm test`, `npx tsc --noEmit`, `npm run build`, and the built `dist/` served over
+HTTP still behave. Not a literal `file://` open of `dist/index.html`: Vite's build puts a
+`crossorigin` attribute on the module script and stylesheet, which Chrome refuses under the `file:`
+scheme, so the app never boots that way. Pre-existing across the whole project, recorded in the
+acceptance record's limitations rather than worked around here.
 
 ## 10. Documentation updates
 

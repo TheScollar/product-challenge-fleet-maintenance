@@ -191,8 +191,12 @@ reader needs it to interpret what is on the screen.
 | **Open the fleet** | Flag is set, the fleet view is shown |
 | Any later load, flag set | Fleet view directly, no cover note |
 | **About this prototype** in the demo bar | Cover note is shown again, without clearing the flag |
-| **Open the fleet**, reached via About | Identical behaviour. Returns to the fleet view, flag already set |
+| **Open the fleet**, reached via About | Identical behaviour. Returns to the fleet view, flag already set. Deliberately the fleet and not "wherever you were", even when About was opened from the week plan: the button names its destination and has to honour it |
 | Demo bar **Reset** | Plan state only. The cover note does not return |
+
+Landing on the fleet is the only thing this path forces. It does not disturb the week plan's own
+planning-or-summary state, so a user who was reading a commit summary, opened About, and clicked
+through finds that summary still waiting when they cross back to the plan tab.
 
 The About control sits in the button group at the right of the demo bar, **after Reset**, so Reset does
 not move for anyone who has already learned where it is during a walkthrough.
@@ -205,7 +209,7 @@ live walkthrough worse. The About control is the way back, and it is always pres
 dismissal without reading, and it costs focus-trap and scroll-lock work for nothing gained.
 
 **Layout.** Single scrollable column at a readable measure. A **sticky bar at the bottom of the
-viewport** keeps **Open this week's plan** reachable at any scroll position, so length never traps
+viewport** keeps **Open the fleet** reachable at any scroll position, so length never traps
 anyone. Bottom rather than top: reading runs downward, the action is the terminus of that reading, and
 a top bar would compete with the title block for the same space. No progress dots, no steps, no
 pagination. One page.
