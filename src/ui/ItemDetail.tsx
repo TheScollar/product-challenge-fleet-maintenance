@@ -100,7 +100,9 @@ export function ItemDetail({
       )}
 
       <ReplacementBookingControl
-        key={item.vehicleId}
+        // Remount when the visit gate flips, so an open request form and its
+        // draft never outlive the visit they were opened for. [scenario spec §5.2]
+        key={`${item.vehicleId}-${appliedVisit === null ? 'none' : 'visit'}`}
         vehicleId={item.vehicleId}
         vehicleClass={vehicle.vehicleClass}
         appliedVisit={appliedVisit}

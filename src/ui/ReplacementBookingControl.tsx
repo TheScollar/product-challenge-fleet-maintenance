@@ -10,7 +10,7 @@ import { activeWeekId } from '../state/planReducer'
  * A replacement belongs to a visit. Mounted only in the weekly plan's detail
  * pane, and it offers the request only once a visit is applied for this
  * vehicle; the dashboard reports a committed booking as a fact and offers no
- * control. Callers mount it with key={vehicleId}. [scenario spec §5.1, §5.2]
+ * control. Callers mount it with a key that changes with the vehicle and with whether a visit is applied, so editing state never outlives the gate. [scenario spec §5.1, §5.2]
  */
 export function ReplacementBookingControl({
   vehicleId,
