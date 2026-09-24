@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { consequenceView } from './consequence'
 import { fixture } from './fixture'
-import { recommendationFor, watchAvailable } from './recommendation'
+import { adoptProposal, recommendationFor, watchAvailable } from './recommendation'
 import { orderQueue, urgencyRank } from './urgency'
-import { coldOpenDecisions, item, vehicle } from './testSupport'
+import { proposedDecisions, item, vehicle } from './testSupport'
 import type { Blocker } from './types'
 
 describe('urgency is three states, never a score', () => {
@@ -39,7 +39,7 @@ describe('queue ordering', () => {
 
   it('puts safety first, then the undisposed decision, then the contributors', () => {
     const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
-    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers })
+    const ordered = orderQueue({ items: week40Items, decisions: proposedDecisions(), blockers })
     expect(ordered.map((i) => i.id)).toEqual([
       'item-v012',
       'item-v041',
@@ -51,7 +51,7 @@ describe('queue ordering', () => {
 
   it('is stable when nothing blocks', () => {
     const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
-    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers: [] })
+    const ordered = orderQueue({ items: week40Items, decisions: proposedDecisions(), blockers: [] })
     expect(ordered[0].id).toBe('item-v012')
     expect(ordered).toHaveLength(5)
   })
@@ -117,5 +117,33 @@ describe('the safety hard stop', () => {
     expect(watchAvailable(item('item-v041'), vehicle('V-041'))).toBe(true)
     expect(watchAvailable(item('item-v027'), vehicle('V-027'))).toBe(true)
     expect(watchAvailable(item('item-v103'), vehicle('V-103'))).toBe(true)
+  })
+})
+
+describe('adoptProposal', () => {
+  it('turns a visit proposal into a staged decision with its slot', () => {
+    expect(adoptProposal(item('item-v118'))).toEqual({
+      itemId: 'item-v118',
+      treatment: 'act-now',
+      slotDate: '2026-09-29',
+      deferral: null,
+    })
+  })
+
+  it('carries the deferral for a watch proposal, and no slot', () => {
+    const d = adoptProposal(item('item-v027'))
+    expect(d.treatment).toBe('watch')
+    expect(d.slotDate).toBeNull()
+    expect(d.deferral!.reviewDate).toBe('2026-11-02')
+    expect(d.deferral!.trigger.label).toBe('Driver reports the wipe quality degrading')
+  })
+
+  it('leaves the slot open where the proposal names none', () => {
+    expect(adoptProposal(item('item-v041'))).toEqual({
+      itemId: 'item-v041',
+      treatment: 'act-now',
+      slotDate: null,
+      deferral: null,
+    })
   })
 })

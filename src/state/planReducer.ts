@@ -79,17 +79,11 @@ export function draftFor(args: {
   const seeded: Record<ItemId, DraftDecision> = {}
 
   for (const entry of queueFor({ fixture, state, weekId })) {
-    const { item, priorDecision } = entry
-    seeded[item.id] = priorDecision
-      ? // A resurfaced item comes back undisposed, but its prior rationale
-        // stays visible through priorDecision. [WP E6.4]
-        { itemId: item.id, treatment: null, slotDate: null, deferral: null }
-      : {
-          itemId: item.id,
-          treatment: item.proposal.treatment,
-          slotDate: item.proposal.slotDate,
-          deferral: item.proposal.deferral,
-        }
+    // Every entry opens undecided, authored or resurfaced alike. The
+    // proposal stays on the item and is adopted only by the user's own
+    // action (adoptProposal); a resurfaced item's earlier rationale stays
+    // visible through priorDecision. [scenario spec §3.1, WP E6.4]
+    seeded[entry.item.id] = { itemId: entry.item.id, treatment: null, slotDate: null, deferral: null }
   }
   return { ...seeded, ...(existing ?? {}) }
 }

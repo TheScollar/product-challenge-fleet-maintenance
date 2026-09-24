@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { daysBetween } from './clock'
 import { fixture, SEED_DATE } from './fixture'
 import { fleetOverview, nextBusinessDay, type FleetOverview } from './fleetStatus'
+import { adoptProposal } from './recommendation'
 import { validatePlan } from './validation'
 import {
   activeWeekId,
@@ -11,7 +12,8 @@ import {
   queueFor,
   type AppState,
 } from '../state/planReducer'
-import type { Fixture } from './types'
+import { adoptedState, item } from './testSupport'
+import type { Fixture, ReplacementBooking } from './types'
 
 const WEEK_40 = '2026-09-28'
 
@@ -37,7 +39,7 @@ function vanOf(overview: FleetOverview, id: string) {
 
 /** The walkthrough decisions: V-118 moved to Thursday, V-041 deferred, commit. */
 function committedState(fx: Fixture = fixture): AppState {
-  let s = initialState(fx)
+  let s = adoptedState(fx)
   s = planReducer(
     s,
     {
@@ -78,7 +80,9 @@ describe('fleet overview at cold open', () => {
   })
 
   it('orders attention exactly like the queue', () => {
-    expect(o.attention.map((s) => s.vehicleId)).toEqual(['V-012', 'V-041', 'V-103', 'V-118', 'V-027'])
+    // Every item is undecided, so after the safety-class van the order is
+    // urgency (estimates before assessment-needed), then item id.
+    expect(o.attention.map((s) => s.vehicleId)).toEqual(['V-012', 'V-027', 'V-103', 'V-118', 'V-041'])
   })
 
   it('shows the held van with its hold reason and no workshop fact', () => {
@@ -88,25 +92,39 @@ describe('fleet overview at cold open', () => {
     expect(v012.itemId).toBe('item-v012')
   })
 
-  it('covers today with R-1 on site, and flags Tuesday standard short by 1', () => {
+  it('covers today and tomorrow, because nothing is planned yet', () => {
     expect(o.today.date).toBe(SEED_DATE)
     expect(o.today.covered).toBe(true)
     expect(o.today.coverOnSite).toEqual(['R-1'])
     expect(o.nextBusinessDay.date).toBe('2026-09-29')
-    expect(o.nextBusinessDay.covered).toBe(false)
-    expect(o.nextBusinessDay.shortfalls.map((s) => [s.vehicleClass, s.shortfall])).toEqual([
-      ['standard', 1],
-    ])
+    expect(o.nextBusinessDay.covered).toBe(true)
+    expect(o.nextBusinessDay.shortfalls).toEqual([])
     expect(o.nextBusinessDay.coverOnSite).toEqual(['R-1', 'R-2'])
+  })
+})
+
+describe('fleet overview once every proposal is adopted', () => {
+  const o = overviewFor(adoptedState())
+
+  it('flags Tuesday standard short by 1, the scripted conflict', () => {
+    expect(o.nextBusinessDay.date).toBe('2026-09-29')
+    expect(o.nextBusinessDay.covered).toBe(false)
+    expect(o.nextBusinessDay.shortfalls.map((s) => [s.vehicleClass, s.shortfall])).toEqual([['standard', 1]])
+  })
+
+  it('orders attention like the queue: safety, the undecided specialist, then the contributors', () => {
+    expect(o.attention.map((s) => s.vehicleId)).toEqual(['V-012', 'V-041', 'V-103', 'V-118', 'V-027'])
   })
 })
 
 describe('a booking is reflected in tomorrow\'s coverage', () => {
   it('clears the Tuesday shortfall and lists the booking as cover on site', () => {
-    const s = initialState(fixture)
+    const s = adoptedState()
     const weekId = activeWeekId(s)
     const decisions = draftFor({ fixture, state: s, weekId })
-    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+    const bookings: Record<string, ReplacementBooking> = {
+      'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
+    }
     const o = fleetOverview({
       fixture,
       today: s.demoDate,
@@ -118,7 +136,7 @@ describe('a booking is reflected in tomorrow\'s coverage', () => {
       bookings,
     })
     expect(o.nextBusinessDay.covered).toBe(true)
-    expect(o.nextBusinessDay.coverOnSite).toContain('V-027 replacement')
+    expect(o.nextBusinessDay.coverOnSite).toContain('V-118 replacement')
   })
 })
 
@@ -198,7 +216,10 @@ describe('fleet overview in week 41', () => {
     expect(o.committed).toBe(false)
     expect(vanOf(o, 'V-041').kind).toBe('needs-decision')
     expect(vanOf(o, 'V-041').itemId).toBe('item-v041')
-    expect(o.attention[0].vehicleId).toBe('V-041')
+    // Week 41 authors two cases of its own, also undecided, so the resurfaced
+    // item is not first: ties break on urgency, and V-105's deadline and
+    // V-024's estimate both outrank V-041's assessment-needed.
+    expect(o.attention[0].vehicleId).toBe('V-105')
     expect(vanOf(o, 'V-012').kind).toBe('off-road')
   })
 
@@ -229,7 +250,14 @@ describe('fleet overview in week 41', () => {
 })
 
 describe('fleet overview: two new week-41 cases collide on Thursday', () => {
-  const week41 = planReducer(committedState(), { type: 'advance-to-next-review' }, fixture)
+  const WEEK_41 = '2026-10-05'
+  const justArrived = planReducer(committedState(), { type: 'advance-to-next-review' }, fixture)
+  // Both new cases' own proposals adopted, exactly as the Use proposal
+  // button would do it: this is what actually puts them both on Thursday.
+  const week41 = [item('item-v024'), item('item-v105')].reduce(
+    (s, i) => planReducer(s, { type: 'set-decision', weekId: WEEK_41, decision: adoptProposal(i) }, fixture),
+    justArrived,
+  )
 
   it('shows both new cases amber with an item to open, from the moment week 41 is reached', () => {
     const o = overviewFor(week41)

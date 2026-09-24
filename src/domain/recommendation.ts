@@ -1,6 +1,6 @@
 import { formatDay } from './clock'
 import { consequenceView, type ConsequenceView } from './consequence'
-import type { ISODate, OpenItem, Urgency, Vehicle } from './types'
+import type { DraftDecision, ISODate, OpenItem, Urgency, Vehicle } from './types'
 
 export interface RecommendationView {
   urgency: Urgency
@@ -25,6 +25,22 @@ function proposedAction(item: OpenItem): string {
   }
   const days = item.visitDays === 1 ? '1 day' : `${item.visitDays} days`
   return `Book a visit: ${formatDay(slotDate)}, ${days}.`
+}
+
+/**
+ * The proposal is the system's; adopting it is the user's act. This is the
+ * one definition of "adopt", used by the Use proposal button and by the
+ * tests, so the two can never drift. A deferral belongs only to a watch and
+ * a slot only to a visit. [scenario spec §3.2]
+ */
+export function adoptProposal(item: OpenItem): DraftDecision {
+  const { treatment, slotDate, deferral } = item.proposal
+  return {
+    itemId: item.id,
+    treatment,
+    slotDate: treatment === 'watch' ? null : slotDate,
+    deferral: treatment === 'watch' ? deferral : null,
+  }
 }
 
 export function recommendationFor(item: OpenItem): RecommendationView {

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { commitPlan, dailyConfirmation, deferralRecordsFrom, summaryFor } from './commit'
 import { fixture } from './fixture'
 import type { DraftDecision, ItemId } from './types'
-import { coldOpenDecisions } from './testSupport'
+import { proposedDecisions } from './testSupport'
 
 const WEEK_40 = '2026-09-28'
 
 function committable(): Record<ItemId, DraftDecision> {
-  const d = coldOpenDecisions()
+  const d = proposedDecisions()
   d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
   d['item-v041'] = {
     itemId: 'item-v041',

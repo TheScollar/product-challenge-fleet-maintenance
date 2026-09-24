@@ -2,19 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { fixture } from '../domain/fixture'
 import { validatePlan } from '../domain/validation'
 import type { DraftDecision } from '../domain/types'
-import { activeWeekId, draftFor, initialState, queueFor } from '../state/planReducer'
+import { activeWeekId, initialState, queueFor } from '../state/planReducer'
+import { proposedDecisions } from '../domain/testSupport'
 import { blockerChips, classifyItem, groupQueue } from './grouping'
 
 const state = initialState(fixture)
 const weekId = activeWeekId(state)
 const entries = queueFor({ fixture, state, weekId })
 const items = entries.map((e) => e.item)
-const decisions = draftFor({ fixture, state, weekId })
+const decisions = proposedDecisions()
 const blockers = validatePlan({ fixture, weekId, decisions })
 
 const idOf = (vehicleId: string) => items.find((i) => i.vehicleId === vehicleId)!.id
 
-describe('groupQueue at week-40 open', () => {
+describe('groupQueue with every proposal adopted', () => {
   const groups = groupQueue({ items, decisions, blockers, fixture })
 
   it('renders exactly two groups: blocking, then settled', () => {
@@ -71,7 +72,7 @@ describe('classifyItem', () => {
   })
 })
 
-describe('blockerChips at week-40 open', () => {
+describe('blockerChips with every proposal adopted', () => {
   const chips = blockerChips({ blockers, items, decisions, fixture })
 
   it('renders one chip per blocker with the spec copy', () => {

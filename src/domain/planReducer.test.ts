@@ -11,12 +11,13 @@ import {
   queueFor,
 } from '../state/planReducer'
 import type { AppState } from '../state/planReducer'
+import { adoptedState } from './testSupport'
 import type { Deferral } from './types'
 
 const reduce = (s: AppState, a: Parameters<typeof planReducer>[1]) => planReducer(s, a, fixture)
 
 function committedWeek40(): AppState {
-  let s = initialState(fixture)
+  let s = adoptedState()
   s = reduce(s, {
     type: 'set-decision',
     weekId: '2026-09-28',
@@ -48,11 +49,13 @@ describe('initial state', () => {
     expect(s.committedByWeek['2026-09-28'] ?? null).toBeNull()
   })
 
-  it('seeds the draft from the system proposals, undisposed items included', () => {
+  it('seeds every item open, with the proposal left on the item', () => {
     const draft = draftFor({ fixture, state: s, weekId: '2026-09-28' })
-    expect(Object.keys(draft)).toHaveLength(5)
-    expect(draft['item-v118'].slotDate).toBe('2026-09-29')
-    expect(draft['item-v041'].slotDate).toBeNull()
+    expect(Object.keys(draft).sort()).toEqual(['item-v012', 'item-v027', 'item-v041', 'item-v103', 'item-v118'])
+    for (const d of Object.values(draft)) {
+      expect(d).toEqual({ itemId: d.itemId, treatment: null, slotDate: null, deferral: null })
+    }
+    expect(fixture.items.find((i) => i.id === 'item-v118')!.proposal.slotDate).toBe('2026-09-29')
   })
 
   it('shows all five items in the week 40 queue', () => {
