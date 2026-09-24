@@ -91,3 +91,19 @@ All ten recorded as **passed**, each with an automated home plus the live pass:
 7. The daily confirmation renders demand figures for whatever "tomorrow" is, including a weekend if
    the clock is advanced to Friday before committing. The seeded walkthrough never reaches that path;
    making the domain weekend-aware is future work.
+
+## Addendum: guided-queue declutter re-verification
+
+**Run on:** 2026-09-24 · **Build:** 6fc3195 (merged to main fast-forward) ·
+**Commands:** `npm test` (208 tests, 14 files, all passing; adds a tested queue-grouping view model
+in `src/ui/grouping.ts`), `npm run build` (tsc clean), plus a live headless-browser pass of the full
+section 7.3 journey against the restyled surface, asserted against the DOM.
+
+The plan surface was restyled per `docs/superpowers/specs/2026-09-23-guided-queue-declutter-design.md`:
+slim two-row tiles grouped into Blocking the week / Settled, blocker chips beside Commit that select
+the offending item, red reserved for what blocks the week, an exception-first capacity band, and the
+evidence prose relocated to the detail pane. The live pass confirmed every walkthrough moment on the
+new surface: the cold-open state, the V-118 Thursday move clearing Tuesday in view, V-041 breaking
+the specialist row (now with its own chip naming the class), the required three-field deferral, the
+disabled UVV levers with the reason shown, commit, resurfacing with the prior rationale in the detail
+head, and reset. Limitation 6 stands: the view-model is unit-tested, the components are verified live.
