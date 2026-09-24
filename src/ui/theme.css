@@ -394,15 +394,20 @@ button:disabled { cursor: not-allowed; }
   border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--r);
   padding: 9px 11px 9px 13px;
 }
-/* Only the navigating cards are buttons. An informational card must not
-   offer a hover affordance it cannot honour. */
-button.acard:hover { border-color: var(--border-strong); }
+/* Every card now carries the booking control, so every card has some
+   interactive content; the hover affordance is no longer conditional on
+   being a button. */
+.acard:hover { border-color: var(--border-strong); }
 .acard.crit { border-left-color: var(--crit); }
 .acard.warn { border-left-color: var(--warn); }
 .acard .row1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 3px; }
 .acard .title { font-size: 12.5px; margin-bottom: 5px; }
 .acard .why { font-size: 11.5px; color: var(--muted); }
-.acard .go { margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--accent); }
+.acard .go {
+  display: block; margin: 6px 0 0; padding: 0; background: none; border: none;
+  font-size: 11px; font-weight: 600; color: var(--accent); text-align: left;
+}
+.acard .block { margin-top: 8px; }
 
 .legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); padding: 2px 0 10px; }
 .specdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--spec); }

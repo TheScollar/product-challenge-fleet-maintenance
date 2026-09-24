@@ -8,6 +8,7 @@ import { activeWeekId, queueFor } from '../state/planReducer'
 import { AssumptionBlock } from './AssumptionBlock'
 import { ConsequenceBlock } from './ConsequenceBlock'
 import { EvidenceBlock } from './EvidenceBlock'
+import { ReplacementBookingControl } from './ReplacementBookingControl'
 import { SlotPicker } from './SlotPicker'
 import { TreatmentForm } from './TreatmentForm'
 
@@ -77,6 +78,8 @@ export function ItemDetail({
       )}
 
       <TreatmentForm item={item} vehicle={vehicle} decision={decision} onChange={setDecision} onApply={onApply} />
+
+      <ReplacementBookingControl vehicleId={item.vehicleId} vehicleClass={vehicle.vehicleClass} />
     </div>
   )
 }

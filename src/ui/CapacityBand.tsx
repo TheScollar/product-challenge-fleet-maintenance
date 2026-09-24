@@ -1,6 +1,7 @@
 import { computeWeekCapacity, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
-import type { DayCapacity, DraftDecision, ISODate, ItemId } from '../domain/types'
+import { adHocCoversFrom } from '../domain/replacementBooking'
+import type { DayCapacity, DraftDecision, ISODate, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId } from '../state/planReducer'
@@ -8,15 +9,18 @@ import { activeWeekId } from '../state/planReducer'
 export function CapacityBand({
   decisions,
   selectedItemId,
+  bookings,
 }: {
   decisions: Record<ItemId, DraftDecision>
   selectedItemId: ItemId | null
+  bookings: Record<VehicleId, ReplacementBooking>
 }) {
   const { state, fixture } = usePlan()
   const weekId = activeWeekId(state)
   const week = weekFixtureFor(fixture, weekId)
   const visits = visitsFromDecisions(decisions, fixture.items)
-  const rows = computeWeekCapacity({ fixture, weekId, visits })
+  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
+  const rows = computeWeekCapacity({ fixture, weekId, visits, adHocCovers })
 
   const cellFor = (date: ISODate, vehicleClass: 'standard' | 'specialist') =>
     rows.find((r) => r.date === date && r.vehicleClass === vehicleClass) as DayCapacity

@@ -3,7 +3,7 @@ import { validatePlan } from './domain/validation'
 import type { DraftDecision, ItemId } from './domain/types'
 import { hasSeenCoverNote, markCoverNoteSeen } from './state/coverNoteSeen'
 import { usePlan } from './state/PlanProvider'
-import { activeWeekId, draftFor } from './state/planReducer'
+import { activeWeekId, bookingsFor, draftFor } from './state/planReducer'
 import { CapacityBand } from './ui/CapacityBand'
 import { CommitSummary } from './ui/CommitSummary'
 import { CoverNote } from './ui/CoverNote'
@@ -49,13 +49,14 @@ export default function App() {
   }, [selectedItemId])
 
   const decisions = useMemo(() => draftFor({ fixture, state, weekId }), [fixture, state, weekId])
+  const bookings = useMemo(() => bookingsFor({ state, weekId }), [state, weekId])
   const previewDecisions = useMemo(
     () => (pendingDecision ? { ...decisions, [pendingDecision.itemId]: pendingDecision } : decisions),
     [decisions, pendingDecision],
   )
   const blockers = useMemo(
-    () => validatePlan({ fixture, weekId, decisions }),
-    [fixture, weekId, decisions],
+    () => validatePlan({ fixture, weekId, decisions, bookings }),
+    [fixture, weekId, decisions, bookings],
   )
   const selectedItem = fixture.items.find((i) => i.id === selectedItemId) ?? null
 
@@ -95,7 +96,7 @@ export default function App() {
       />
       <NavTabs active={tab} onNavigate={setTab} />
       {tab === 'fleet' ? (
-        <FleetView decisions={decisions} blockers={blockers} onOpenPlan={openPlan} />
+        <FleetView decisions={decisions} blockers={blockers} bookings={bookings} onOpenPlan={openPlan} />
       ) : (
         <>
           <PlanHeader
@@ -107,7 +108,7 @@ export default function App() {
             }}
             onSelectItem={setSelectedItemId}
           />
-          <CapacityBand decisions={previewDecisions} selectedItemId={selectedItemId} />
+          <CapacityBand decisions={previewDecisions} selectedItemId={selectedItemId} bookings={bookings} />
           {planView === 'summary' && state.committedByWeek[weekId] ? (
             <CommitSummary onEdit={() => setPlanView('planning')} />
           ) : (
