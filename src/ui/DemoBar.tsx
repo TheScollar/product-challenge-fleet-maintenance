@@ -2,7 +2,7 @@ import { formatLongDay } from '../domain/clock'
 import { nextResurfaceDate } from '../domain/deferral'
 import { usePlan } from '../state/PlanProvider'
 
-export function DemoBar({ onAbout }: { onAbout: () => void }) {
+export function DemoBar({ onAbout, onReset }: { onAbout: () => void; onReset: () => void }) {
   const { state, dispatch, fixture } = usePlan()
   const nextReview = nextResurfaceDate({
     fixture,
@@ -24,7 +24,16 @@ export function DemoBar({ onAbout }: { onAbout: () => void }) {
       >
         Advance to next review date
       </button>
-      <button onClick={() => dispatch({ type: 'reset' })}>Reset scenario</button>
+      <button
+        onClick={() => {
+          dispatch({ type: 'reset' })
+          // Resetting inside week 40 changes no week id, so the week-change
+          // effect cannot restore the landing view; the callback does. [FO spec 3]
+          onReset()
+        }}
+      >
+        Reset scenario
+      </button>
       <button onClick={onAbout}>About this prototype</button>
       {state.storageNotice !== null && (
         <div className="notice">

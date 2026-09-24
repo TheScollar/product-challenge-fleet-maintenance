@@ -9,14 +9,18 @@ import { CommitSummary } from './ui/CommitSummary'
 import { CoverNote } from './ui/CoverNote'
 import { DecisionQueue } from './ui/DecisionQueue'
 import { DemoBar } from './ui/DemoBar'
+import { FleetView } from './ui/FleetView'
 import { ItemDetail } from './ui/ItemDetail'
+import { NavTabs } from './ui/NavTabs'
 import { PlanHeader } from './ui/PlanHeader'
 
 export default function App() {
   const { state, dispatch, fixture } = usePlan()
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null)
-  const [view, setView] = useState<'planning' | 'summary'>('planning')
-  // A boolean, not a router: two states, no URLs, no history entries.
+  // A value, not a router: three states, no URLs, no history entries. The
+  // fleet view is the landing surface; decisions stay on the week plan.
+  // [FO spec 3]
+  const [view, setView] = useState<'fleet' | 'planning' | 'summary'>('fleet')
   // [cover note spec 5.4] Lazy-initialised so the synchronous localStorage
   // read only happens once, on mount, not on every render.
   const [showCoverNote, setShowCoverNote] = useState(() => !hasSeenCoverNote())
@@ -24,7 +28,7 @@ export default function App() {
   const weekId = activeWeekId(state)
 
   useEffect(() => {
-    setView('planning')
+    setView('fleet')
     setSelectedItemId(null)
   }, [weekId])
 
@@ -34,6 +38,11 @@ export default function App() {
     [fixture, weekId, decisions],
   )
   const selectedItem = fixture.items.find((i) => i.id === selectedItemId) ?? null
+
+  const openPlan = (itemId: ItemId | null) => {
+    if (itemId !== null) setSelectedItemId(itemId)
+    setView('planning')
+  }
 
   // The cover note is a full screen, not chrome over the plan: the demo bar
   // does not render here. [cover note spec 4]
@@ -50,40 +59,61 @@ export default function App() {
 
   return (
     <>
-      <DemoBar onAbout={() => setShowCoverNote(true)} />
-      <PlanHeader
-        blockers={blockers}
-        decisions={decisions}
-        onCommit={() => {
-          dispatch({ type: 'commit', weekId })
-          setView('summary')
+      <DemoBar
+        onAbout={() => setShowCoverNote(true)}
+        onReset={() => {
+          setView('fleet')
+          setSelectedItemId(null)
         }}
-        onSelectItem={setSelectedItemId}
       />
-      <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
-      {view === 'summary' && state.committedByWeek[weekId] ? (
-        <CommitSummary onEdit={() => setView('planning')} />
+      <NavTabs
+        active={view === 'fleet' ? 'fleet' : 'plan'}
+        onNavigate={(tab) => {
+          if (tab === 'fleet') setView('fleet')
+          // Clicking the already-active plan tab must not yank summary back
+          // to planning. [FO spec 3]
+          else if (view === 'fleet') setView('planning')
+        }}
+      />
+      {view === 'fleet' ? (
+        <FleetView decisions={decisions} blockers={blockers} onOpenPlan={openPlan} />
       ) : (
-        <div className="split">
-          <DecisionQueue
-            decisions={decisions}
+        <>
+          <PlanHeader
             blockers={blockers}
-            selectedItemId={selectedItemId}
-            onSelect={setSelectedItemId}
+            decisions={decisions}
+            onCommit={() => {
+              dispatch({ type: 'commit', weekId })
+              setView('summary')
+            }}
+            onSelectItem={setSelectedItemId}
           />
-          <div className="pane right">
-            {selectedItem === null ? (
-              <p className="empty">Select an item to see its evidence and options.</p>
-            ) : (
-              <ItemDetail
-                key={selectedItem.id}
-                item={selectedItem}
+          <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
+          {view === 'summary' && state.committedByWeek[weekId] ? (
+            <CommitSummary onEdit={() => setView('planning')} />
+          ) : (
+            <div className="split">
+              <DecisionQueue
                 decisions={decisions}
-                onChange={(decision) => dispatch({ type: 'set-decision', weekId, decision })}
+                blockers={blockers}
+                selectedItemId={selectedItemId}
+                onSelect={setSelectedItemId}
               />
-            )}
-          </div>
-        </div>
+              <div className="pane right">
+                {selectedItem === null ? (
+                  <p className="empty">Select an item to see its evidence and options.</p>
+                ) : (
+                  <ItemDetail
+                    key={selectedItem.id}
+                    item={selectedItem}
+                    decisions={decisions}
+                    onChange={(decision) => dispatch({ type: 'set-decision', weekId, decision })}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   )
