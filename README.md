@@ -27,7 +27,7 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 183 tests over the domain and state layers, including the ten
+npm test        # 209 tests over the domain and state layers, including the ten
                 # verification scenarios end to end
 ```
 
@@ -35,23 +35,25 @@ No backend, no network calls, no accounts, no configuration. State is kept in `l
 `fleet-maintenance-prototype/v1`, and the yellow demo bar has a reset control.
 
 **First launch opens a cover note** addressed to the evaluation panel: the framing, the choices made,
-and what is simulated, before the product itself. `Open this week's plan` continues to the app, and
-`About this prototype` in the demo bar brings the note back at any time. Reset deliberately does not
+and what is simulated, before the product itself. `Open the fleet` continues to the app, landing on the
+fleet overview, and `About this prototype` in the demo bar brings the note back at any time. Reset deliberately does not
 resurrect it.
 
 ## The five-minute walkthrough
 
-1. The plan opens on week 40 with five decisions and two blockers. `V-012` is already out of service,
-   before anything is committed.
-2. Open `V-118`. Tuesday is red because of it. Switch the slot to Thursday and watch Tuesday clear in
+1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road, four more
+   needing a decision, and tomorrow's shortfall flagged. Click any quiet van to inspect it.
+2. Switch to the week plan. Week 40 carries five decisions and two blockers. `V-012` is already out
+   of service, before anything is committed.
+3. Open `V-118`. Tuesday is red because of it. Switch the slot to Thursday and watch Tuesday clear in
    the band above. Try Wednesday instead to see the shortage land there rather than disappear.
-3. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
+4. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
    No lever closes it: a standard rental is not a specialist van.
-4. Defer `V-041` with a reason, a review date and a trigger. The second blocker clears.
-5. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
-6. Commit. The summary carries the visits, forward availability, the cover assumptions including the
+5. Defer `V-041` with a reason, a review date and a trigger. The second blocker clears.
+6. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
+7. Commit. The summary carries the visits, forward availability, the cover assumptions including the
    absence of specialist cover, and the deferred follow-ups.
-7. Advance the clock to the next review date. `V-041` returns with its rationale intact. Reset.
+8. Advance the clock to the next review date. `V-041` returns with its rationale intact. Reset.
 
 ## What is simulated
 
@@ -126,7 +128,8 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 - `docs/fleet-maintenance-work-packages.md`: the build contract, scope, goals and what was cut
 - `docs/superpowers/specs/2026-09-23-fleet-maintenance-prototype-design.md`: the technical design
 - `docs/superpowers/specs/2026-09-23-cover-note-design.md`: the in-app cover note, specified separately
+- `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`: the fleet overview landing screen, specified separately
 - `docs/fleet-maintenance-research-findings.md`: research and framing
-- `docs/mockups/`: the two layouts the layout decision was made from, and the guided-queue
-  declutter proposal the current surface follows
+- `docs/mockups/`: layout decisions and the alternatives they were made from, including the
+  guided-queue declutter proposal the current surface follows
 - `docs/acceptance.md`: what was verified, how, and what was not

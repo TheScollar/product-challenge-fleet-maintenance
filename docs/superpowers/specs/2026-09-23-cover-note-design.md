@@ -103,6 +103,10 @@ Promise, set apart from the body:
 
 ### 3.5 What you are about to see
 
+> You land on the fleet first: 45 vans, one already off the road, and a short list of what needs
+> you. It answers the daily question, is today fine, before you plan the week. The weekly plan is
+> one tab over, and everything below describes it.
+>
 > One planning week. A capacity band across the top that stays visible while you work, because it is
 > the thing every decision moves. Below it, five decisions waiting on you.
 >
@@ -121,6 +125,9 @@ per the rule below: the original draft named `V-012` and `V-041` as the two bloc
 screen `V-012` is covered and booked, so it does not block commit. The two blockers are the Tuesday
 shortfall and `V-041`'s undecided item. The rule stands for future edits: verify against the built
 surface, and correct the copy rather than the screen.
+Amended again on the same date for the fleet overview
+(`docs/superpowers/specs/2026-09-23-fleet-overview-design.md`): the click-through now lands on the
+fleet view, the action label is **Open the fleet**, and the block gains the bridge paragraph above.
 
 ### 3.6 The decisions worth knowing about
 
@@ -167,7 +174,7 @@ reader has the repository.
 | `docs/fleet-maintenance-work-packages.md` | The build contract, scope, goals and what was cut |
 | `docs/fleet-maintenance-research-findings.md` | Research and framing, and where the user came from |
 | `docs/superpowers/specs/2026-09-23-fleet-maintenance-prototype-design.md` | The technical design |
-| `docs/mockups/` | The two layouts the layout decision was made from |
+| `docs/mockups/` | Layout decisions and the alternatives they were made from |
 
 ### 3.10 Excluded from the cover note
 
@@ -181,10 +188,10 @@ reader needs it to interpret what is on the screen.
 | Trigger | Result |
 | --- | --- |
 | First load, flag absent | Cover note is shown |
-| **Open this week's plan** | Flag is set, plan surface is shown |
-| Any later load, flag set | Plan surface directly, no cover note |
+| **Open the fleet** | Flag is set, the fleet view is shown |
+| Any later load, flag set | Fleet view directly, no cover note |
 | **About this prototype** in the demo bar | Cover note is shown again, without clearing the flag |
-| **Open this week's plan**, reached via About | Identical behaviour. Returns to the plan, flag already set |
+| **Open the fleet**, reached via About | Identical behaviour. Returns to the fleet view, flag already set |
 | Demo bar **Reset** | Plan state only. The cover note does not return |
 
 The About control sits in the button group at the right of the demo bar, **after Reset**, so Reset does

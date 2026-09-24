@@ -107,3 +107,26 @@ new surface: the cold-open state, the V-118 Thursday move clearing Tuesday in vi
 the specialist row (now with its own chip naming the class), the required three-field deferral, the
 disabled UVV levers with the reason shown, commit, resurfacing with the prior rationale in the detail
 head, and reset. Limitation 6 stands: the view-model is unit-tested, the components are verified live.
+
+## Addendum: the fleet overview landing screen (2026-09-23)
+
+**Build:** 1a3710e · **Commands:** `npm test` (209 tests, all passing), `npx tsc --noEmit`
+(clean), `npm run build` (succeeds; `dist/index.html` verified from a filesystem origin), plus the
+live browser checks below.
+
+The app now lands on a read-only fleet overview ahead of the weekly plan
+(`docs/superpowers/specs/2026-09-23-fleet-overview-design.md`). The weekly plan remains the only
+decision surface; the overview's only verb is navigation. Statuses are fully derived: red from
+holds and committed visits, amber from queue items not resolved by a committed disposition, green
+otherwise with booked and watching sub-labels from the committed plan and the deferral ledger.
+
+**Verified live:** cold-open board (1 off the road, 4 needing a decision, 40 in service, attention
+in queue order, Tuesday shortfall flagged for tomorrow); click-through to the week plan with the
+item pre-selected; inspect popover open, close, Escape and edge behaviour; committed-week board
+(booked, watching, no tomorrow warning); Tuesday with two vans off the road; week 41 resurfacing
+with the V-012 release; reset and reload both landing on the fleet view.
+
+**G1 restated from the new landing.** The structural claim now starts one screen earlier: at cold
+open the fleet view shows the exception (V-012, held, safety) first among five attention cards,
+with the 45-van fleet represented without a 45-row list. The observed one-minute criterion remains
+**not run** (no unfamiliar observer), unchanged from the main record.
