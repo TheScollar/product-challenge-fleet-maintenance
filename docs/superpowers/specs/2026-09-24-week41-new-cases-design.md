@@ -43,7 +43,7 @@ Both are previously-quiet vans (no existing item), both proposed `act-now` by de
 `garageId: 'werkstatt-berg'` (the fixture's only garage), both `safetyClass: false`, both
 `visitDays: 1`, `canExtendToDays: null`.
 
-### `item-v105` — V-105, Hauptuntersuchung (HU) due
+### `item-v105`: V-105, Hauptuntersuchung (HU) due
 
 A *deadline*-urgency case that is not a safety hold: the van stays on the road until booked, unlike
 V-012. This is the first deadline item that is not also a UVV off-road hold, which shows the
@@ -66,9 +66,9 @@ V-012. This is the first deadline item that is not also a UVV off-road hold, whi
 | `consequence.coverUnavailable` | `false` |
 | `consequence.uncoveredAssignmentsNote` | "Depends on the day chosen. Thursday leaves one assignment uncovered." |
 | `proposal` | `act-now`, slot 2026-10-08 |
-| `triggerOptions` | One event trigger, `v105-hu-reminder`, label "Registration office sends the final HU reminder." No corresponding entry is added to `fixture.events`, so — like V-027's trigger — it is available to pick if the user defers, but never fires in the fixture. |
+| `triggerOptions` | One event trigger, `v105-hu-reminder`, label "Registration office sends the final HU reminder." No corresponding entry is added to `fixture.events`, so, like V-027's trigger, it is available to pick if the user defers, but never fires in the fixture. |
 
-### `item-v024` — V-024, front tyre tread approaching the legal minimum
+### `item-v024`: V-024, front tyre tread approaching the legal minimum
 
 An *estimate*-urgency case, same urgency kind as V-103, V-118 and V-027, but with **no projected
 `relevantDate`**. V-118's interval date is a real computation over a stored field
@@ -120,8 +120,8 @@ available = 38 - 2 + 1 = 37 < demand 38  →  shortfall 1
 ```
 
 This is visible in the capacity band and blocks commit from the moment week 41 becomes the active
-week, the same mechanism that makes V-118's week-40 Tuesday conflict visible at cold open — nothing
-new is computed, `computeWeekCapacity` already reads the whole week regardless of which day is
+week, the same mechanism that makes V-118's week-40 Tuesday conflict visible at cold open. Nothing
+new is computed: `computeWeekCapacity` already reads the whole week regardless of which day is
 "today." It clears by moving either item to Tuesday, Wednesday or Friday, each of which has its own
 untouched spare unit. Moving one to Monday instead does not clear it (Monday has none to give),
 which mirrors, unplanned, the same "the shortage lands elsewhere" lesson V-103 already teaches in
@@ -155,7 +155,7 @@ V-041 and V-027; it was simply never exercised for a week-41-authored item befor
 - **Left undecided into week 42.** If the user advances past week 41 without committing a decision
   on either new item, it simply drops out of the queue (not authored in week 42, not in
   `deferralHistory` since nothing was ever committed). This is existing, pre-existing behavior for
-  *any* undecided authored item carried past its week — not a new edge case this spec introduces —
+  *any* undecided authored item carried past its week, not a new edge case this spec introduces,
   so it is not addressed here.
 - **V-041 manually booked onto Thursday too.** `werkstatt-berg` has 2 free bays on 2026-10-08, and
   the two new items already use both. If the user disposes V-041 (specialist, undisposed at
@@ -167,22 +167,22 @@ V-041 and V-027; it was simply never exercised for a week-41-authored item befor
 
 ## 7. Testing and verification
 
-**Tests requiring a deliberate update** — the new, correct behavior, not incidental breakage.
+**Tests requiring a deliberate update**: the new, correct behavior, not incidental breakage.
 Every other test touching a week-41 date was checked and does not derive its item list from
 `fixture.weeks[1].itemIds` (confirmed for `persistence.test.ts`, `deferral.test.ts`,
 `commit.test.ts`, `capacity.test.ts`, `validation.test.ts`, `grouping.test.ts`, and the rest of
 `planReducer.test.ts`/`fleetStatus.test.ts` beyond what is listed below), so they are left alone.
 
-1. `src/domain/scenarios.test.ts`, scenario 8 ("Review date arrives or trigger fires") — one of the
+1. `src/domain/scenarios.test.ts`, scenario 8 ("Review date arrives or trigger fires"), one of the
    ten canonical scenarios the README cites as run end to end. `queueFor(...)` for week 41 currently
    asserts exactly `['item-v041']`; it becomes `['item-v024', 'item-v105', 'item-v041']` (authored
    items first, in `itemIds` order, then resurfaced). V-041's own assertions (`priorDecision`,
    `resurfacedBecause`) are unaffected.
-2. `src/domain/planReducer.test.ts` — the mirrored queue assertion, same change.
-3. `src/domain/fixture.test.ts` — "authors two weeks, the second carrying no new items":
+2. `src/domain/planReducer.test.ts`: the mirrored queue assertion, same change.
+3. `src/domain/fixture.test.ts`: "authors two weeks, the second carrying no new items":
    `itemIds` length for week 41 goes from `toHaveLength(0)` to `toHaveLength(2)`, and the test title
    is reworded since the claim it makes is no longer true.
-4. `src/domain/fleetStatus.test.ts` — the Tuesday-of-week-41 counts test ("releases the held van
+4. `src/domain/fleetStatus.test.ts`: the Tuesday-of-week-41 counts test ("releases the held van
    once the recorded release date passes") goes from `{offRoad: 0, needsDecision: 1, inService: 44}`
    to `{offRoad: 0, needsDecision: 3, inService: 42}`.
 
