@@ -318,6 +318,8 @@ week's proposals are adopted, not at week 41's own cold open. The cover note's t
 about to see" paragraph, its source spec, the README walkthrough and four specs carry dated
 amendments. A fifth spec, `2026-09-24-week41-new-cases-design.md`, was not in the plan but carries
 one too: its two `consequence.coverCostEur` rows (`V-024`, `V-105`) name a field deleted along with
-the rest, found while scanning the docs tree for stale references to it. The Codex attempt at the
+the rest, found while scanning the docs tree for stale references to it, and it now carries two
+more, in §4 and §7, about the Thursday collision above appearing only once both proposals are
+adopted. The Codex attempt at the
 same fixes, reverted before any commit, is preserved as
 `.superpowers/sdd/codex-fleet-scenario-fixes-2026-09-24.patch` for reference only.
