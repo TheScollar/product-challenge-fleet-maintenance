@@ -52,7 +52,7 @@ This is one task because the three files form a single prop-threading change: `T
 meaningless until `App.tsx` supplies them. No intermediate state between edits type-checks, so they land
 together.
 
-- [ ] **Step 1: Edit `src/ui/TreatmentForm.tsx`**
+- [x] **Step 1: Edit `src/ui/TreatmentForm.tsx`**
 
 Add an `onApply` prop and make `apply()` call it instead of `onChange`. `pick()` keeps calling
 `onChange`, that's now the "stage this" path. Replace the full file with:
@@ -194,7 +194,7 @@ export function TreatmentForm({
 }
 ```
 
-- [ ] **Step 2: Edit `src/ui/ItemDetail.tsx`**
+- [x] **Step 2: Edit `src/ui/ItemDetail.tsx`**
 
 `ItemDetail` now owns the staged `DraftDecision` locally (seeded from the committed one), and reports it
 upward for the capacity-band preview. Replace the full file with:
@@ -290,7 +290,7 @@ staged one). Its own feasibility/effect math (`slotOptions`, `shortfallsUnder` i
 (`baysUsedOn(..., excludeItemId)`), so it only ever needs other items' committed slots, which this
 change never touches.
 
-- [ ] **Step 3: Edit `src/App.tsx`**
+- [x] **Step 3: Edit `src/App.tsx`**
 
 Add a `pendingDecision` state for the capacity-band preview, reset it whenever the selection changes,
 merge it over the committed decisions for `CapacityBand` only, and update the `ItemDetail` call site to
@@ -442,18 +442,18 @@ export default function App() {
 Note what did not change: `PlanHeader` and `DecisionQueue` both still receive the plain committed
 `decisions` and `blockers`. Only `CapacityBand` receives the merged `previewDecisions`.
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `npx tsc --noEmit`
 Expected: no output, exit code 0.
 
-- [ ] **Step 5: Run the existing suite**
+- [x] **Step 5: Run the existing suite**
 
 Run: `npm test`
 Expected: `Test Files 14 passed (14)`, `Tests 214 passed (214)`. This task touches no file under
 `src/domain/*` or `src/state/*`, so this is a pure regression check, not new coverage.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ui/TreatmentForm.tsx src/ui/ItemDetail.tsx src/App.tsx
