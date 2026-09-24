@@ -91,9 +91,9 @@ export const coverNoteContent: CoverNoteContent = {
             'A known deadline, an estimate with its assumption named, or an unknown condition that reads assessment needed. No number is invented where the evidence supports none.',
         },
         {
-          term: 'The three cost figures stay apart',
+          term: 'Disruption stays apart; spend does not',
           detail:
-            'Service cost, replacement cover and operational disruption are never blended. Disruption stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route figure this scenario cannot support.',
+            'Operational disruption is never blended into money: it stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route figure this scenario cannot support. Service cost and replacement cover are both spend, so they combine into one weekly total tracked against a budget.',
         },
         {
           term: 'Deferral is a record, not a gut call',

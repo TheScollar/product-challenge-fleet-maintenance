@@ -16,9 +16,10 @@ export interface CostSummary {
  * capacity once did (5bbdec1, 25dee47). [replacement cover spec §4.2]
  *
  * Operational disruption is not part of this total: it stays a count,
- * never money, per the cover note's "three cost figures stay apart"
- * [C §3.6]. This function deliberately narrows that principle to combine
- * only service cost and cover cost, which are both spend.
+ * never money, matching the cover note's disruption-stays-apart principle
+ * [C §3.6]. That principle originally kept all three figures apart; this
+ * function deliberately narrows it to combine only service cost and cover
+ * cost, which are both spend. [replacement cover spec §4.2]
  */
 export function costSummaryFor(args: {
   fixture: Fixture

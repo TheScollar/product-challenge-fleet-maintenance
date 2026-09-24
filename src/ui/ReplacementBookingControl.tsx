@@ -66,7 +66,10 @@ export function ReplacementBookingControl({
   }
 
   const errors = replacementBookingErrors(draft, { fixture, weekId })
-  const previewDays = draft.days !== undefined && draft.days !== null && draft.days >= 1 ? draft.days : 0
+  const previewDays =
+    draft.days !== undefined && draft.days !== null && Number.isInteger(draft.days) && draft.days >= 1
+      ? draft.days
+      : 0
   const previewCost = bookingCostEur({ ...draft, days: previewDays } as ReplacementBooking, fixture.replacementDayRateEur)
   const fieldId = (name: string) => `${vehicleId}-booking-${name}`
 
