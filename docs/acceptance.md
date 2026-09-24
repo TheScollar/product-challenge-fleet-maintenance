@@ -227,18 +227,26 @@ plus a gap in this addendum's own verification claim; a second round closed both
   equivalent line; the band's `covers` now does the same, bringing it in line with the dashboard.
   **Post-fix live pass** (booking `V-001` for Tuesday): the band's legend read `R-1 Mon to Fri · R-2
   Tue and Thu only · V-001 replacement Tue only · no specialist cover`, Tuesday's standard cell read
-  `38 / 38`, and both `CostAgainstBudget` renders (dashboard, live; commit summary, frozen) showed
-  matching figures. `hasSpecialistCover` was unaffected, since an ad hoc cover is always
-  standard-class.
+  `38 / 38`, and the dashboard's live `CostAgainstBudget` render showed matching figures.
+  `hasSpecialistCover` was unaffected, since an ad hoc cover is always standard-class. The commit
+  summary's frozen render of the same component was not re-run live this round; its figures were
+  independently verified live in the Task 12 per-task review, and the component is identical code
+  shared with the dashboard render that was re-checked here.
 - **Docs corrected, not papered over.** `README.md`'s "the three cost figures stay apart" claim
   contradicted the shipped code, which deliberately combines service and cover cost; the in-app
   cover note (`coverNoteContent.ts`), the user-facing instance of the same claim on the About
-  screen, carried the identical contradiction and was missed by the first fix round. Both now state
-  the narrowed rule: disruption stays apart, spend does not. `costs.ts`'s comment citing the cover
+  screen, carried the identical contradiction and was missed by the first fix round, along with its
+  own source of truth, `docs/superpowers/specs/2026-09-23-cover-note-design.md` §3.6, which a
+  future re-sync against would have reinstated the superseded claim. All three now agree: the
+  cover-note spec carries a dated amendment, the cover note's copy follows it under a documented
+  exception, and the README states the same narrowed rule. `costs.ts`'s comment citing the cover
   note as unqualified authority for the old, wider rule was reworded to name the narrowing
-  explicitly. `README.md`'s spec index and this addendum were added or corrected to match.
+  explicitly, and now calls `bookingCostEur` instead of inlining a copy of its formula, closing a
+  Minor item this addendum's second draft had accidentally dropped while still true. `README.md`'s
+  test count (stale at 209 since before this branch) and spec index were also corrected.
 
 Left as follow-up, all Minor: `ItemDetail`'s booking-control mount relies on its parent's key
 rather than carrying its own; `isReplacementBookingComplete` is unused dead code; specialist
 exclusion is enforced on the UI/validation path but not at the state-write boundary, low risk for a
-single-writer localStorage prototype.
+single-writer localStorage prototype; the README's own walkthrough does not mention requesting a
+replacement, so an evaluator following only that script will not encounter this feature.

@@ -27,7 +27,7 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 209 tests over the domain and state layers, including the ten
+npm test        # 252 tests over the domain and state layers, including the ten
                 # verification scenarios end to end
 ```
 

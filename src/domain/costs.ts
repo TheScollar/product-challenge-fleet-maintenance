@@ -1,4 +1,5 @@
 import { weekFixtureFor } from './capacity'
+import { bookingCostEur } from './replacementBooking'
 import type { DraftDecision, Fixture, ItemId, ReplacementBooking, VehicleId, WeekId } from './types'
 import { visitsFromDecisions } from './visits'
 
@@ -39,7 +40,7 @@ export function costSummaryFor(args: {
     coverCostEur += item.consequence.coverCostEur ?? 0
   }
   for (const booking of Object.values(bookings)) {
-    coverCostEur += booking.days * fixture.replacementDayRateEur
+    coverCostEur += bookingCostEur(booking, fixture.replacementDayRateEur)
   }
 
   const totalEur = serviceCostEur + coverCostEur

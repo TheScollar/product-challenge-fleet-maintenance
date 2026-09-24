@@ -141,6 +141,14 @@ Rendered as term-and-detail pairs.
 | Deferral is a record, not a gut call | Reason, review date and trigger are all required, and the item returns carrying them. Waiting is a legitimate decision; waiting without a follow-up is not. |
 | A blocked plan is a legitimate outcome | When no lever closes a gap, the draft survives and the blocker is named. The product never claims a readiness it does not have. |
 
+**Amended 2026-09-24 for the replacement cover feature**
+(`docs/superpowers/specs/2026-09-24-replacement-cover-design.md`, §4.2): the "three cost figures stay
+apart" row is superseded. Service cost and replacement cover are both spend, so they now combine
+into one weekly total tracked against a budget; operational disruption alone stays apart, never
+becoming money. `src/ui/coverNoteContent.ts` carries the narrowed copy under this exception, per the
+rule this document states above: verify against the built surface, and correct the copy rather than
+the screen.
+
 ### 3.7 What I deliberately did not build, and why
 
 Rendered as term-and-detail pairs.
