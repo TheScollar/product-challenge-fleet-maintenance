@@ -209,3 +209,68 @@ disables Monday and Tuesday for that reason. Moving either item to Monday instea
 shortfall rather than clearing it, since Monday's one spare unit is already spent on V-012's hold.
 Committing after relocating one case shows `Booked Thu 8 Oct` for the item left on Thursday and the
 chosen day for the other.
+
+## Addendum: final whole-branch review of replacement cover (2026-09-24)
+
+**Commands:** `npm test` (252 tests, 16 files, all passing; 1 added), `npx tsc --noEmit` (clean),
+`npm run build` (clean), plus two live browser passes, one before the fixes below and one after.
+
+**Pre-fix live pass**, run before the findings below existed, exercised the feature end to end. All
+three booking entry points, the fleet-grid popover, an attention card and the plan-surface item
+detail, produced a working request form. A requested booking cleared a real Tuesday capacity
+shortfall, the "tomorrow" warning disappearing once it was in place. The dashboard's cost figures
+updated live as bookings were added, observed going EUR 2,420 → EUR 2,560 → EUR 3,120 across two
+bookings; pushing the total to EUR 3,120 against a EUR 3,000 budget left Commit enabled and showed
+"EUR 120 over the EUR 3,000 budget". The commit summary froze that same over-budget total and
+listed both bookings sorted by vehicle ID. Reset cleared both the draft and the just-committed
+booking back to the EUR 2,420 baseline. The specialist-disabled state, "No specialist replacement
+cover exists.", rendered correctly at every entry point, including a quiet (green) specialist van's
+popover.
+
+A review of the whole replacement-cover branch, deliberately off the scripted path, found four
+Important issues that every per-task gate had missed. A first fix round closed three of them; the
+re-review found the fourth still open (the in-app copy the first round should also have corrected)
+plus a gap in this addendum's own verification claim; a second round closed both. All are fixed:
+
+- **A data-loss bug (Important).** `replacementBookingErrors` checked `days < 1` but never checked
+  it was an integer, and the days input carried no `step`, so a user could type `1.5` and have it
+  accepted and stored. The stricter persistence validator, `isReplacementBooking`, already requires
+  `Number.isInteger(days)`, so the next page load found the stored state invalid and reset the
+  entire app to the seed, silently destroying every decision and booking made. Fixed by tightening
+  the domain check to also require an integer, matching persistence; the days input now also
+  carries `step={1}` as defense in depth; the live cost/downtime preview now applies the same
+  integer gate; pinned by a new regression test.
+- **Duplicated cost-tile markup (Important).** `FleetView` and `CommitSummary` each carried a
+  byte-identical three-tile cost block, the same risk on the presentation side that
+  `costSummaryFor` was built to close on the calculation side (5bbdec1, 25dee47). Extracted into a
+  shared `CostAgainstBudget` component; both surfaces now render from the same markup.
+- **A capacity-band legend gap (Important).** The band's cell numbers already reflected a requested
+  booking via `adHocCoversFrom`, but its header legend read only `fixture.covers`, so the line
+  explaining where cover comes from never mentioned a booking that had just changed the numbers
+  above it. `fleetStatus.ts`'s `coverageFor` already appended ad hoc covers to the dashboard's
+  equivalent line; the band's `covers` now does the same, bringing it in line with the dashboard.
+  **Post-fix live pass** (booking `V-001` for Tuesday): the band's legend read `R-1 Mon to Fri · R-2
+  Tue and Thu only · V-001 replacement Tue only · no specialist cover`, Tuesday's standard cell read
+  `38 / 38`, and the dashboard's live `CostAgainstBudget` render showed matching figures.
+  `hasSpecialistCover` was unaffected, since an ad hoc cover is always standard-class. The commit
+  summary's frozen render of the same component was not re-run live this round; its figures were
+  independently verified live in the Task 12 per-task review, and the component is identical code
+  shared with the dashboard render that was re-checked here.
+- **Docs corrected, not papered over.** `README.md`'s "the three cost figures stay apart" claim
+  contradicted the shipped code, which deliberately combines service and cover cost; the in-app
+  cover note (`coverNoteContent.ts`), the user-facing instance of the same claim on the About
+  screen, carried the identical contradiction and was missed by the first fix round, along with its
+  own source of truth, `docs/superpowers/specs/2026-09-23-cover-note-design.md` §3.6, against which
+  a future re-sync would have reinstated the superseded claim. All three now agree: the
+  cover-note spec carries a dated amendment, the cover note's copy follows it under a documented
+  exception, and the README states the same narrowed rule. `costs.ts`'s comment citing the cover
+  note as unqualified authority for the old, wider rule was reworded to name the narrowing
+  explicitly, and now calls `bookingCostEur` instead of inlining a copy of its formula, closing a
+  Minor item this addendum's second draft had accidentally dropped while still true. `README.md`'s
+  test count (stale at 209 since before this branch) and spec index were also corrected.
+
+Left as follow-up, all Minor: `ItemDetail`'s booking-control mount relies on its parent's key
+rather than carrying its own; `isReplacementBookingComplete` is unused dead code; specialist
+exclusion is enforced on the UI/validation path but not at the state-write boundary, low risk for a
+single-writer localStorage prototype; the README's own walkthrough does not mention requesting a
+replacement, so an evaluator following only that script will not encounter this feature.

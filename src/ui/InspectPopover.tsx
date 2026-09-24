@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { formatDay } from '../domain/clock'
 import type { ItemId, Vehicle } from '../domain/types'
+import { ReplacementBookingControl } from './ReplacementBookingControl'
 
 /**
  * Read-only inspection of one van. Click-away and Escape close it; near the
@@ -61,6 +62,7 @@ export function InspectPopover({
         <dt>Status</dt>
         <dd>{facts.length > 0 ? facts.join(' · ') : 'In service · not held'}</dd>
       </dl>
+      <ReplacementBookingControl key={vehicle.id} vehicleId={vehicle.id} vehicleClass={vehicle.vehicleClass} />
       {itemId !== null ? (
         <button className="foot" onClick={() => onOpenPlan(itemId)}>
           View in week plan →

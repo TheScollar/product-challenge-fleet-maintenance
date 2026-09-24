@@ -1,5 +1,6 @@
 import { weekDays } from './clock'
 import type {
+  Cover,
   DayCapacity,
   Fixture,
   ISODate,
@@ -26,6 +27,7 @@ export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
     demand: fixture.defaultDemand,
     coverIds: fixture.defaultCoverIds,
     itemIds: [],
+    budgetEur: fixture.defaultBudgetEur,
   }
 }
 
@@ -63,20 +65,29 @@ export function computeDayCapacity(args: {
   fixture: Fixture
   visits: Visit[]
   week: WeekFixture
+  adHocCovers?: Cover[]
 }): DayCapacity {
-  const { date, vehicleClass, fixture, visits, week } = args
+  const { date, vehicleClass, fixture, visits, week, adHocCovers = [] } = args
   const inClass = fixture.vehicles.filter((v) => v.vehicleClass === vehicleClass)
   const unavailableAll = unavailableOn(date, fixture.vehicles, visits)
   const unavailable = inClass.filter((v) => unavailableAll.has(v.id)).map((v) => v.id)
 
   // Cover carries its own class, so a standard rental can never close a
   // specialist gap. The data model does not allow it. [S 3.1]
-  const cover = fixture.covers.filter(
+  const poolCover = fixture.covers.filter(
     (c) =>
       week.coverIds.includes(c.id) &&
       c.vehicleClass === vehicleClass &&
       c.confirmedDates.includes(date),
   ).length
+  // A requested replacement booking is merged in as an indistinguishable
+  // extra cover source, so it clears a shortfall exactly like R-1 or R-2
+  // does, with no second capacity mechanism to keep in sync. [replacement
+  // cover spec §4.1]
+  const extraCover = adHocCovers.filter(
+    (c) => c.vehicleClass === vehicleClass && c.confirmedDates.includes(date),
+  ).length
+  const cover = poolCover + extraCover
 
   const owned = inClass.length
   const available = owned - unavailable.length + cover
@@ -98,13 +109,14 @@ export function computeWeekCapacity(args: {
   fixture: Fixture
   weekId: WeekId
   visits: Visit[]
+  adHocCovers?: Cover[]
 }): DayCapacity[] {
-  const { fixture, weekId, visits } = args
+  const { fixture, weekId, visits, adHocCovers = [] } = args
   const week = weekFixtureFor(fixture, weekId)
   const classes: VehicleClass[] = ['standard', 'specialist']
   return week.days.flatMap((date) =>
     classes.map((vehicleClass) =>
-      computeDayCapacity({ date, vehicleClass, fixture, visits, week }),
+      computeDayCapacity({ date, vehicleClass, fixture, visits, week, adHocCovers }),
     ),
   )
 }

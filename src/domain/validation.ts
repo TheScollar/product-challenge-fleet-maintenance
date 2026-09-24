@@ -2,7 +2,8 @@ import { computeWeekCapacity, isHeldOn } from './capacity'
 import { formatDay } from './clock'
 import { isDeferralComplete } from './deferral'
 import { slotBlockers } from './feasibility'
-import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem, WeekId } from './types'
+import { adHocCoversFrom } from './replacementBooking'
+import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem, ReplacementBooking, VehicleId, WeekId } from './types'
 import { visitsFromDecisions } from './visits'
 
 /**
@@ -13,13 +14,15 @@ export function validatePlan(args: {
   fixture: Fixture
   weekId: WeekId
   decisions: Record<ItemId, DraftDecision>
+  bookings?: Record<VehicleId, ReplacementBooking>
 }): Blocker[] {
-  const { fixture, weekId, decisions } = args
+  const { fixture, weekId, decisions, bookings = {} } = args
   // Every item the caller has a decision slot for, which is the week's queue.
   // Filtering on week.itemIds would skip resurfaced items entirely, since weeks
   // after the first author none of their own.
   const items = fixture.items.filter((i) => decisions[i.id] !== undefined)
   const visits = visitsFromDecisions(decisions, fixture.items)
+  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
   const out: Blocker[] = []
 
   for (const item of items) {
@@ -41,7 +44,7 @@ export function validatePlan(args: {
     out.push(...slotBlockers({ item, date: decision.slotDate, fixture, visits }))
   }
 
-  for (const day of computeWeekCapacity({ fixture, weekId, visits })) {
+  for (const day of computeWeekCapacity({ fixture, weekId, visits, adHocCovers })) {
     if (day.shortfall > 0) {
       out.push({
         kind: 'capacity-shortfall',

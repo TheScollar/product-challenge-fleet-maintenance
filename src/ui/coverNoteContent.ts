@@ -6,7 +6,7 @@
  * spec's order, with section 3.1's placement rule applied ("What you are
  * about to see" is the fourth block).
  *
- * Two copy-fidelity notes:
+ * Three copy-fidelity notes:
  *
  * - The spec's blockquote markers (`>`) are formatting of the spec document
  *   and are stripped. Its bold spans are content and are preserved with
@@ -20,6 +20,11 @@
  *   "Where the thinking lives" table, where the spec requires the paths
  *   themselves to render in monospace; CoverNote.tsx applies that as a
  *   block-level rule for every `paths` entry, not as a per-string decision.
+ * - The "Disruption stays apart; spend does not" pair is not verbatim from
+ *   section 3.6: it carries the narrowed rule from the replacement-cover
+ *   spec's amendment to that section, dated 2026-09-24. Re-syncing this pair
+ *   against section 3.6 without reading that amendment first would reinstate
+ *   the superseded, now-false "three cost figures stay apart" claim.
  */
 
 export type CoverBlock =
@@ -91,9 +96,9 @@ export const coverNoteContent: CoverNoteContent = {
             'A known deadline, an estimate with its assumption named, or an unknown condition that reads assessment needed. No number is invented where the evidence supports none.',
         },
         {
-          term: 'The three cost figures stay apart',
+          term: 'Disruption stays apart; spend does not',
           detail:
-            'Service cost, replacement cover and operational disruption are never blended. Disruption stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route figure this scenario cannot support.',
+            'Operational disruption is never blended into money: it stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route figure this scenario cannot support. Service cost and replacement cover are both spend, so they combine into one weekly total tracked against a budget.',
         },
         {
           term: 'Deferral is a record, not a gut call',

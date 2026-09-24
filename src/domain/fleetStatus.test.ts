@@ -101,6 +101,27 @@ describe('fleet overview at cold open', () => {
   })
 })
 
+describe('a booking is reflected in tomorrow\'s coverage', () => {
+  it('clears the Tuesday shortfall and lists the booking as cover on site', () => {
+    const s = initialState(fixture)
+    const weekId = activeWeekId(s)
+    const decisions = draftFor({ fixture, state: s, weekId })
+    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+    const o = fleetOverview({
+      fixture,
+      today: s.demoDate,
+      queueItems: queueFor({ fixture, state: s, weekId }).map((e) => e.item),
+      decisions,
+      blockers: validatePlan({ fixture, weekId, decisions, bookings }),
+      committed: s.committedByWeek[weekId] ?? null,
+      deferralHistory: s.deferralHistory,
+      bookings,
+    })
+    expect(o.nextBusinessDay.covered).toBe(true)
+    expect(o.nextBusinessDay.coverOnSite).toContain('V-027 replacement')
+  })
+})
+
 describe('fleet overview after the walkthrough commit', () => {
   const o = overviewFor(committedState())
 

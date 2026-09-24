@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addDays, formatDay, formatLongDay, isoWeekNumber } from '../domain/clock'
+import { costSummaryFor } from '../domain/costs'
 import { fleetOverview, type VanStatus } from '../domain/fleetStatus'
-import type { Blocker, DraftDecision, ItemId, VehicleId } from '../domain/types'
+import type { Blocker, DraftDecision, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { urgencyLabel } from '../domain/urgency'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId, queueFor } from '../state/planReducer'
+import { CostAgainstBudget } from './CostAgainstBudget'
 import { InspectPopover } from './InspectPopover'
+import { ReplacementBookingControl } from './ReplacementBookingControl'
 
 export function FleetView({
   decisions,
   blockers,
+  bookings,
   onOpenPlan,
 }: {
   decisions: Record<ItemId, DraftDecision>
   blockers: Blocker[]
+  bookings: Record<VehicleId, ReplacementBooking>
   onOpenPlan: (itemId: ItemId | null) => void
 }) {
   const { state, fixture } = usePlan()
@@ -30,8 +35,14 @@ export function FleetView({
         blockers,
         committed: state.committedByWeek[weekId] ?? null,
         deferralHistory: state.deferralHistory,
+        bookings,
       }),
-    [fixture, state, weekId, decisions, blockers],
+    [fixture, state, weekId, decisions, blockers, bookings],
+  )
+
+  const cost = useMemo(
+    () => costSummaryFor({ fixture, weekId, decisions, bookings }),
+    [fixture, weekId, decisions, bookings],
   )
 
   const specialists = fixture.vehicles.filter((v) => v.vehicleClass === 'specialist').length
@@ -171,6 +182,11 @@ export function FleetView({
           ))}
         </div>
       </div>
+
+      <div className="fleetsection">
+        <h2>This week's cost</h2>
+        <CostAgainstBudget summary={cost} />
+      </div>
     </>
   )
 }
@@ -186,13 +202,12 @@ function AttentionCard({
   const itemId = status.itemId
   const item = fixture.items.find((i) => i.id === itemId) ?? null
   const className = `acard ${status.kind === 'off-road' ? 'crit' : 'warn'}`
-  const body = (
-    <>
+
+  return (
+    <div className={className}>
       <div className="row1">
         <span className="vid">{status.vehicleId}</span>
         {item !== null && item.safetyClass && <span className="badge safety">Safety · hard stop</span>}
-        {/* Plain `.badge`, matching how the week plan's own tiles mark a held
-            van. The `held` modifier it used to carry no longer has a rule. */}
         {status.kind === 'off-road' && <span className="badge">Off the road</span>}
         {status.vehicleClass === 'specialist' && <span className="badge specialist">Specialist</span>}
         {item !== null && (
@@ -203,19 +218,12 @@ function AttentionCard({
       <div className="why">
         {status.kind === 'off-road' ? status.facts.join(' · ') : item !== null ? item.urgency.because : ''}
       </div>
-    </>
-  )
-
-  // No item in this week's queue means there is nothing to select over there:
-  // the van is red for a hold alone and the card is already the whole fact.
-  // A button here would promise a destination the week plan cannot supply, so
-  // the card states its facts and stops, like the stat tiles. [FO spec 4]
-  if (itemId === null) return <div className={className}>{body}</div>
-
-  return (
-    <button className={className} onClick={() => onOpenPlan(itemId)}>
-      {body}
-      <div className="go">Open in week plan →</div>
-    </button>
+      {itemId !== null && (
+        <button className="go" onClick={() => onOpenPlan(itemId)}>
+          Open in week plan →
+        </button>
+      )}
+      <ReplacementBookingControl key={status.vehicleId} vehicleId={status.vehicleId} vehicleClass={status.vehicleClass} />
+    </div>
   )
 }

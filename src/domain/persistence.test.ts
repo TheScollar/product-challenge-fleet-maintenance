@@ -36,6 +36,7 @@ function validEnvelope(overrides: Record<string, unknown> = {}): string {
     version: 1,
     demoDate: '2026-09-28',
     draftByWeek: {},
+    draftBookingsByWeek: {},
     committedByWeek: {},
     deferralHistory: {},
     storageNotice: null,
@@ -48,6 +49,7 @@ function expectSeedEquivalent(actual: AppState) {
   expect(actual.version).toBe(seed.version)
   expect(actual.demoDate).toBe(seed.demoDate)
   expect(actual.draftByWeek).toEqual(seed.draftByWeek)
+  expect(actual.draftBookingsByWeek).toEqual(seed.draftBookingsByWeek)
   expect(actual.committedByWeek).toEqual(seed.committedByWeek)
   expect(actual.deferralHistory).toEqual(seed.deferralHistory)
 }
@@ -56,6 +58,29 @@ function expectSeedEquivalent(actual: AppState) {
  *  exercises the same shapes loadState now validates. */
 function committedRealState(): AppState {
   const s = reduce(initialState(fixture), {
+    type: 'set-decision',
+    weekId: '2026-09-28',
+    decision: {
+      itemId: 'item-v041',
+      treatment: 'watch',
+      slotDate: null,
+      deferral: {
+        reason: 'No specialist cover this week.',
+        reviewDate: '2026-10-05',
+        trigger: { kind: 'event', eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' },
+      },
+    },
+  })
+  return reduce(s, { type: 'commit', weekId: '2026-09-28' })
+}
+
+function committedRealStateWithBooking(): AppState {
+  let s = reduce(initialState(fixture), {
+    type: 'set-booking',
+    weekId: '2026-09-28',
+    booking: { vehicleId: 'V-027', startDate: '2026-09-29', days: 2 },
+  })
+  s = reduce(s, {
     type: 'set-decision',
     weekId: '2026-09-28',
     decision: {
@@ -194,6 +219,34 @@ const CORRUPT_PAYLOADS: Array<{ name: string; payload: string }> = [
       },
     }),
   },
+  {
+    name: 'draftBookingsByWeek is a string instead of a map',
+    payload: validEnvelope({ draftBookingsByWeek: 'garbage' }),
+  },
+  {
+    name: 'a draft booking has a non-integer day count',
+    payload: validEnvelope({
+      draftBookingsByWeek: {
+        '2026-09-28': { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1.5 } },
+      },
+    }),
+  },
+  {
+    name: 'a draft booking has a calendar-invalid start date',
+    payload: validEnvelope({
+      draftBookingsByWeek: {
+        '2026-09-28': { 'V-027': { vehicleId: 'V-027', startDate: '2026-02-30', days: 1 } },
+      },
+    }),
+  },
+  {
+    name: 'a committed plan is missing bookings entirely',
+    payload: validEnvelope({
+      committedByWeek: {
+        '2026-09-28': { weekId: '2026-09-28', committedOn: '2026-09-28', decisions: {} },
+      },
+    }),
+  },
 ]
 
 describe('loadState', () => {
@@ -238,6 +291,16 @@ describe('loadState', () => {
   it('round-trips a real committed state through saveState', () => {
     withStoredValue(null, () => {
       const real = committedRealState()
+      saveState(real)
+      const loaded = loadState(fixture)
+      expect(loaded).toEqual(real)
+      expect(loaded.storageNotice).toBeNull()
+    })
+  })
+
+  it('round-trips a real committed booking through saveState', () => {
+    withStoredValue(null, () => {
+      const real = committedRealStateWithBooking()
       saveState(real)
       const loaded = loadState(fixture)
       expect(loaded).toEqual(real)

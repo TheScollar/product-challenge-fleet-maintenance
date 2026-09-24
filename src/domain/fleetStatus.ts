@@ -1,9 +1,11 @@
 import { computeDayCapacity, isHeldOn, weekFixtureFor } from './capacity'
 import { addDays, daysBetween, formatDay, mondayOf } from './clock'
 import { latestRecord } from './deferral'
+import { adHocCoversFrom } from './replacementBooking'
 import type {
   Blocker,
   CommittedPlan,
+  Cover,
   DayCapacity,
   DeferralRecord,
   DraftDecision,
@@ -11,6 +13,7 @@ import type {
   ISODate,
   ItemId,
   OpenItem,
+  ReplacementBooking,
   Vehicle,
   VehicleClass,
   VehicleId,
@@ -71,19 +74,22 @@ export function nextBusinessDay(fixture: Fixture, today: ISODate): ISODate {
   return weekFixtureFor(fixture, addDays(week.weekId, 7)).days[0]
 }
 
-function coverageFor(date: ISODate, fixture: Fixture, visits: Visit[]): CoverageFacts {
+function coverageFor(date: ISODate, fixture: Fixture, visits: Visit[], adHocCovers: Cover[]): CoverageFacts {
   const week = weekFixtureFor(fixture, mondayOf(date))
   const classes: VehicleClass[] = ['standard', 'specialist']
   const days = classes.map((vehicleClass) =>
-    computeDayCapacity({ date, vehicleClass, fixture, visits, week }),
+    computeDayCapacity({ date, vehicleClass, fixture, visits, week, adHocCovers }),
   )
   return {
     date,
     covered: days.every((d) => d.shortfall === 0),
     shortfalls: days.filter((d) => d.shortfall > 0),
-    coverOnSite: fixture.covers
-      .filter((c) => week.coverIds.includes(c.id) && c.confirmedDates.includes(date))
-      .map((c) => c.id),
+    coverOnSite: [
+      ...fixture.covers
+        .filter((c) => week.coverIds.includes(c.id) && c.confirmedDates.includes(date))
+        .map((c) => c.id),
+      ...adHocCovers.filter((c) => c.confirmedDates.includes(date)).map((c) => c.id),
+    ],
   }
 }
 
@@ -95,8 +101,10 @@ export function fleetOverview(args: {
   blockers: Blocker[]
   committed: CommittedPlan | null
   deferralHistory: Record<ItemId, DeferralRecord[]>
+  bookings?: Record<VehicleId, ReplacementBooking>
 }): FleetOverview {
-  const { fixture, today, queueItems, decisions, blockers, committed, deferralHistory } = args
+  const { fixture, today, queueItems, decisions, blockers, committed, deferralHistory, bookings = {} } = args
+  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
 
   // A van turns red only for an operational fact: a hold, or a committed
   // visit. Coverage is a different question, and both its lines read the
@@ -191,8 +199,8 @@ export function fleetOverview(args: {
     counts,
     onRoad: fixture.vehicles.length - counts.offRoad,
     awaitingDecision,
-    today: coverageFor(today, fixture, draftVisits),
-    nextBusinessDay: coverageFor(nextBusinessDay(fixture, today), fixture, draftVisits),
+    today: coverageFor(today, fixture, draftVisits, adHocCovers),
+    nextBusinessDay: coverageFor(nextBusinessDay(fixture, today), fixture, draftVisits, adHocCovers),
     committed: committed !== null,
   }
 }

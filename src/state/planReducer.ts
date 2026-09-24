@@ -11,6 +11,8 @@ import type {
   ISODate,
   ItemId,
   OpenItem,
+  ReplacementBooking,
+  VehicleId,
   WeekId,
 } from '../domain/types'
 
@@ -18,6 +20,7 @@ export interface AppState {
   version: 1
   demoDate: ISODate
   draftByWeek: Record<WeekId, Record<ItemId, DraftDecision>>
+  draftBookingsByWeek: Record<WeekId, Record<VehicleId, ReplacementBooking>>
   committedByWeek: Record<WeekId, CommittedPlan | null>
   deferralHistory: Record<ItemId, DeferralRecord[]>
   storageNotice: string | null
@@ -25,6 +28,8 @@ export interface AppState {
 
 export type PlanAction =
   | { type: 'set-decision'; weekId: WeekId; decision: DraftDecision }
+  | { type: 'set-booking'; weekId: WeekId; booking: ReplacementBooking }
+  | { type: 'clear-booking'; weekId: WeekId; vehicleId: VehicleId }
   | { type: 'commit'; weekId: WeekId }
   | { type: 'advance-days'; days: number }
   | { type: 'advance-to-next-review' }
@@ -89,11 +94,19 @@ export function draftFor(args: {
   return { ...seeded, ...(existing ?? {}) }
 }
 
+export function bookingsFor(args: {
+  state: AppState
+  weekId: WeekId
+}): Record<VehicleId, ReplacementBooking> {
+  return args.state.draftBookingsByWeek[args.weekId] ?? {}
+}
+
 export function initialState(_fixture: Fixture): AppState {
   return {
     version: 1,
     demoDate: SEED_DATE,
     draftByWeek: {},
+    draftBookingsByWeek: {},
     committedByWeek: {},
     deferralHistory: {},
     storageNotice: null,
@@ -117,9 +130,30 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       }
     }
 
+    case 'set-booking': {
+      const current = bookingsFor({ state, weekId: action.weekId })
+      return {
+        ...state,
+        draftBookingsByWeek: {
+          ...state.draftBookingsByWeek,
+          [action.weekId]: { ...current, [action.booking.vehicleId]: action.booking },
+        },
+      }
+    }
+
+    case 'clear-booking': {
+      const current = { ...bookingsFor({ state, weekId: action.weekId }) }
+      delete current[action.vehicleId]
+      return {
+        ...state,
+        draftBookingsByWeek: { ...state.draftBookingsByWeek, [action.weekId]: current },
+      }
+    }
+
     case 'commit': {
       const decisions = draftFor({ fixture, state, weekId: action.weekId })
-      const plan = commitPlan({ weekId: action.weekId, decisions, demoDate: state.demoDate })
+      const bookings = bookingsFor({ state, weekId: action.weekId })
+      const plan = commitPlan({ weekId: action.weekId, decisions, bookings, demoDate: state.demoDate })
       // Rebuild history only for items this plan actually decided. An item
       // decided away from a deferral must lose its old record, or it resurfaces
       // forever on a stale rationale. An item still undisposed has decided
@@ -137,6 +171,7 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       return {
         ...state,
         draftByWeek: { ...state.draftByWeek, [action.weekId]: decisions },
+        draftBookingsByWeek: { ...state.draftBookingsByWeek, [action.weekId]: bookings },
         committedByWeek: { ...state.committedByWeek, [action.weekId]: plan },
         deferralHistory: history,
       }

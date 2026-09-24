@@ -27,7 +27,7 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 209 tests over the domain and state layers, including the ten
+npm test        # 252 tests over the domain and state layers, including the ten
                 # verification scenarios end to end
 ```
 
@@ -73,10 +73,12 @@ and no external booking exists.** Prices are scenario prices.
 - **Urgency is three states, never a score.** A known deadline, an estimate with its assumption named,
   or an unknown condition that reads `assessment needed`. No number is invented where the evidence
   supports none.
-- **The three cost figures stay apart.** Service cost, replacement cover and operational disruption are
-  never blended. Disruption stays a count of uncovered assignments rather than becoming money, because
-  turning it into euros needs a revenue-per-route figure the fixture cannot support. Cover reads
-  `not available` rather than zero where none is compatible.
+- **Disruption stays apart; spend does not.** Operational disruption is never blended into money: it
+  stays a count of uncovered assignments, because turning it into euros needs a revenue-per-route
+  figure the fixture cannot support, and cover reads `not available` rather than zero where none is
+  compatible. Service cost and replacement-cover cost are different: both are spend, so the
+  replacement cover feature combines them into one weekly total tracked against a budget
+  (`docs/superpowers/specs/2026-09-24-replacement-cover-design.md` §4.2).
 - **Deferral is a record, not a gut call.** Reason, review date and trigger are all required, and the
   item comes back carrying them.
 - **A blocked plan is a legitimate outcome.** The draft survives and the blocker is named. The UI never
@@ -132,6 +134,7 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 - `docs/superpowers/specs/2026-09-23-fleet-maintenance-prototype-design.md`: the technical design
 - `docs/superpowers/specs/2026-09-23-cover-note-design.md`: the in-app cover note, specified separately
 - `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`: the fleet overview landing screen, specified separately
+- `docs/superpowers/specs/2026-09-24-replacement-cover-design.md`: requesting and costing replacement cover, specified separately
 - `docs/fleet-maintenance-research-findings.md`: research and framing
 - `docs/mockups/`: layout decisions and the alternatives they were made from, including the
   guided-queue declutter proposal the current surface follows

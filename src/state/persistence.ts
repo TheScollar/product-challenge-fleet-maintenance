@@ -7,7 +7,9 @@ import type {
   DraftDecision,
   Fixture,
   ISODate,
+  ReplacementBooking,
   Trigger,
+  VehicleId,
 } from '../domain/types'
 
 export const STORAGE_KEY = 'fleet-maintenance-prototype/v1'
@@ -79,10 +81,26 @@ function isDecisionsMap(value: unknown): value is Record<string, DraftDecision> 
   return isPlainObject(value) && Object.values(value).every(isDraftDecision)
 }
 
+function isReplacementBooking(value: unknown): value is ReplacementBooking {
+  if (!isPlainObject(value)) return false
+  const { vehicleId, startDate, days } = value
+  return (
+    typeof vehicleId === 'string' &&
+    isISODate(startDate) &&
+    typeof days === 'number' &&
+    Number.isInteger(days) &&
+    days > 0
+  )
+}
+
+function isBookingsMap(value: unknown): value is Record<VehicleId, ReplacementBooking> {
+  return isPlainObject(value) && Object.values(value).every(isReplacementBooking)
+}
+
 function isCommittedPlan(value: unknown): value is CommittedPlan {
   if (!isPlainObject(value)) return false
-  const { weekId, committedOn, decisions } = value
-  return isISODate(weekId) && isISODate(committedOn) && isDecisionsMap(decisions)
+  const { weekId, committedOn, decisions, bookings } = value
+  return isISODate(weekId) && isISODate(committedOn) && isDecisionsMap(decisions) && isBookingsMap(bookings)
 }
 
 function isDeferralRecord(value: unknown): value is DeferralRecord {
@@ -94,12 +112,14 @@ function isDeferralRecord(value: unknown): value is DeferralRecord {
 /** The full shape of a stored AppState, minus storageNotice, which is never
  *  persisted meaningfully and is overwritten on every load. */
 function isValidState(value: Partial<AppState>): value is AppState {
-  const { version, demoDate, draftByWeek, committedByWeek, deferralHistory } = value
+  const { version, demoDate, draftByWeek, draftBookingsByWeek, committedByWeek, deferralHistory } = value
   return (
     version === CURRENT_VERSION &&
     isISODate(demoDate) &&
     isPlainObject(draftByWeek) &&
     Object.values(draftByWeek).every(isDecisionsMap) &&
+    isPlainObject(draftBookingsByWeek) &&
+    Object.values(draftBookingsByWeek).every(isBookingsMap) &&
     isPlainObject(committedByWeek) &&
     Object.values(committedByWeek).every((v) => v === null || isCommittedPlan(v)) &&
     isPlainObject(deferralHistory) &&

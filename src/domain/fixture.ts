@@ -384,6 +384,7 @@ const weeks: WeekFixture[] = [
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1', 'R-2'],
     itemIds: ['item-v012', 'item-v041', 'item-v103', 'item-v118', 'item-v027'],
+    budgetEur: 3000,
   },
   {
     weekId: '2026-10-05',
@@ -391,6 +392,7 @@ const weeks: WeekFixture[] = [
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1'],
     itemIds: ['item-v024', 'item-v105'],
+    budgetEur: 3000,
   },
 ]
 
@@ -404,4 +406,6 @@ export const fixture: Fixture = {
   defaultDemand: { standard: 38, specialist: 7 },
   defaultCoverIds: ['R-1'],
   events,
+  replacementDayRateEur: 140,
+  defaultBudgetEur: 3000,
 }

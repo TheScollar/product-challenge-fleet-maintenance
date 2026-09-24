@@ -89,6 +89,16 @@ describe('fixture integrity', () => {
     expect(fixture.defaultDemand).toEqual({ standard: 38, specialist: 7 })
   })
 
+  it('prices a standard replacement at a single fixture-wide day rate', () => {
+    expect(fixture.replacementDayRateEur).toBe(140)
+  })
+
+  it('sets a weekly budget for both authored weeks and a default for the rest', () => {
+    expect(fixture.weeks.find((w) => w.weekId === '2026-09-28')!.budgetEur).toBe(3000)
+    expect(fixture.weeks.find((w) => w.weekId === '2026-10-05')!.budgetEur).toBe(3000)
+    expect(fixture.defaultBudgetEur).toBe(3000)
+  })
+
   it('authors two weeks, the second carrying two new cases plus resurfacing', () => {
     expect(fixture.weeks.map((w) => w.weekId)).toEqual(['2026-09-28', '2026-10-05'])
     expect(fixture.weeks[0].itemIds).toHaveLength(5)
