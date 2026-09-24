@@ -145,9 +145,12 @@ describe('8. Review date arrives or trigger fires', () => {
     const advanced = reduce(committed, { type: 'advance-to-next-review' })
     expect(advanced.demoDate).toBe('2026-10-05')
     const queue = queueFor({ fixture, state: advanced, weekId: '2026-10-05' })
-    expect(queue.map((q) => q.item.id)).toEqual(['item-v041'])
-    expect(queue[0].priorDecision!.deferral.reason).toContain('No specialist cover')
-    expect(queue[0].resurfacedBecause).toContain('Review date')
+    // Week 41 now also authors its own two cases (item-v024, item-v105) ahead
+    // of whatever resurfaces. V-041 is still the only resurfaced entry.
+    expect(queue.map((q) => q.item.id)).toEqual(['item-v024', 'item-v105', 'item-v041'])
+    const v041 = queue.find((q) => q.item.id === 'item-v041')!
+    expect(v041.priorDecision!.deferral.reason).toContain('No specialist cover')
+    expect(v041.resurfacedBecause).toContain('Review date')
   })
 })
 

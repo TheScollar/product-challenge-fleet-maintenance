@@ -109,9 +109,12 @@ describe('advancing the clock', () => {
   it('resurfaces V-041 into week 41 with its rationale intact', () => {
     const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
     const queue = queueFor({ fixture, state: s, weekId: '2026-10-05' })
-    expect(queue.map((q) => q.item.id)).toEqual(['item-v041'])
-    expect(queue[0].resurfacedBecause).toContain('Review date')
-    expect(queue[0].priorDecision!.deferral.reason).toContain('No specialist cover')
+    // Week 41 now also authors its own two cases (item-v024, item-v105) ahead
+    // of whatever resurfaces. V-041 is still the only resurfaced entry.
+    expect(queue.map((q) => q.item.id)).toEqual(['item-v024', 'item-v105', 'item-v041'])
+    const v041 = queue.find((q) => q.item.id === 'item-v041')!
+    expect(v041.resurfacedBecause).toContain('Review date')
+    expect(v041.priorDecision!.deferral.reason).toContain('No specialist cover')
   })
 
   it('leaves V-027 down, since neither its date nor its trigger has arrived', () => {

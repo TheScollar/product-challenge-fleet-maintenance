@@ -183,8 +183,9 @@ describe('fleet overview in week 41', () => {
 
   it('leaves the held van red with no item, since week 41 queues none for it', () => {
     // The shape the attention card has to survive: red, real facts, nothing to
-    // navigate to. Week 41 authors no items and V-012's week-40 item was
-    // committed, so only the hold is left. [FO spec 4]
+    // navigate to. Week 41 authors two new cases of its own now, but none for
+    // V-012, and its week-40 item was committed, so only the hold is left.
+    // [FO spec 4]
     const o = overviewFor(s)
     const v012 = vanOf(o, 'V-012')
     expect(v012.kind).toBe('off-road')
@@ -201,7 +202,68 @@ describe('fleet overview in week 41', () => {
     expect(vanOf(later, 'V-012').kind).toBe('in-service')
     expect(vanOf(later, 'V-012').facts).toEqual([])
     expect(vanOf(later, 'V-027').facts).toEqual(['Watching · review Mon 2 Nov'])
-    expect(later.counts).toEqual({ offRoad: 0, needsDecision: 1, inService: 44 })
+    // needsDecision now also counts V-024 and V-105, week 41's own new cases.
+    expect(later.counts).toEqual({ offRoad: 0, needsDecision: 3, inService: 42 })
+  })
+})
+
+describe('fleet overview: two new week-41 cases collide on Thursday', () => {
+  const week41 = planReducer(committedState(), { type: 'advance-to-next-review' }, fixture)
+
+  it('shows both new cases amber with an item to open, from the moment week 41 is reached', () => {
+    const o = overviewFor(week41)
+    expect(vanOf(o, 'V-024').kind).toBe('needs-decision')
+    expect(vanOf(o, 'V-024').itemId).toBe('item-v024')
+    expect(vanOf(o, 'V-105').kind).toBe('needs-decision')
+    expect(vanOf(o, 'V-105').itemId).toBe('item-v105')
+  })
+
+  it('flags Thursday standard short by 1 with no decision made yet', () => {
+    const thursday = planReducer(week41, { type: 'advance-days', days: 3 }, fixture)
+    const o = overviewFor(thursday)
+    expect(o.today.date).toBe('2026-10-08')
+    expect(o.today.covered).toBe(false)
+    expect(o.today.shortfalls.map((s) => [s.vehicleClass, s.shortfall])).toEqual([['standard', 1]])
+  })
+
+  it('clears Thursday when one case moves to a day with spare capacity', () => {
+    const beforeMove = planReducer(week41, { type: 'advance-days', days: 3 }, fixture)
+    expect(overviewFor(beforeMove).today.covered).toBe(false)
+
+    // V-105, not V-024: V-024's parts aren't ready until Wednesday, so the
+    // slot picker would disable Tuesday for it. V-105 carries no parts
+    // requirement, so this is a day a real user could actually pick.
+    const moved = planReducer(
+      week41,
+      {
+        type: 'set-decision',
+        weekId: '2026-10-05',
+        decision: { itemId: 'item-v105', treatment: 'act-now', slotDate: '2026-10-06', deferral: null },
+      },
+      fixture,
+    )
+    const afterMove = planReducer(moved, { type: 'advance-days', days: 3 }, fixture)
+    expect(overviewFor(afterMove).today.covered).toBe(true)
+  })
+
+  it('relocates rather than resolves the shortfall if moved to Monday instead', () => {
+    // V-105 again: no parts requirement, so Monday is a reachable slot for it.
+    const moved = planReducer(
+      week41,
+      {
+        type: 'set-decision',
+        weekId: '2026-10-05',
+        decision: { itemId: 'item-v105', treatment: 'act-now', slotDate: '2026-10-05', deferral: null },
+      },
+      fixture,
+    )
+    const monday = overviewFor(moved)
+    expect(monday.today.date).toBe('2026-10-05')
+    expect(monday.today.covered).toBe(false)
+    expect(monday.today.shortfalls.map((s) => [s.vehicleClass, s.shortfall])).toEqual([['standard', 1]])
+
+    const thursday = planReducer(moved, { type: 'advance-days', days: 3 }, fixture)
+    expect(overviewFor(thursday).today.covered).toBe(true)
   })
 })
 

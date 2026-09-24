@@ -53,7 +53,9 @@ resurrect it.
 6. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
 7. Commit. The summary carries the visits, forward availability, the cover assumptions including the
    absence of specialist cover, and the deferred follow-ups.
-8. Advance the clock to the next review date. `V-041` returns with its rationale intact. Reset.
+8. Advance the clock to the next review date. `V-041` returns with its rationale intact, and week 41
+   opens with two new cases of its own: `V-105`'s HU deadline and `V-024`'s tyre tread, both
+   proposed for the same Thursday and leaving it one standard van short. Reset.
 
 ## What is simulated
 
@@ -104,7 +106,8 @@ and no external booking exists.** Prices are scenario prices.
 
 The full list with evidence lives in `docs/acceptance.md`. The ones to know before judging the build:
 
-1. Week 41 and later carry only resurfaced items. No new work is authored for them.
+1. Week 41 additionally authors two new cases (a HU deadline and a tyre-tread estimate, both
+   landing on the same Thursday). Week 42 and later still carry only resurfaced items.
 2. The walkthrough was verified live in a browser by the build's own tooling, twice, but not observed
    with a person unfamiliar with the build, so G1 and G5 carry no independent usability evidence.
 3. Real-world booking rejection and pending confirmation are not modelled.

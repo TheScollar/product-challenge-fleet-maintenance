@@ -43,8 +43,8 @@ export interface QueueEntry {
 
 /**
  * The week's queue is its authored items plus anything resurfacing from an
- * earlier week. Week 41 and later author no items, so they show resurfaced
- * work only. [S 3.7]
+ * earlier week. Week 41 authors two of its own; week 42 and later author
+ * none, so they show resurfaced work only. [S 3.7]
  */
 export function queueFor(args: { fixture: Fixture; state: AppState; weekId: WeekId }): QueueEntry[] {
   const { fixture, state, weekId } = args
