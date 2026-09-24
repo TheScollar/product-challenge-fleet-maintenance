@@ -968,6 +968,15 @@ becomes
 
 - [ ] **Step 6: Rewire the app shell**
 
+**Integration note, added after Task 1 landed.** Between this plan being written and this step
+executing, the sibling week-plan redesign (spec section 11) merged to `main` and changed the
+`App.tsx` on disk: `PlanHeader` now takes two more props, `decisions` and `onSelectItem`, to drive
+its blocker chips. The replacement below already carries that forward (`decisions={decisions}` and
+`onSelectItem={setSelectedItemId}` on the `<PlanHeader>` element inside the `planning`/`summary`
+branch) — it is not the literal pre-merge file. Before running this step, diff the current
+`src/App.tsx` against the block below; if `PlanHeader` has gained further props since, carry those
+forward the same way rather than reverting them.
+
 Replace the entire content of `src/App.tsx` with:
 
 ```tsx
@@ -1054,10 +1063,12 @@ export default function App() {
         <>
           <PlanHeader
             blockers={blockers}
+            decisions={decisions}
             onCommit={() => {
               dispatch({ type: 'commit', weekId })
               setView('summary')
             }}
+            onSelectItem={setSelectedItemId}
           />
           <CapacityBand decisions={decisions} selectedItemId={selectedItemId} />
           {view === 'summary' && state.committedByWeek[weekId] ? (
@@ -1276,13 +1287,37 @@ becomes
 
 and the remaining steps renumber from 3 to 8 (content unchanged).
 
-(c) The test-count comment in the Running it section: replace `183 tests` with the total reported
-by `npm test` after Task 1 (expected `199 tests`; use the observed number).
+(c) The test-count comment in the Running it section: replace `183 tests` with the CURRENT total
+reported by running `npm test` yourself right before this edit. (Originally estimated at 199; by
+the time Tasks 1 and 2 landed, a concurrent sibling session had also merged its own tests, and the
+actual total was 209. Use whatever `npm test` reports at the moment you make this edit, not either
+number written here — this file is not the live source of truth for a count that drifts.)
 
-(d) In "Where the thinking lives": the mockups line becomes
-`` - `docs/mockups/`: layout decisions and the alternatives they were made from ``
-and this line is added after the cover-note spec line:
+(d) **Reconciliation, added after a sibling session's merge changed this exact line.** The plan's
+original text assumed the mockups bullet in "Where the thinking lives" was still one line reading
+"the two layouts the layout decision was made from". A concurrent sibling session (the week-plan
+declutter redesign) already edited that same bullet to a two-line form documenting its own mockup.
+Before editing, read the current `README.md` "Where the thinking lives" section and confirm what
+is actually there. As of this plan update it reads:
+
+```markdown
+- `docs/mockups/`: the two layouts the layout decision was made from, and the guided-queue
+  declutter proposal the current surface follows
+```
+
+Change it to (extending the sibling's sentence rather than reverting it):
+
+```markdown
+- `docs/mockups/`: layout decisions and the alternatives they were made from, including the
+  guided-queue declutter proposal the current surface follows
+```
+
+and add this line after the cover-note spec line:
 `` - `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`: the fleet overview landing screen, specified separately ``
+
+If the bullet has drifted again since this plan update (another concurrent edit), apply the same
+principle: keep every prior session's pointer, phrase the sentence to include all of them, don't
+revert anything.
 
 - [ ] **Step 6: Run the full verification**
 

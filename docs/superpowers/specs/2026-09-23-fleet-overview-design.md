@@ -114,8 +114,6 @@ the question their own screen asks.
 
 **Header facts.**
 
-**Header facts.**
-
 - Today line: `<45 - offRoad> of 45 vans on the road`, whether every assignment is covered today
   (from `computeDayCapacity` for both classes; a gap is named by class and count), and which cover
   vehicles are on site today (covers whose confirmed dates include today).
