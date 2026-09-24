@@ -88,7 +88,7 @@ export function CoverNote({ onOpenPlan }: { onOpenPlan: () => void }) {
 
       <footer className="covernote-bar">
         <button ref={buttonRef} className="covernote-cta" onClick={onOpenPlan}>
-          Open this week's plan
+          Open the fleet
         </button>
       </footer>
     </div>

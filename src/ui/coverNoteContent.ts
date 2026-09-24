@@ -68,6 +68,7 @@ export const coverNoteContent: CoverNoteContent = {
       id: 'what-you-will-see',
       heading: 'What you are about to see',
       paragraphs: [
+        'You land on the fleet first: 45 vans, one already off the road, and a short list of what needs you. It answers the daily question, is today fine, before you plan the week. The weekly plan is one tab over, and everything below describes it.',
         'One planning week. A capacity band across the top that stays visible while you work, because it is the thing every decision moves. Below it, five decisions waiting on you.',
         'Two things block the week. Tuesday is one van short, because three standard vans are off the road at once and the rental cover only stretches to two of them: moving one visit clears it. And V-041, the only specialist van in the queue, still needs a decision. No specialist cover exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.',
         'V-012 is already out of service before you commit anything, on a brake defect found at inspection. It stays out until a release is recorded, and the week plans around it.',
@@ -171,7 +172,7 @@ export const coverNoteContent: CoverNoteContent = {
         },
         {
           path: 'docs/mockups/',
-          description: 'The two layouts the layout decision was made from',
+          description: 'Layout decisions and the alternatives they were made from',
         },
       ],
     },
