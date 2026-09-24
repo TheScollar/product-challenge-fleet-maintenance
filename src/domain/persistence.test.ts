@@ -33,7 +33,7 @@ function withStoredValue(raw: string | null, run: () => void) {
 
 function validEnvelope(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({
-    version: 1,
+    version: 2,
     demoDate: '2026-09-28',
     draftByWeek: {},
     draftBookingsByWeek: {},
@@ -269,8 +269,16 @@ describe('loadState', () => {
     })
   })
 
-  it('falls back to the seed on a wrong version', () => {
-    withStoredValue(validEnvelope({ version: 2 }), () => {
+  it("falls back to the seed, with the older-build notice, on the previous build's version", () => {
+    withStoredValue(validEnvelope({ version: 1 }), () => {
+      const s = loadState(fixture)
+      expectSeedEquivalent(s)
+      expect(s.storageNotice).toContain('older build')
+    })
+  })
+
+  it('falls back to the seed on a future version too', () => {
+    withStoredValue(validEnvelope({ version: 3 }), () => {
       const s = loadState(fixture)
       expectSeedEquivalent(s)
       expect(s.storageNotice).not.toBeNull()

@@ -17,7 +17,7 @@ import type {
 } from '../domain/types'
 
 export interface AppState {
-  version: 1
+  version: 2
   demoDate: ISODate
   draftByWeek: Record<WeekId, Record<ItemId, DraftDecision>>
   draftBookingsByWeek: Record<WeekId, Record<VehicleId, ReplacementBooking>>
@@ -97,7 +97,7 @@ export function bookingsFor(args: {
 
 export function initialState(_fixture: Fixture): AppState {
   return {
-    version: 1,
+    version: 2,
     demoDate: SEED_DATE,
     draftByWeek: {},
     draftBookingsByWeek: {},
