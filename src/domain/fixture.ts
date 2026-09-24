@@ -295,6 +295,82 @@ const items: OpenItem[] = [
       { kind: 'event', eventId: 'v027-wipe-degrades', label: 'Driver reports the wipe quality degrading' },
     ],
   },
+  {
+    id: 'item-v024',
+    vehicleId: 'V-024',
+    title: 'Front tyre tread approaching the legal minimum',
+    garageId: 'werkstatt-berg',
+    evidence: {
+      observation:
+        'Front-axle tread depth read at 2.1 mm, telematics-linked. Statutory minimum under StVZO is 1.6 mm.',
+      source: 'Telematics tread-depth feed',
+      receivedOn: '2026-10-05',
+      verbatim: null,
+    },
+    urgency: {
+      kind: 'estimate',
+      because: 'Tread read 2.1 mm on 5 Oct against a 1.6 mm legal minimum under StVZO.',
+      relevantDate: null,
+    },
+    assumption:
+      'A single tread reading does not establish a wear rate, so no replacement date is projected. The finding alone is evidence enough to book the visit this week rather than wait for a second reading.',
+    safetyClass: false,
+    parts: { name: 'Front tyre pair', readyOn: '2026-10-07' },
+    visitDays: 1,
+    canExtendToDays: null,
+    consequence: {
+      qualitative:
+        'Tread continues toward the legal minimum with each week driven. No regulatory deadline applies yet, and replacing now avoids a rushed booking once the margin closes.',
+      serviceCostEur: 240,
+      coverCostEur: 140,
+      coverUnavailable: false,
+      uncoveredAssignmentsNote: 'Depends on the day chosen. Thursday leaves one assignment uncovered.',
+    },
+    proposal: { treatment: 'act-now', slotDate: '2026-10-08', deferral: null },
+    triggerOptions: [
+      {
+        kind: 'odometer',
+        vehicleId: 'V-024',
+        thresholdKm: 64_000,
+        label: 'Odometer passes 64,000 km',
+      },
+    ],
+  },
+  {
+    id: 'item-v105',
+    vehicleId: 'V-105',
+    title: 'Hauptuntersuchung (HU) due',
+    garageId: 'werkstatt-berg',
+    evidence: {
+      observation: 'HU sticker expires 31 Oct 2026. No test slot booked yet.',
+      source: 'Fleet registration record',
+      receivedOn: '2026-10-05',
+      verbatim: null,
+    },
+    urgency: {
+      kind: 'deadline',
+      because:
+        'Legally required roadworthiness test (HU) must be completed before the sticker expires. Driving past that date without a valid HU is an administrative offence.',
+      relevantDate: '2026-10-31',
+    },
+    assumption: null,
+    safetyClass: false,
+    parts: null,
+    visitDays: 1,
+    canExtendToDays: null,
+    consequence: {
+      qualitative:
+        'A missed HU deadline is an administrative offence and can affect insurance cover if the van is stopped without a valid test. Booking now, well ahead of 31 Oct, avoids a last-minute scramble if the test finds a defect needing a follow-up visit before the sticker expires.',
+      serviceCostEur: 120,
+      coverCostEur: 140,
+      coverUnavailable: false,
+      uncoveredAssignmentsNote: 'Depends on the day chosen. Thursday leaves one assignment uncovered.',
+    },
+    proposal: { treatment: 'act-now', slotDate: '2026-10-08', deferral: null },
+    triggerOptions: [
+      { kind: 'event', eventId: 'v105-hu-reminder', label: 'Registration office sends the final HU reminder' },
+    ],
+  },
 ]
 
 // Only v041 is scheduled to fire. v027's trigger never fires in the fixture,
@@ -307,14 +383,14 @@ const weeks: WeekFixture[] = [
     days: WEEK_40,
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1', 'R-2'],
-    itemIds: items.map((i) => i.id),
+    itemIds: ['item-v012', 'item-v041', 'item-v103', 'item-v118', 'item-v027'],
   },
   {
     weekId: '2026-10-05',
     days: WEEK_41,
     demand: { standard: 38, specialist: 7 },
     coverIds: ['R-1'],
-    itemIds: [],
+    itemIds: ['item-v024', 'item-v105'],
   },
 ]
 

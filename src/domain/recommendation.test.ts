@@ -38,7 +38,8 @@ describe('queue ordering', () => {
   ]
 
   it('puts safety first, then the undisposed decision, then the contributors', () => {
-    const ordered = orderQueue({ items: fixture.items, decisions: coldOpenDecisions(), blockers })
+    const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
+    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers })
     expect(ordered.map((i) => i.id)).toEqual([
       'item-v012',
       'item-v041',
@@ -49,7 +50,8 @@ describe('queue ordering', () => {
   })
 
   it('is stable when nothing blocks', () => {
-    const ordered = orderQueue({ items: fixture.items, decisions: coldOpenDecisions(), blockers: [] })
+    const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
+    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers: [] })
     expect(ordered[0].id).toBe('item-v012')
     expect(ordered).toHaveLength(5)
   })

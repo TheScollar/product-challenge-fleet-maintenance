@@ -32,10 +32,25 @@ describe('fixture integrity', () => {
     expect(fixture.vehicles.filter((v) => v.hold !== null).map((v) => v.id)).toEqual(['V-012'])
   })
 
-  it('has five open items, each referencing a real vehicle', () => {
-    expect(fixture.items).toHaveLength(5)
+  it('has seven open items, each referencing a real vehicle', () => {
+    expect(fixture.items).toHaveLength(7)
     const ids = new Set(fixture.vehicles.map((v) => v.id))
     for (const item of fixture.items) expect(ids.has(item.vehicleId)).toBe(true)
+  })
+
+  it('authors two new standard-class cases for week 41, both act-now on Thursday', () => {
+    const v024 = fixture.items.find((i) => i.id === 'item-v024')!
+    const v105 = fixture.items.find((i) => i.id === 'item-v105')!
+    expect(v024.vehicleId).toBe('V-024')
+    expect(v024.urgency.kind).toBe('estimate')
+    expect(v024.safetyClass).toBe(false)
+    expect(v024.proposal).toEqual({ treatment: 'act-now', slotDate: '2026-10-08', deferral: null })
+    expect(v105.vehicleId).toBe('V-105')
+    expect(v105.urgency.kind).toBe('deadline')
+    expect(v105.safetyClass).toBe(false)
+    expect(v105.proposal).toEqual({ treatment: 'act-now', slotDate: '2026-10-08', deferral: null })
+    expect(fixture.vehicles.find((v) => v.id === 'V-024')?.vehicleClass).toBe('standard')
+    expect(fixture.vehicles.find((v) => v.id === 'V-105')?.vehicleClass).toBe('standard')
   })
 
   it('leaves V-041 undisposed so the cold open carries one shortfall, not two', () => {
@@ -74,10 +89,10 @@ describe('fixture integrity', () => {
     expect(fixture.defaultDemand).toEqual({ standard: 38, specialist: 7 })
   })
 
-  it('authors two weeks, the second carrying no new items', () => {
+  it('authors two weeks, the second carrying two new cases plus resurfacing', () => {
     expect(fixture.weeks.map((w) => w.weekId)).toEqual(['2026-09-28', '2026-10-05'])
     expect(fixture.weeks[0].itemIds).toHaveLength(5)
-    expect(fixture.weeks[1].itemIds).toHaveLength(0)
+    expect(fixture.weeks[1].itemIds).toEqual(['item-v024', 'item-v105'])
   })
 
   it('seeds the demo clock on the Monday of week 40', () => {
@@ -124,6 +139,24 @@ describe('each item carries its own deferral triggers', () => {
     expect(optionsFor('item-v027')).toEqual([
       { kind: 'event', eventId: 'v027-wipe-degrades', label: 'Driver reports the wipe quality degrading' },
     ])
+  })
+
+  it('offers V-024 a recheck odometer trigger', () => {
+    expect(optionsFor('item-v024')).toEqual([
+      {
+        kind: 'odometer',
+        vehicleId: 'V-024',
+        thresholdKm: 64_000,
+        label: 'Odometer passes 64,000 km',
+      },
+    ])
+  })
+
+  it('offers V-105 the HU reminder event, which never fires in the fixture', () => {
+    expect(optionsFor('item-v105')).toEqual([
+      { kind: 'event', eventId: 'v105-hu-reminder', label: 'Registration office sends the final HU reminder' },
+    ])
+    expect(fixture.events.some((e) => e.eventId === 'v105-hu-reminder')).toBe(false)
   })
 
   it('never offers an item a trigger about another vehicle', () => {
