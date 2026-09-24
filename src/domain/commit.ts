@@ -1,5 +1,6 @@
 import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
 import { formatDay, formatLongDay } from './clock'
+import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
 import type {
   CommittedPlan,
   DayCapacity,
@@ -81,6 +82,9 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
   const { fixture, plan } = args
   const week = weekFixtureFor(fixture, plan.weekId)
   const visits = visitsFromDecisions(plan.decisions, fixture.items)
+  // A committed replacement is cover in the summary too. Until now the band
+  // counted it and this table did not. [scenario spec §6]
+  const adHocCovers = adHocCoversFrom(bookingsForVisits(plan.bookings, visits), fixture.replacementDayRateEur)
 
   const coverAssumptions = fixture.covers
     .filter((c) => week.coverIds.includes(c.id))
@@ -106,7 +110,7 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
       days: v.days,
       scope: v.scope,
     })),
-    availability: computeWeekCapacity({ fixture, weekId: plan.weekId, visits }),
+    availability: computeWeekCapacity({ fixture, weekId: plan.weekId, visits, adHocCovers }),
     coverAssumptions,
     // Same structural test as deferralRecordsFrom: the summary must not list a
     // van as a deferred follow-up when the same plan books it a visit.
@@ -152,6 +156,7 @@ export function dailyConfirmation(args: {
   const { fixture, plan, forDate } = args
   const week = weekFixtureFor(fixture, plan.weekId)
   const visits = visitsFromDecisions(plan.decisions, fixture.items)
+  const adHocCovers = adHocCoversFrom(bookingsForVisits(plan.bookings, visits), fixture.replacementDayRateEur)
   const classes: VehicleClass[] = ['standard', 'specialist']
 
   const offRoad = [...unavailableOn(forDate, fixture.vehicles, visits)]
@@ -171,11 +176,13 @@ export function dailyConfirmation(args: {
     date: forDate,
     dateLabel: formatLongDay(forDate),
     rows: classes.map((vehicleClass) =>
-      computeDayCapacity({ date: forDate, vehicleClass, fixture, visits, week }),
+      computeDayCapacity({ date: forDate, vehicleClass, fixture, visits, week, adHocCovers }),
     ),
     offRoad,
-    coverInUse: fixture.covers
-      .filter((c) => week.coverIds.includes(c.id) && c.confirmedDates.includes(forDate))
+    coverInUse: [
+      ...fixture.covers.filter((c) => week.coverIds.includes(c.id) && c.confirmedDates.includes(forDate)),
+      ...adHocCovers.filter((c) => c.confirmedDates.includes(forDate)),
+    ]
       .map((c) => c.id)
       .sort(),
   }

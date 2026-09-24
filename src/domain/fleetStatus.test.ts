@@ -138,6 +138,27 @@ describe('a booking is reflected in tomorrow\'s coverage', () => {
     expect(o.nextBusinessDay.covered).toBe(true)
     expect(o.nextBusinessDay.coverOnSite).toContain('V-118 replacement')
   })
+
+  it('adds nothing for a booking whose vehicle has no visit', () => {
+    const s = adoptedState()
+    const weekId = activeWeekId(s)
+    const decisions = draftFor({ fixture, state: s, weekId })
+    const bookings: Record<string, ReplacementBooking> = {
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    }
+    const o = fleetOverview({
+      fixture,
+      today: s.demoDate,
+      queueItems: queueFor({ fixture, state: s, weekId }).map((e) => e.item),
+      decisions,
+      blockers: validatePlan({ fixture, weekId, decisions, bookings }),
+      committed: s.committedByWeek[weekId] ?? null,
+      deferralHistory: s.deferralHistory,
+      bookings,
+    })
+    expect(o.nextBusinessDay.covered).toBe(false)
+    expect(o.nextBusinessDay.coverOnSite).toEqual(['R-1', 'R-2'])
+  })
 })
 
 describe('fleet overview after the walkthrough commit', () => {

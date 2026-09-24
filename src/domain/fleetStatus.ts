@@ -1,7 +1,7 @@
 import { computeDayCapacity, isHeldOn, weekFixtureFor } from './capacity'
 import { addDays, daysBetween, formatDay, mondayOf } from './clock'
 import { latestRecord } from './deferral'
-import { adHocCoversFrom } from './replacementBooking'
+import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
 import type {
   Blocker,
   CommittedPlan,
@@ -104,7 +104,6 @@ export function fleetOverview(args: {
   bookings?: Record<VehicleId, ReplacementBooking>
 }): FleetOverview {
   const { fixture, today, queueItems, decisions, blockers, committed, deferralHistory, bookings = {} } = args
-  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
 
   // A van turns red only for an operational fact: a hold, or a committed
   // visit. Coverage is a different question, and both its lines read the
@@ -113,6 +112,9 @@ export function fleetOverview(args: {
   const committedVisits =
     committed === null ? [] : visitsFromDecisions(committed.decisions, fixture.items)
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
+  // Draft bookings, filtered to draft visits: the same rule every other
+  // capacity reader applies. [scenario spec §5.4]
+  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, draftVisits), fixture.replacementDayRateEur)
 
   const queueByVehicle = new Map<VehicleId, OpenItem>()
   for (const item of queueItems) {
