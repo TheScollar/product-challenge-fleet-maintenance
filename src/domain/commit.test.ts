@@ -7,12 +7,7 @@ import { coldOpenDecisions } from './testSupport'
 const WEEK_40 = '2026-09-28'
 
 function committable(): Record<ItemId, DraftDecision> {
-  const allDecisions = coldOpenDecisions()
-  const week40ItemIds = fixture.weeks[0].itemIds
-  const d: Record<ItemId, DraftDecision> = {}
-  for (const id of week40ItemIds) {
-    d[id] = allDecisions[id]
-  }
+  const d = coldOpenDecisions()
   d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
   d['item-v041'] = {
     itemId: 'item-v041',

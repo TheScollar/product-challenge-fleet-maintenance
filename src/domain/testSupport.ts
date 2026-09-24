@@ -13,15 +13,18 @@ export const vehicle = (id: string): Vehicle => {
   return found
 }
 
-/** The system proposals exactly as the fixture ships them. */
+/** The system proposals exactly as the fixture ships them for week 40 (the cold open). */
 export function coldOpenDecisions(): Record<ItemId, DraftDecision> {
   const out: Record<ItemId, DraftDecision> = {}
+  const week40ItemIds = fixture.weeks[0].itemIds
   for (const i of fixture.items) {
-    out[i.id] = {
-      itemId: i.id,
-      treatment: i.proposal.treatment,
-      slotDate: i.proposal.slotDate,
-      deferral: i.proposal.deferral,
+    if (week40ItemIds.includes(i.id)) {
+      out[i.id] = {
+        itemId: i.id,
+        treatment: i.proposal.treatment,
+        slotDate: i.proposal.slotDate,
+        deferral: i.proposal.deferral,
+      }
     }
   }
   return out

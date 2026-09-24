@@ -14,8 +14,7 @@ function standardFor(visits: Visit[], date: string) {
 
 describe('derived visits', () => {
   it('produces one visit per scheduled item, and none for a watch', () => {
-    const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
-    const visits = visitsFromDecisions(coldOpenDecisions(), week40Items)
+    const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
     expect(visits.map((v) => v.itemId).sort()).toEqual(['item-v012', 'item-v103', 'item-v118'])
   })
 
