@@ -16,7 +16,9 @@ export function InspectPopover({
   vehicle: Vehicle
   facts: string[]
   itemId: ItemId | null
-  onClose: () => void
+  /** The caller needs to know which path closed it: only the keyboard one
+   *  leaves the tile on screen to hand focus back to. [FO spec 6] */
+  onClose: (reason: 'key' | 'pointer') => void
   onOpenPlan: (itemId: ItemId | null) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -28,10 +30,10 @@ export function InspectPopover({
     }
     const onDocMouseDown = (e: MouseEvent) => {
       const target = e.target as Element | null
-      if (target === null || target.closest('.popwrap') === null) onClose()
+      if (target === null || target.closest('.popwrap') === null) onClose('pointer')
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onClose('key')
     }
     document.addEventListener('mousedown', onDocMouseDown)
     document.addEventListener('keydown', onKey)

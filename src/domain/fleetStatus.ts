@@ -15,7 +15,6 @@ import type {
   VehicleClass,
   VehicleId,
   Visit,
-  WeekId,
 } from './types'
 import { orderQueue } from './urgency'
 import { visitCoversDate, visitsFromDecisions } from './visits'
@@ -49,9 +48,17 @@ export interface FleetOverview {
   quiet: VanStatus[]
   counts: { offRoad: number; needsDecision: number; inService: number }
   onRoad: number
-  /** Operational reality: committed visits and holds only. */
+  /**
+   * Queue items this week that no committed disposition has resolved yet, so
+   * the count of decisions genuinely still waiting. Not the attention list's
+   * length: a van can be red for a hold alone, with no queue item behind it
+   * and nothing to decide. Not `counts.needsDecision` either: that one counts
+   * amber vans, and a red van can still owe a decision on its queue item.
+   */
+  awaitingDecision: number
+  /** One capacity semantics: the same effective decisions the band renders. */
   today: CoverageFacts
-  /** Planning preview: the same effective decisions the capacity band renders. */
+  /** Planning preview, on the same effective decisions as `today`. */
   nextBusinessDay: CoverageFacts
   committed: boolean
 }
@@ -82,7 +89,6 @@ function coverageFor(date: ISODate, fixture: Fixture, visits: Visit[]): Coverage
 
 export function fleetOverview(args: {
   fixture: Fixture
-  weekId: WeekId
   today: ISODate
   queueItems: OpenItem[]
   decisions: Record<ItemId, DraftDecision>
@@ -92,8 +98,10 @@ export function fleetOverview(args: {
 }): FleetOverview {
   const { fixture, today, queueItems, decisions, blockers, committed, deferralHistory } = args
 
-  // A booking is operational once committed; drafts affect only the coverage
-  // preview, exactly as they affect the band. [spec 4]
+  // A van turns red only for an operational fact: a hold, or a committed
+  // visit. Coverage is a different question, and both its lines read the
+  // draft, exactly as the band does, so no day of the active week can have a
+  // second capacity semantics. [spec 4, 7]
   const committedVisits =
     committed === null ? [] : visitsFromDecisions(committed.decisions, fixture.items)
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
@@ -172,12 +180,18 @@ export function fleetOverview(args: {
     inService: quiet.length,
   }
 
+  const awaitingDecision = queueItems.filter((item) => {
+    const decision = committed === null ? null : (committed.decisions[item.id] ?? null)
+    return decision === null || decision.treatment === null
+  }).length
+
   return {
     attention,
     quiet,
     counts,
     onRoad: fixture.vehicles.length - counts.offRoad,
-    today: coverageFor(today, fixture, committedVisits),
+    awaitingDecision,
+    today: coverageFor(today, fixture, draftVisits),
     nextBusinessDay: coverageFor(nextBusinessDay(fixture, today), fixture, draftVisits),
     committed: committed !== null,
   }

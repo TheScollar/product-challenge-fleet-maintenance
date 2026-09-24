@@ -20,7 +20,6 @@ function overviewFor(state: AppState, fx: Fixture = fixture): FleetOverview {
   const decisions = draftFor({ fixture: fx, state, weekId })
   return fleetOverview({
     fixture: fx,
-    weekId,
     today: state.demoDate,
     queueItems: queueFor({ fixture: fx, state, weekId }).map((e) => e.item),
     decisions,
@@ -182,6 +181,21 @@ describe('fleet overview in week 41', () => {
     expect(vanOf(o, 'V-012').kind).toBe('off-road')
   })
 
+  it('leaves the held van red with no item, since week 41 queues none for it', () => {
+    // The shape the attention card has to survive: red, real facts, nothing to
+    // navigate to. Week 41 authors no items and V-012's week-40 item was
+    // committed, so only the hold is left. [FO spec 4]
+    const o = overviewFor(s)
+    const v012 = vanOf(o, 'V-012')
+    expect(v012.kind).toBe('off-road')
+    expect(v012.itemId).toBeNull()
+    expect(v012.facts).toEqual(['Held · Safety-relevant brake defect recorded at UVV inspection'])
+    // Every amber van, by contrast, always has an item behind it.
+    for (const s2 of o.attention) {
+      if (s2.kind === 'needs-decision') expect(s2.itemId).not.toBeNull()
+    }
+  })
+
   it('releases the held van once the recorded release date passes', () => {
     const later = overviewFor(planReducer(s, { type: 'advance-days', days: 1 }, fixture))
     expect(vanOf(later, 'V-012').kind).toBe('in-service')
@@ -225,6 +239,61 @@ describe('fleet overview: a held van whose own item resurfaces undecided', () =>
     expect(v027.kind).toBe('off-road')
     expect(v027.itemId).toBe('item-v027')
     expect(v027.facts).toEqual(['Held · Collision damage from a yard reversing incident'])
+  })
+})
+
+describe("fleet overview reads today from the draft, exactly as the band does", () => {
+  // Week 41, committed to nothing: the resurfaced specialist item is scheduled
+  // onto today and left in draft. The capacity band already counts that van
+  // out, and blocks Commit over the gap; the fleet header must name the same
+  // gap rather than read committed-only and call the day covered. [FO spec 4, 7]
+  const WEEK_41 = '2026-10-05'
+  const week41 = planReducer(committedState(), { type: 'advance-to-next-review' }, fixture)
+  const scheduled = planReducer(
+    week41,
+    {
+      type: 'set-decision',
+      weekId: WEEK_41,
+      decision: { itemId: 'item-v041', treatment: 'act-now', slotDate: WEEK_41, deferral: null },
+    },
+    fixture,
+  )
+
+  it('is covered before the draft edit, on the identical committed state', () => {
+    const before = overviewFor(week41)
+    expect(before.today.date).toBe(WEEK_41)
+    expect(before.committed).toBe(false)
+    expect(before.today.covered).toBe(true)
+  })
+
+  it('flags the shortfall the still-uncommitted draft creates on today', () => {
+    const after = overviewFor(scheduled)
+    // Nothing is committed for week 41, so a committed-only reading would call
+    // this day covered. The only thing that changed is the draft.
+    expect(after.committed).toBe(false)
+    expect(after.today.date).toBe(WEEK_41)
+    expect(after.today.covered).toBe(false)
+    expect(after.today.shortfalls.map((s) => [s.vehicleClass, s.shortfall])).toEqual([
+      ['specialist', 1],
+    ])
+  })
+})
+
+describe('fleet overview: decisions still waiting', () => {
+  it('counts undecided queue items, not attention cards', () => {
+    const cold = overviewFor(initialState(fixture))
+    // Five queue items are undecided, and V-012 is one of them even though its
+    // van is red for the hold. The amber count alone would read 4.
+    expect(cold.awaitingDecision).toBe(5)
+    expect(cold.attention.length).toBe(5)
+    expect(cold.counts.needsDecision).toBe(4)
+  })
+
+  it('drops to zero once every item carries a committed disposition', () => {
+    const after = overviewFor(committedState())
+    expect(after.awaitingDecision).toBe(0)
+    // The held van is still an attention card, with nothing left to decide.
+    expect(after.attention.map((s) => s.vehicleId)).toEqual(['V-012'])
   })
 })
 

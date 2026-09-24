@@ -394,7 +394,9 @@ button:disabled { cursor: not-allowed; }
   border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--r);
   padding: 9px 11px 9px 13px;
 }
-.acard:hover { border-color: var(--border-strong); }
+/* Only the navigating cards are buttons. An informational card must not
+   offer a hover affordance it cannot honour. */
+button.acard:hover { border-color: var(--border-strong); }
 .acard.crit { border-left-color: var(--crit); }
 .acard.warn { border-left-color: var(--warn); }
 .acard .row1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 3px; }
@@ -412,7 +414,9 @@ button:disabled { cursor: not-allowed; }
 .popwrap { position: relative; }
 .tile {
   position: relative; width: 100%; background: var(--surface); border: 1px solid var(--border);
-  border-bottom: 3px solid #bfe0cb; border-radius: 5px; padding: 7px 6px 6px; text-align: center;
+  /* The same muted green the settled queue tiles rail with, so "quiet" reads
+     identically on both surfaces. */
+  border-bottom: 3px solid #bfd8c9; border-radius: 5px; padding: 7px 6px 6px; text-align: center;
 }
 .tile:hover { border-color: var(--border-strong); }
 .tile.open { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
