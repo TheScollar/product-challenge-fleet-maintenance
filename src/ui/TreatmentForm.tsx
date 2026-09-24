@@ -14,11 +14,13 @@ export function TreatmentForm({
   vehicle,
   decision,
   onChange,
+  onApply,
 }: {
   item: OpenItem
   vehicle: Vehicle
   decision: DraftDecision
   onChange: (d: DraftDecision) => void
+  onApply: (d: DraftDecision) => void
 }) {
   const allowWatch = watchAvailable(item, vehicle)
   const [draft, setDraft] = useState<Partial<Deferral>>(decision.deferral ?? {})
@@ -42,7 +44,7 @@ export function TreatmentForm({
 
   function apply() {
     if (!canApply) return
-    onChange({
+    onApply({
       ...decision,
       deferral: needsDeferral ? (draft as Deferral) : null,
     })
