@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addDays, formatDay, formatLongDay, isoWeekNumber } from '../domain/clock'
+import { costSummaryFor } from '../domain/costs'
 import { fleetOverview, type VanStatus } from '../domain/fleetStatus'
 import type { Blocker, DraftDecision, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { urgencyLabel } from '../domain/urgency'
@@ -36,6 +37,11 @@ export function FleetView({
         bookings,
       }),
     [fixture, state, weekId, decisions, blockers, bookings],
+  )
+
+  const cost = useMemo(
+    () => costSummaryFor({ fixture, weekId, decisions, bookings }),
+    [fixture, weekId, decisions, bookings],
   )
 
   const specialists = fixture.vehicles.filter((v) => v.vehicleClass === 'specialist').length
@@ -173,6 +179,28 @@ export function FleetView({
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="fleetsection">
+        <h2>This week's cost</h2>
+        <div className="costs">
+          <div className="cost">
+            <div className="n">EUR {cost.serviceCostEur.toLocaleString('en-GB')}</div>
+            <div className="l">Service cost</div>
+          </div>
+          <div className="cost">
+            <div className="n">EUR {cost.coverCostEur.toLocaleString('en-GB')}</div>
+            <div className="l">Replacement cover</div>
+          </div>
+          <div className={`cost${cost.overByEur !== null ? ' over' : ''}`}>
+            <div className="n">EUR {cost.totalEur.toLocaleString('en-GB')}</div>
+            <div className="l">
+              {cost.overByEur !== null
+                ? `EUR ${cost.overByEur.toLocaleString('en-GB')} over the EUR ${cost.budgetEur.toLocaleString('en-GB')} budget`
+                : `Of a EUR ${cost.budgetEur.toLocaleString('en-GB')} weekly budget`}
+            </div>
+          </div>
         </div>
       </div>
     </>

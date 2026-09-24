@@ -448,3 +448,6 @@ button:disabled { cursor: not-allowed; }
 
 /* Replacement cover: the shared booking control, mounted per vehicle. */
 .block .bookinginfo { font-size: 12px; color: var(--text); margin: 0 0 8px; }
+
+.cost.over { border-color: #e8bdb9; background: var(--crit-soft); }
+.cost.over .n { color: var(--crit); }
