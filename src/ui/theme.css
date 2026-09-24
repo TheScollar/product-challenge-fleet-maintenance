@@ -82,12 +82,12 @@ button:disabled { cursor: not-allowed; }
 .urg.assessment-needed { color: #4a525c; border-color: var(--border-strong); background: #f2f4f6; }
 
 .badge {
-  font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 1px 5px; border-radius: 3px;
+  color: var(--muted); background: #f0f2f4;
 }
 .badge.safety { background: var(--crit-soft); color: var(--crit); }
 .badge.specialist { background: var(--spec-soft); color: var(--spec); }
-.badge.held { background: #eceef1; color: #4a525c; }
 .badge.resurfaced { background: var(--accent-soft); color: var(--accent); }
 
 .vid { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -152,31 +152,38 @@ button:disabled { cursor: not-allowed; }
 .pane { padding: 13px 16px; }
 .pane.left { border-right: 1px solid var(--border); }
 .pane.right { background: #fbfcfd; border-left: 3px solid var(--accent); min-height: 60vh; }
-.pane .panetitle {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--faint); margin: 0 0 10px;
+
+.group { margin-bottom: 16px; }
+.grouptitle {
+  display: flex; align-items: baseline; gap: 7px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--faint); margin: 0 0 8px;
 }
+.grouptitle.crit { color: var(--crit); }
+.grouptitle .cnt { font-weight: 600; color: var(--faint); }
 
 .card {
   display: block; width: 100%; text-align: left;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 9px 11px; margin-bottom: 7px; position: relative;
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--r); padding: 8px 11px; margin-bottom: 6px;
 }
+.card.blocking { border-left-color: var(--crit); }
+.card.settled { border-left-color: #bfd8c9; }
+.card.settled .title { color: var(--muted); }
+.card.settled .urg, .card.settled .badge { opacity: 0.7; }
 .card:hover { border-color: var(--border-strong); }
-.card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-.card .row1 { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; padding-right: 110px; }
-.card .title { font-size: 12.5px; margin-bottom: 5px; padding-right: 110px; }
-.card .why { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-.card .state {
-  position: absolute; top: 9px; right: 11px; font-size: 10.5px;
-  font-weight: 600; color: var(--muted); max-width: 105px; text-align: right;
+.card.sel {
+  border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft);
+  border-left-color: var(--accent);
 }
-.card .state.warn { color: var(--warn); }
-.card .state.crit { color: var(--crit); }
-.card .prior {
-  margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);
-  font-size: 11px; color: var(--muted);
-}
+.card .r1 { display: flex; align-items: center; gap: 7px; margin-bottom: 2px; }
+.card .r2 { display: flex; align-items: center; gap: 7px; }
+.card .spacer { flex: 1; }
+.card .title { font-size: 12.5px; }
+.card .status { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.card .status.crit { color: var(--crit); }
+.card .status.ok { color: var(--ok); }
 .empty { color: var(--muted); font-size: 12.5px; padding: 12px 0; }
 
 .detail .head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
