@@ -3,13 +3,18 @@ import type { DraftDecision, ISODate, ItemId, OpenItem, TreatmentKind, Visit } f
 
 const VISIT_TREATMENTS: ReadonlySet<TreatmentKind> = new Set<TreatmentKind>(['act-now', 'bundle'])
 
+/** The treatments that book a workshop visit. Shared by the domain rule and the UI gate. */
+export function isVisitTreatment(kind: TreatmentKind | null): kind is TreatmentKind {
+  return kind !== null && VISIT_TREATMENTS.has(kind)
+}
+
 /**
  * Structural, not trusting: a visit needs a visit treatment and a slot. With
  * the backlog opening undecided a slot can exist before a treatment does, and
  * that is not a visit anywhere in the plan. [scenario spec §3.3]
  */
 export function isVisitDecision(d: DraftDecision): boolean {
-  return d.treatment !== null && VISIT_TREATMENTS.has(d.treatment) && d.slotDate !== null
+  return isVisitTreatment(d.treatment) && d.slotDate !== null
 }
 
 export function visitCoversDate(visit: Visit, date: ISODate): boolean {

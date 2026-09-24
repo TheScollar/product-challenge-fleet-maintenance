@@ -288,7 +288,7 @@ describe('fleet overview: two new week-41 cases collide on Thursday', () => {
     expect(vanOf(o, 'V-105').itemId).toBe('item-v105')
   })
 
-  it('flags Thursday standard short by 1 with no decision made yet', () => {
+  it('flags Thursday standard short by 1 once both proposals are adopted', () => {
     const thursday = planReducer(week41, { type: 'advance-days', days: 3 }, fixture)
     const o = overviewFor(thursday)
     expect(o.today.date).toBe('2026-10-08')

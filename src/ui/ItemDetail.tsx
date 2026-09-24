@@ -3,7 +3,7 @@ import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
 import { bookingCostEur, bookingsForVisits } from '../domain/replacementBooking'
 import { urgencyLabel } from '../domain/urgency'
-import { visitsFromDecisions } from '../domain/visits'
+import { isVisitTreatment, visitsFromDecisions } from '../domain/visits'
 import type { DraftDecision, ItemId, OpenItem } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId, bookingsFor, queueFor } from '../state/planReducer'
@@ -55,7 +55,7 @@ export function ItemDetail({
     onPendingChange(decision)
   }, [decision, onPendingChange])
 
-  const stagingVisit = decision.treatment === 'act-now' || decision.treatment === 'bundle'
+  const stagingVisit = isVisitTreatment(decision.treatment)
 
   return (
     <div className="detail">

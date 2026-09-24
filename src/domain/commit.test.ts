@@ -229,4 +229,14 @@ describe('a committed booking is cover in the summary and the daily confirmation
     expect(tuesdayStandard(summaryFor({ fixture, plan }).availability).shortfall).toBe(1)
     expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual(['R-1', 'R-2'])
   })
+
+  it('lists only bookings whose vehicle has a visit, sorted by vehicle', () => {
+    const mixed = {
+      'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+      'V-012': { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 },
+    }
+    const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings: mixed, demoDate: '2026-09-28' })
+    expect(summaryFor({ fixture, plan }).bookings.map((b) => b.vehicleId)).toEqual(['V-012', 'V-118'])
+  })
 })

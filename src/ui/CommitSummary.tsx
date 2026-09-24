@@ -14,7 +14,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
   if (plan === null) return null
   const summary = summaryFor({ fixture, plan })
   const cost = costSummaryFor({ fixture, weekId: plan.weekId, decisions: plan.decisions, bookings: plan.bookings })
-  const bookingRows = Object.values(plan.bookings).sort((a, b) => a.vehicleId.localeCompare(b.vehicleId))
+  const bookingRows = summary.bookings
 
   return (
     <div className="summary">

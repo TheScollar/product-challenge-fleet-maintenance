@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from './fixture'
-import { isVisitDecision, visitsFromDecisions } from './visits'
+import { isVisitDecision, isVisitTreatment, visitsFromDecisions } from './visits'
 import type { DraftDecision } from './types'
 
 const d = (partial: Partial<DraftDecision>): DraftDecision => ({
@@ -25,5 +25,12 @@ describe('a visit is a visit treatment with a slot, nothing less', () => {
   it('does not count a watch, or a visit treatment without a slot', () => {
     expect(isVisitDecision(d({ treatment: 'watch', slotDate: '2026-09-29' }))).toBe(false)
     expect(isVisitDecision(d({ treatment: 'act-now', slotDate: null }))).toBe(false)
+  })
+
+  it('names the visit treatments once, for the domain rule and the UI gate alike', () => {
+    expect(isVisitTreatment('act-now')).toBe(true)
+    expect(isVisitTreatment('bundle')).toBe(true)
+    expect(isVisitTreatment('watch')).toBe(false)
+    expect(isVisitTreatment(null)).toBe(false)
   })
 })

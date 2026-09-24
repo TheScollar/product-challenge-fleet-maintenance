@@ -67,6 +67,10 @@ export interface CommitSummaryView {
   }>
   availability: DayCapacity[]
   coverAssumptions: string[]
+  /** The committed bookings that still have a visit to cover, sorted by vehicle. Stale or
+   *  hand-edited bookings for a vehicle with no visit are excluded here, exactly as they are
+   *  excluded from capacity and cost. [scenario spec §5.4] */
+  bookings: ReplacementBooking[]
   deferrals: Array<{
     itemId: ItemId
     vehicleId: VehicleId
@@ -82,9 +86,10 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
   const { fixture, plan } = args
   const week = weekFixtureFor(fixture, plan.weekId)
   const visits = visitsFromDecisions(plan.decisions, fixture.items)
+  const visitBookings = bookingsForVisits(plan.bookings, visits)
   // A committed replacement is cover in the summary too. Until now the band
   // counted it and this table did not. [scenario spec §6]
-  const adHocCovers = adHocCoversFrom(bookingsForVisits(plan.bookings, visits), fixture.replacementDayRateEur)
+  const adHocCovers = adHocCoversFrom(visitBookings, fixture.replacementDayRateEur)
 
   const coverAssumptions = fixture.covers
     .filter((c) => week.coverIds.includes(c.id))
@@ -112,6 +117,7 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
     })),
     availability: computeWeekCapacity({ fixture, weekId: plan.weekId, visits, adHocCovers }),
     coverAssumptions,
+    bookings: Object.values(visitBookings).sort((a, b) => a.vehicleId.localeCompare(b.vehicleId)),
     // Same structural test as deferralRecordsFrom: the summary must not list a
     // van as a deferred follow-up when the same plan books it a visit.
     deferrals: Object.values(plan.decisions)
