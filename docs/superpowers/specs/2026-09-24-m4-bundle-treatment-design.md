@@ -106,7 +106,7 @@ the existing garage/cover data:
 - `bundleComparison(item, target, fixture, decisions)` — returns the bundled and split figures shown in §4,
   each shaped like the existing `ConsequenceView` (`qualitative`, `serviceCost`, `coverCost`, `disruption`,
   formatted with `consequence.ts`'s own `eur()`/`'not available'`/`'not stated'` conventions) plus a visit
-  count. Built the same way `SlotPicker`'s existing `effectOf`/`shortfallsUnder` trial computation already
+  count. Built the same way SlotPicker's existing effectOf/shortfallsUnder trial computation already
   works: compute both draft variants and diff them, rather than a new ad hoc estimate. The extension risk is
   a stated sentence, not a computed figure — see §2's note on `canExtendToDays`.
 
