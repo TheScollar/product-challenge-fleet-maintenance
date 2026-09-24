@@ -38,6 +38,20 @@ describe('cold open carries exactly two blockers', () => {
   })
 })
 
+describe('a requested booking clears a capacity blocker', () => {
+  it('removes the Tuesday shortfall once a standard booking covers it', () => {
+    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+    const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: coldOpen(), bookings })
+    expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(false)
+  })
+
+  it('does nothing for a booking on a different day', () => {
+    const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-30', days: 1 } }
+    const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: coldOpen(), bookings })
+    expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
+  })
+})
+
 describe('the journey to a committable plan', () => {
   function resolved(): Record<ItemId, DraftDecision> {
     const d = coldOpen()
