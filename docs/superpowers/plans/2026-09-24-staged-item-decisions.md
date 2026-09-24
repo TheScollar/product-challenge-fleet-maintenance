@@ -472,25 +472,25 @@ before continuing.
 
 **Files:** None (verification only; see the contingency note above if a fix turns out to be needed).
 
-- [ ] **Step 1: Start the dev server**
+- [x] **Step 1: Start the dev server**
 
 Run in the background: `npm run dev -- --port 5183 --strictPort`
 Expected output includes: `VITE v8.3.0  ready` and `Local:   http://localhost:5183/`.
 
-- [ ] **Step 2: Open a browser session and land on the fleet**
+- [x] **Step 2: Open a browser session and land on the fleet**
 
 Using the browser tool, open `http://localhost:5183/`, then click the `Open the fleet` button.
 Expected: page text includes `Fleet · Monday 28 September 2026` and a `V-012` attention card with
 `SAFETY · HARD STOP`.
 
-- [ ] **Step 3: Open V-012 in the week plan and capture the baseline**
+- [x] **Step 3: Open V-012 in the week plan and capture the baseline**
 
 Click the `V-012` card. Read the page. Expected page text includes `SETTLED`, `V-012`, `Tue 29 Sep
 booked`, and further down `Apply to draft`. Read `localStorage.getItem('fleet-maintenance-prototype/v1')`
 via the browser's JS-evaluation capability; expected: no key yet, or `item-v012` (if present from a
 prior run in the same session) shows `"slotDate":"2026-09-29"`.
 
-- [ ] **Step 4: Pick a different day without applying, and confirm nothing committed yet**
+- [x] **Step 4: Pick a different day without applying, and confirm nothing committed yet**
 
 In the Slot panel, click `Wed 30 Sep`. Read the page again. Expected: the Wed 30 Sep option now shows as
 selected, the Week Capacity band's Wed 30 Sep column and its flag line change to reflect the hypothetical
@@ -498,25 +498,25 @@ move, and the `V-012` row on the left, in the `Settled` group, still reads `Tue 
 `localStorage.getItem('fleet-maintenance-prototype/v1')` and confirm `item-v012` is either absent or
 still shows `"slotDate":"2026-09-29"`, proving the pick staged locally and did not dispatch.
 
-- [ ] **Step 5: Apply, and confirm it commits**
+- [x] **Step 5: Apply, and confirm it commits**
 
 Click `Apply to draft`. Evaluate localStorage again: `item-v012` now shows `"slotDate":"2026-09-30"`.
 Read the page: the left list's `Settled` row for `V-012` now reads `Wed 30 Sep booked`.
 
-- [ ] **Step 6: Change the day again and re-apply**
+- [x] **Step 6: Change the day again and re-apply**
 
 Click `Tue 29 Sep`. Confirm (as in Step 4) that localStorage still shows `2026-09-30` and the left list
 still reads `Wed 30 Sep booked`. Click `Apply to draft` again. Confirm (as in Step 5) that localStorage
 now shows `2026-09-29` and the left list reads `Tue 29 Sep booked`. This is the exact behavior that
 started this work: pick, apply, change the pick, apply again.
 
-- [ ] **Step 7: Confirm switching away discards an unapplied pick**
+- [x] **Step 7: Confirm switching away discards an unapplied pick**
 
 With V-012 selected and its last applied slot at Tue 29 Sep, click `Wed 30 Sep` again without applying.
 Click a different item's card (`V-041`). Click back on `V-012`. Expected: the Slot panel shows `Tue 29
 Sep` selected, not `Wed 30 Sep`, confirming the unapplied pick was discarded when the selection moved.
 
-- [ ] **Step 8: Regression pass**
+- [x] **Step 8: Regression pass**
 
 Run: `npx tsc --noEmit` and `npm test`
 Expected: same as Task 1 Steps 4-5.
@@ -524,6 +524,6 @@ Expected: same as Task 1 Steps 4-5.
 Run: `npm run build`
 Expected: build succeeds (matches the check already recorded in `docs/acceptance.md`).
 
-- [ ] **Step 9: Stop the dev server and close the browser session**
+- [x] **Step 9: Stop the dev server and close the browser session**
 
 Stop the background dev server process and close the browser session opened in Step 2.
