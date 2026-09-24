@@ -13,8 +13,9 @@ import type {
 import { visitCoversDate } from './visits'
 
 /**
- * Weeks the fixture does not author fall back to the week 41 template:
- * normal demand, R-1 only, and no new items. [S 3.7]
+ * Weeks the fixture does not author fall back to a default template:
+ * normal demand, R-1 only, and no new items. Week 41 is no longer an
+ * example of this fallback; it authors its own items. [S 3.7]
  */
 export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
   const authored = fixture.weeks.find((w) => w.weekId === weekId)

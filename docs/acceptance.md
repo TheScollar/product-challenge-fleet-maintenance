@@ -202,7 +202,10 @@ week later with two new cases.
 
 **Verified live:** both cases appear as attention cards on the fleet overview from the moment week
 41 is reached, each with its own urgency chip and because-text. The week plan's "Blocking the week"
-group lists three items (V-024, V-105 and, if still undisposed, V-041). Moving one case's slot to
-Tuesday, Wednesday or Friday clears the Thursday shortfall in the capacity band, and moving it to
-Monday instead relocates the shortfall rather than clearing it. Committing shows both vans as
-`Booked Thu 8 Oct` on the fleet overview.
+group lists three items (V-024, V-105 and, if still undisposed, V-041). V-105 carries no parts
+requirement and can move to Tuesday, Wednesday or Friday to clear the Thursday shortfall; V-024's
+parts are not ready until Wednesday, so only Wednesday or Friday work for it, and the slot picker
+disables Monday and Tuesday for that reason. Moving either item to Monday instead relocates the
+shortfall rather than clearing it, since Monday's one spare unit is already spent on V-012's hold.
+Committing after relocating one case shows `Booked Thu 8 Oct` for the item left on Thursday and the
+chosen day for the other.

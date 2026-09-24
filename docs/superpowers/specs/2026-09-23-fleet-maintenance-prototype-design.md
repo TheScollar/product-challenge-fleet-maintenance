@@ -248,11 +248,14 @@ The fixture therefore carries **two weeks [new]**:
 
 - **Week 40** (Mon 2026-09-28 to Fri 2026-10-02): the full seeded scenario.
 - **Week 41** (Mon 2026-10-05 to Fri 2026-10-09): demand and cover only. Its queue contains **only
-  resurfaced deferrals and fired triggers**. No new week 41 items exist.
+  resurfaced deferrals and fired triggers**. No new week 41 items exist. (As approved and built
+  2026-09-23; superseded 2026-09-24, see `docs/superpowers/specs/2026-09-24-week41-new-cases-design.md`,
+  which authors two new week-41 cases.)
 
 **Weeks after 41 use the week 41 template [new]:** normal demand, `R-1` only, and a queue containing
 only resurfaced deferrals. `V-027` reviews on 2026-11-02, which is week 45, so the clock must remain
-meaningful past the two authored weeks.
+meaningful past the two authored weeks. (Week 41 itself no longer matches this template as of
+2026-09-24; see the cross-reference above.)
 
 This is what makes G4 demonstrable rather than asserted: commit week 40, advance to Monday, and `V-041`
 returns with its rationale intact. The narrowness of week 41 is a **stated limitation in the handoff**,
@@ -605,7 +608,8 @@ stated, alongside the §7.1 results. A goal with no evidence is recorded as not 
 
 Stated limitations to carry into the README:
 
-1. Week 41 contains only resurfaced items (§3.7).
+1. Week 41 contains only resurfaced items (§3.7). (Superseded 2026-09-24: week 41 also authors two
+   new cases; see `docs/superpowers/specs/2026-09-24-week41-new-cases-design.md`.)
 2. The walkthrough is self-run, not observed (§7.2).
 3. Commit is simulated and fixture-guaranteed. Real-world rejection and pending confirmation are future
    work [WP §4, §10].

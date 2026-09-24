@@ -122,9 +122,11 @@ available = 38 - 2 + 1 = 37 < demand 38  →  shortfall 1
 This is visible in the capacity band and blocks commit from the moment week 41 becomes the active
 week, the same mechanism that makes V-118's week-40 Tuesday conflict visible at cold open. Nothing
 new is computed: `computeWeekCapacity` already reads the whole week regardless of which day is
-"today." It clears by moving either item to Tuesday, Wednesday or Friday, each of which has its own
-untouched spare unit. Moving one to Monday instead does not clear it (Monday has none to give),
-which mirrors, unplanned, the same "the shortage lands elsewhere" lesson V-103 already teaches in
+"today." It clears by moving either item off Thursday, though not to the same set of days: V-105
+carries no parts requirement and can move to Tuesday, Wednesday or Friday, while V-024's parts
+(§3) are not ready until Wednesday, so only Wednesday or Friday clear it for that item. Moving
+either one to Monday instead does not clear it (Monday has none to give), which mirrors, unplanned,
+the same "the shortage lands elsewhere" lesson V-103 already teaches in
 week 40.
 
 **Effect on the weekly plan.** `groupQueue` (`src/ui/grouping.ts`) puts any item behind a

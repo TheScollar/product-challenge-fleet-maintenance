@@ -230,12 +230,15 @@ describe('fleet overview: two new week-41 cases collide on Thursday', () => {
     const beforeMove = planReducer(week41, { type: 'advance-days', days: 3 }, fixture)
     expect(overviewFor(beforeMove).today.covered).toBe(false)
 
+    // V-105, not V-024: V-024's parts aren't ready until Wednesday, so the
+    // slot picker would disable Tuesday for it. V-105 carries no parts
+    // requirement, so this is a day a real user could actually pick.
     const moved = planReducer(
       week41,
       {
         type: 'set-decision',
         weekId: '2026-10-05',
-        decision: { itemId: 'item-v024', treatment: 'act-now', slotDate: '2026-10-06', deferral: null },
+        decision: { itemId: 'item-v105', treatment: 'act-now', slotDate: '2026-10-06', deferral: null },
       },
       fixture,
     )
@@ -244,12 +247,13 @@ describe('fleet overview: two new week-41 cases collide on Thursday', () => {
   })
 
   it('relocates rather than resolves the shortfall if moved to Monday instead', () => {
+    // V-105 again: no parts requirement, so Monday is a reachable slot for it.
     const moved = planReducer(
       week41,
       {
         type: 'set-decision',
         weekId: '2026-10-05',
-        decision: { itemId: 'item-v024', treatment: 'act-now', slotDate: '2026-10-05', deferral: null },
+        decision: { itemId: 'item-v105', treatment: 'act-now', slotDate: '2026-10-05', deferral: null },
       },
       fixture,
     )
