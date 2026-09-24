@@ -3,6 +3,8 @@ import { addDays, mondayOf } from '../domain/clock'
 import { nextResurfaceDate, resurfacedItems } from '../domain/deferral'
 import { weekFixtureFor } from '../domain/capacity'
 import { SEED_DATE } from '../domain/fixture'
+import { bookingsForVisits } from '../domain/replacementBooking'
+import { visitsFromDecisions } from '../domain/visits'
 import type {
   CommittedPlan,
   DeferralRecord,
@@ -115,16 +117,28 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       // site keeps a decision moved off watch from carrying a stale follow-up.
       const decision: DraftDecision =
         action.decision.treatment === 'watch' ? action.decision : { ...action.decision, deferral: null }
+      const draft = { ...current, [decision.itemId]: decision }
+      // A replacement belongs to a visit. Whenever the decisions change, the
+      // week's bookings are pruned to vehicles that still have one, so a
+      // watched or undecided item carries neither cover capacity nor cover
+      // cost. [scenario spec §5.3]
+      const bookings = bookingsForVisits(
+        bookingsFor({ state, weekId: action.weekId }),
+        visitsFromDecisions(draft, fixture.items),
+      )
       return {
         ...state,
-        draftByWeek: {
-          ...state.draftByWeek,
-          [action.weekId]: { ...current, [decision.itemId]: decision },
-        },
+        draftByWeek: { ...state.draftByWeek, [action.weekId]: draft },
+        draftBookingsByWeek: { ...state.draftBookingsByWeek, [action.weekId]: bookings },
       }
     }
 
     case 'set-booking': {
+      // Structural: no action sequence can store a booking for a vehicle
+      // whose draft has no visit. The control offers the request only once a
+      // visit is applied; this guard does not rely on that. [scenario spec §5.3]
+      const visits = visitsFromDecisions(draftFor({ fixture, state, weekId: action.weekId }), fixture.items)
+      if (!visits.some((v) => v.vehicleId === action.booking.vehicleId)) return state
       const current = bookingsFor({ state, weekId: action.weekId })
       return {
         ...state,

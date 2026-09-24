@@ -1,6 +1,6 @@
 import { weekFixtureFor } from './capacity'
 import { addDays } from './clock'
-import type { Cover, Fixture, ReplacementBooking, VehicleId, WeekId } from './types'
+import type { Cover, Fixture, ReplacementBooking, VehicleId, Visit, WeekId } from './types'
 
 /**
  * Structural, not trusting: the standard-only rule is checked here too, not
@@ -66,4 +66,18 @@ export function adHocCoversFrom(
   dayRateEur: number,
 ): Cover[] {
   return Object.values(bookings).map((b) => bookingAsCover(b, dayRateEur))
+}
+
+/**
+ * A replacement belongs to a visit. Every reader filters through here first,
+ * so a booking that reached storage by any route other than the reducer, or
+ * that outlived its visit, adds neither capacity nor cost. Structural, not
+ * trusting, like deferralRecordsFrom. [scenario spec §5.4]
+ */
+export function bookingsForVisits(
+  bookings: Record<VehicleId, ReplacementBooking>,
+  visits: Visit[],
+): Record<VehicleId, ReplacementBooking> {
+  const visiting = new Set(visits.map((v) => v.vehicleId))
+  return Object.fromEntries(Object.entries(bookings).filter(([vehicleId]) => visiting.has(vehicleId)))
 }
