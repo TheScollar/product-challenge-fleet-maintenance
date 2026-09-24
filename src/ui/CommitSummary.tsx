@@ -1,3 +1,4 @@
+import { capacityFigure } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { costSummaryFor } from '../domain/costs'
 import { bookingCostEur } from '../domain/replacementBooking'
@@ -47,10 +48,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
                 .filter((a) => a.date === date)
                 .map((a) => (
                   <div key={a.vehicleClass}>
-                    <span className="n">
-                      {a.available} / {a.demand}
-                    </span>{' '}
-                    {a.vehicleClass}
+                    <span className="n">{capacityFigure(a)}</span> {a.vehicleClass}
                   </div>
                 ))}
             </div>

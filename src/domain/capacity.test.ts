@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
+import {
+  capacityBreakdown,
+  capacityFigure,
+  computeDayCapacity,
+  computeWeekCapacity,
+  isHeldOn,
+  unavailableOn,
+  weekFixtureFor,
+} from './capacity'
 import { fixture } from './fixture'
 import { visitCoversDate, visitsFromDecisions } from './visits'
 import { proposedDecisions, vehicle } from './testSupport'
@@ -232,5 +240,47 @@ describe('an ad hoc cover clears a shortfall exactly like a pooled one', () => {
     const week = weekFixtureFor(fixture, WEEK_40)
     const tue = computeDayCapacity({ date: '2026-09-29', vehicleClass: 'standard', fixture, visits: [], week })
     expect(tue.cover).toBe(2)
+  })
+})
+
+describe('capacity figures name own vans and rentals separately', () => {
+  const adopted = visitsFromDecisions(proposedDecisions(), fixture.items)
+  const week = weekFixtureFor(fixture, WEEK_40)
+
+  it('reads own + rental / demand where rentals are on site', () => {
+    const thu = standardFor(adopted, '2026-10-01')
+    expect(thu.available).toBe(39)
+    expect(thu.coverIds).toEqual(['R-1', 'R-2'])
+    expect(capacityFigure(thu)).toBe('37 + 2 / 38')
+    expect(capacityFigure(standardFor(adopted, '2026-09-29'))).toBe('35 + 2 / 38')
+    expect(capacityFigure(standardFor([], '2026-09-30'))).toBe('37 + 1 / 38')
+  })
+
+  it('drops the rental term where no cover exists', () => {
+    const spec = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits: adopted, week })
+    expect(spec.coverIds).toEqual([])
+    expect(capacityFigure(spec)).toBe('7 / 7')
+  })
+
+  it('lists an ad hoc cover by its id', () => {
+    const extra: Cover = { id: 'V-118 replacement', vehicleClass: 'standard', confirmedDates: ['2026-09-29'], dayRateEur: 140 }
+    const tue = computeDayCapacity({
+      date: '2026-09-29',
+      vehicleClass: 'standard',
+      fixture,
+      visits: adopted,
+      week,
+      adHocCovers: [extra],
+    })
+    expect(tue.coverIds).toEqual(['R-1', 'R-2', 'V-118 replacement'])
+    expect(capacityFigure(tue)).toBe('35 + 3 / 38')
+  })
+
+  it('spells the breakdown out for the cell tooltip', () => {
+    expect(capacityBreakdown(standardFor(adopted, '2026-10-01'))).toBe(
+      '38 owned · off the road: V-012 · rentals on site: R-1, R-2',
+    )
+    const spec = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits: adopted, week })
+    expect(capacityBreakdown(spec)).toBe('7 owned · none off the road · no rental on site')
   })
 })

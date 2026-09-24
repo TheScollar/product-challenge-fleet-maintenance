@@ -1,3 +1,4 @@
+import { capacityFigure } from '../domain/capacity'
 import { addDays } from '../domain/clock'
 import { dailyConfirmation } from '../domain/commit'
 import type { CommittedPlan } from '../domain/types'
@@ -14,10 +15,7 @@ export function DailyConfirmation({ plan }: { plan: CommittedPlan }) {
       <div className="row">
         {view.rows.map((r) => (
           <div key={r.vehicleClass}>
-            <span className="n">
-              {r.available} / {r.demand}
-            </span>{' '}
-            {r.vehicleClass} assignments covered
+            <span className="n">{capacityFigure(r)}</span> {r.vehicleClass} assignments covered
             {r.shortfall > 0 && <strong style={{ color: 'var(--crit)' }}> · short {r.shortfall}</strong>}
           </div>
         ))}
