@@ -95,6 +95,7 @@ export function ReplacementBookingControl({
           type="number"
           min={1}
           max={week.days.length}
+          step={1}
           value={draft.days ?? 1}
           onChange={(e) => setDraft({ ...draft, vehicleId, days: Number(e.target.value) })}
         />

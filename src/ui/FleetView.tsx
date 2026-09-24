@@ -6,6 +6,7 @@ import type { Blocker, DraftDecision, ItemId, ReplacementBooking, VehicleId } fr
 import { urgencyLabel } from '../domain/urgency'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId, queueFor } from '../state/planReducer'
+import { CostAgainstBudget } from './CostAgainstBudget'
 import { InspectPopover } from './InspectPopover'
 import { ReplacementBookingControl } from './ReplacementBookingControl'
 
@@ -184,24 +185,7 @@ export function FleetView({
 
       <div className="fleetsection">
         <h2>This week's cost</h2>
-        <div className="costs">
-          <div className="cost">
-            <div className="n">EUR {cost.serviceCostEur.toLocaleString('en-GB')}</div>
-            <div className="l">Service cost</div>
-          </div>
-          <div className="cost">
-            <div className="n">EUR {cost.coverCostEur.toLocaleString('en-GB')}</div>
-            <div className="l">Replacement cover</div>
-          </div>
-          <div className={`cost${cost.overByEur !== null ? ' over' : ''}`}>
-            <div className="n">EUR {cost.totalEur.toLocaleString('en-GB')}</div>
-            <div className="l">
-              {cost.overByEur !== null
-                ? `EUR ${cost.overByEur.toLocaleString('en-GB')} over the EUR ${cost.budgetEur.toLocaleString('en-GB')} budget`
-                : `Of a EUR ${cost.budgetEur.toLocaleString('en-GB')} weekly budget`}
-            </div>
-          </div>
-        </div>
+        <CostAgainstBudget summary={cost} />
       </div>
     </>
   )

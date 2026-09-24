@@ -185,3 +185,45 @@ fixed:
 
 No colour value, queue ordering or sibling-owned component was changed. Limitation 6 still stands:
 the projection is unit-tested, the components are verified live.
+
+## Addendum: final whole-branch review of replacement cover (2026-09-24)
+
+**Commands:** `npm test` (252 tests, 16 files, all passing; 1 added), `npx tsc --noEmit` (clean),
+`npm run build` (clean), plus a live browser pass.
+
+The live pass exercised the feature end to end. All three booking entry points, the fleet-grid
+popover, an attention card and the plan-surface item detail, produced a working request form. A
+requested booking cleared a real Tuesday capacity shortfall, the "tomorrow" warning disappearing
+once it was in place. The dashboard's cost figures updated live as bookings were added, observed
+going EUR 2,420 → EUR 2,560 → EUR 3,120 across two bookings; pushing the total to EUR 3,120 against
+a EUR 3,000 budget left Commit enabled and showed "EUR 120 over the EUR 3,000 budget". The commit
+summary froze that same over-budget total and listed both bookings sorted by vehicle ID. Reset
+cleared both the draft and the just-committed booking back to the EUR 2,420 baseline. The
+specialist-disabled state, "No specialist replacement cover exists.", rendered correctly at every
+entry point, including a quiet (green) specialist van's popover.
+
+A review of the whole replacement-cover branch, deliberately off the scripted path, found three
+Important issues that every per-task gate had missed. All are fixed:
+
+- **A data-loss bug (Important).** `replacementBookingErrors` checked `days < 1` but never checked
+  it was an integer, and the days input carried no `step`, so a user could type `1.5` and have it
+  accepted and stored. The stricter persistence validator, `isReplacementBooking`, already requires
+  `Number.isInteger(days)`, so the next page load found the stored state invalid and reset the
+  entire app to the seed, silently destroying every decision and booking made. Fixed by tightening
+  the domain check to also require an integer, matching persistence; the days input now also
+  carries `step={1}` as defense in depth; pinned by a new regression test.
+- **Duplicated cost-tile markup (Important).** `FleetView` and `CommitSummary` each carried a
+  byte-identical three-tile cost block, the same risk on the presentation side that
+  `costSummaryFor` was built to close on the calculation side (5bbdec1, 25dee47). Extracted into a
+  shared `CostAgainstBudget` component; both surfaces now render from the same markup.
+- **A capacity-band legend gap (Important).** The band's cell numbers already reflected a requested
+  booking via `adHocCoversFrom`, but its header legend read only `fixture.covers`, so the line
+  explaining where cover comes from never mentioned a booking that had just changed the numbers
+  above it. `fleetStatus.ts`'s `coverageFor` already appended ad hoc covers to the dashboard's
+  equivalent line; the band's `covers` now does the same, bringing it in line with the dashboard.
+
+Left as follow-up, all Minor: `ItemDetail`'s booking-control mount relies on its parent's key
+rather than carrying its own; `costs.ts` still inlines a cost formula duplicated from
+`bookingCostEur`; `isReplacementBookingComplete` is unused dead code; specialist exclusion is
+enforced on the UI/validation path but not at the state-write boundary, low risk for a
+single-writer localStorage prototype.

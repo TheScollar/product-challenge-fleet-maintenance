@@ -4,6 +4,7 @@ import { bookingCostEur } from '../domain/replacementBooking'
 import { summaryFor } from '../domain/commit'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId } from '../state/planReducer'
+import { CostAgainstBudget } from './CostAgainstBudget'
 import { DailyConfirmation } from './DailyConfirmation'
 
 export function CommitSummary({ onEdit }: { onEdit: () => void }) {
@@ -68,24 +69,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
 
       <section>
         <h3>Cost against budget</h3>
-        <div className="costs">
-          <div className="cost">
-            <div className="n">EUR {cost.serviceCostEur.toLocaleString('en-GB')}</div>
-            <div className="l">Service cost</div>
-          </div>
-          <div className="cost">
-            <div className="n">EUR {cost.coverCostEur.toLocaleString('en-GB')}</div>
-            <div className="l">Replacement cover</div>
-          </div>
-          <div className={`cost${cost.overByEur !== null ? ' over' : ''}`}>
-            <div className="n">EUR {cost.totalEur.toLocaleString('en-GB')}</div>
-            <div className="l">
-              {cost.overByEur !== null
-                ? `EUR ${cost.overByEur.toLocaleString('en-GB')} over the EUR ${cost.budgetEur.toLocaleString('en-GB')} budget`
-                : `Of a EUR ${cost.budgetEur.toLocaleString('en-GB')} weekly budget`}
-            </div>
-          </div>
-        </div>
+        <CostAgainstBudget summary={cost} />
         {bookingRows.length > 0 && (
           <ul>
             {bookingRows.map((b) => (

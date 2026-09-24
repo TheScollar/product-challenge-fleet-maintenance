@@ -19,7 +19,7 @@ export function replacementBookingErrors(
   const errors: string[] = []
   if (vehicle.vehicleClass !== 'standard') errors.push('No specialist replacement cover exists')
   if (!draft.startDate) errors.push('A start date is required')
-  if (draft.days === undefined || draft.days === null || draft.days < 1) {
+  if (draft.days === undefined || draft.days === null || !Number.isInteger(draft.days) || draft.days < 1) {
     errors.push('At least one day is required')
   }
 

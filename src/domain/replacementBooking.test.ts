@@ -47,6 +47,14 @@ describe('replacementBookingErrors', () => {
     expect(errors).toContain('Start date must fall within the active week')
   })
 
+  it('rejects a fractional day count', () => {
+    const errors = replacementBookingErrors(
+      { vehicleId: 'V-027', startDate: '2026-09-29', days: 1.5 },
+      { fixture, weekId: WEEK_40 },
+    )
+    expect(errors).toContain('At least one day is required')
+  })
+
   it('rejects a range that overruns the week', () => {
     const errors = replacementBookingErrors(
       { vehicleId: 'V-027', startDate: '2026-10-02', days: 2 },

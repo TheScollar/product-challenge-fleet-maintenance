@@ -29,7 +29,7 @@ export function CapacityBand({
   const shortDays = rows.filter((r) => r.shortfall > 0)
   const spareDays = rows.filter((r) => r.available > r.demand)
 
-  const covers = fixture.covers.filter((c) => week.coverIds.includes(c.id))
+  const covers = [...fixture.covers.filter((c) => week.coverIds.includes(c.id)), ...adHocCovers]
   const hasSpecialistCover = covers.some((c) => c.vehicleClass === 'specialist')
 
   return (
