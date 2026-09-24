@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { costSummaryFor } from './costs'
 import { fixture } from './fixture'
 import { coldOpenDecisions } from './testSupport'
-import type { ReplacementBooking, VehicleId } from './types'
+import type { DraftDecision, ItemId, ReplacementBooking, VehicleId } from './types'
 
 const WEEK_40 = '2026-09-28'
 
@@ -41,9 +41,16 @@ describe('costSummaryFor', () => {
   })
 
   it('never counts an item that is watched or undecided', () => {
-    const summary = costSummaryFor({ fixture, weekId: WEEK_40, decisions: {}, bookings: {} })
-    expect(summary.serviceCostEur).toBe(0)
-    expect(summary.coverCostEur).toBe(0)
-    expect(summary.totalEur).toBe(0)
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v012': { itemId: 'item-v012', treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+      'item-v041': { itemId: 'item-v041', treatment: 'watch', slotDate: null, deferral: null },
+      'item-v027': { itemId: 'item-v027', treatment: null, slotDate: null, deferral: null },
+    }
+    const summary = costSummaryFor({ fixture, weekId: WEEK_40, decisions, bookings: {} })
+    // Only item-v012 is visited (act-now with a slot date). item-v041 is watched,
+    // item-v027 is undecided (treatment null); neither contributes.
+    expect(summary.serviceCostEur).toBe(480)
+    expect(summary.coverCostEur).toBe(700)
+    expect(summary.totalEur).toBe(1180)
   })
 })
