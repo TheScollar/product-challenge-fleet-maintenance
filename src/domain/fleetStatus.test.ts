@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { daysBetween } from './clock'
 import { fixture, SEED_DATE } from './fixture'
 import { fleetOverview, nextBusinessDay, type FleetOverview } from './fleetStatus'
 import { validatePlan } from './validation'
@@ -187,6 +188,43 @@ describe('fleet overview in week 41', () => {
     expect(vanOf(later, 'V-012').facts).toEqual([])
     expect(vanOf(later, 'V-027').facts).toEqual(['Watching · review Mon 2 Nov'])
     expect(later.counts).toEqual({ offRoad: 0, needsDecision: 1, inService: 44 })
+  })
+})
+
+describe('fleet overview: a held van whose own item resurfaces undecided', () => {
+  // V-027 held for a reason with nothing to do with its item (unlike V-012,
+  // whose only fixture hold belongs to a safety-class item that can never
+  // reach deferralHistory). Committing week 40 lets item-v027 keep its own
+  // default watch proposal, landing a DeferralRecord in the ledger; jumping
+  // straight to that item's own review date resurfaces it into the queue,
+  // undecided, while the first commit's record still sits in deferralHistory.
+  const heldV027: Fixture = {
+    ...fixture,
+    vehicles: fixture.vehicles.map((v) =>
+      v.id === 'V-027'
+        ? {
+            ...v,
+            hold: {
+              reason: 'Collision damage from a yard reversing incident',
+              since: SEED_DATE,
+              releaseRecordedOn: null,
+            },
+          }
+        : v,
+    ),
+  }
+  const resurfaced = planReducer(
+    committedState(heldV027),
+    { type: 'advance-days', days: daysBetween(SEED_DATE, '2026-11-02') },
+    heldV027,
+  )
+  const o = overviewFor(resurfaced, heldV027)
+
+  it('stays red for the hold alone, with no stale Watching fact for the resurfaced item', () => {
+    const v027 = vanOf(o, 'V-027')
+    expect(v027.kind).toBe('off-road')
+    expect(v027.itemId).toBe('item-v027')
+    expect(v027.facts).toEqual(['Held · Collision damage from a yard reversing incident'])
   })
 })
 

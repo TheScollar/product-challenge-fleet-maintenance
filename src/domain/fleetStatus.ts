@@ -128,8 +128,9 @@ export function fleetOverview(args: {
     ) {
       planFacts.push(`Booked ${formatDay(committedDecision.slotDate)}`)
     }
-    // Watching reads from the ledger, the one recency definition. A resurfaced
-    // item is back in the queue and goes amber instead, so no stale fact shows.
+    // The off-road branch keeps planFacts, so a van held for a reason unrelated
+    // to its item must drop that item's stale watch record once it resurfaces
+    // undecided, or Held would contradict a stale Watching. [spec 4]
     for (const item of fixture.items) {
       if (item.vehicleId !== vehicle.id) continue
       if (queueItem !== null && item.id === queueItem.id && committedDecision === null) continue
