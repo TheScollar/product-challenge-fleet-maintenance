@@ -1,4 +1,6 @@
 import { formatDay } from '../domain/clock'
+import { costSummaryFor } from '../domain/costs'
+import { bookingCostEur } from '../domain/replacementBooking'
 import { summaryFor } from '../domain/commit'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId } from '../state/planReducer'
@@ -9,6 +11,8 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
   const plan = state.committedByWeek[activeWeekId(state)] ?? null
   if (plan === null) return null
   const summary = summaryFor({ fixture, plan })
+  const cost = costSummaryFor({ fixture, weekId: plan.weekId, decisions: plan.decisions, bookings: plan.bookings })
+  const bookingRows = Object.values(plan.bookings).sort((a, b) => a.vehicleId.localeCompare(b.vehicleId))
 
   return (
     <div className="summary">
@@ -60,6 +64,38 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
             <li key={line}>{line}</li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <h3>Cost against budget</h3>
+        <div className="costs">
+          <div className="cost">
+            <div className="n">EUR {cost.serviceCostEur.toLocaleString('en-GB')}</div>
+            <div className="l">Service cost</div>
+          </div>
+          <div className="cost">
+            <div className="n">EUR {cost.coverCostEur.toLocaleString('en-GB')}</div>
+            <div className="l">Replacement cover</div>
+          </div>
+          <div className={`cost${cost.overByEur !== null ? ' over' : ''}`}>
+            <div className="n">EUR {cost.totalEur.toLocaleString('en-GB')}</div>
+            <div className="l">
+              {cost.overByEur !== null
+                ? `EUR ${cost.overByEur.toLocaleString('en-GB')} over the EUR ${cost.budgetEur.toLocaleString('en-GB')} budget`
+                : `Of a EUR ${cost.budgetEur.toLocaleString('en-GB')} weekly budget`}
+            </div>
+          </div>
+        </div>
+        {bookingRows.length > 0 && (
+          <ul>
+            {bookingRows.map((b) => (
+              <li key={b.vehicleId}>
+                {b.vehicleId}: {b.days} {b.days === 1 ? 'day' : 'days'} from {formatDay(b.startDate)}, EUR{' '}
+                {bookingCostEur(b, fixture.replacementDayRateEur).toLocaleString('en-GB')}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section>
