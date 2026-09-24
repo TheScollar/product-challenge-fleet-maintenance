@@ -236,8 +236,8 @@ plus a gap in this addendum's own verification claim; a second round closed both
   contradicted the shipped code, which deliberately combines service and cover cost; the in-app
   cover note (`coverNoteContent.ts`), the user-facing instance of the same claim on the About
   screen, carried the identical contradiction and was missed by the first fix round, along with its
-  own source of truth, `docs/superpowers/specs/2026-09-23-cover-note-design.md` §3.6, which a
-  future re-sync against would have reinstated the superseded claim. All three now agree: the
+  own source of truth, `docs/superpowers/specs/2026-09-23-cover-note-design.md` §3.6, against which
+  a future re-sync would have reinstated the superseded claim. All three now agree: the
   cover-note spec carries a dated amendment, the cover note's copy follows it under a documented
   exception, and the README states the same narrowed rule. `costs.ts`'s comment citing the cover
   note as unqualified authority for the old, wider rule was reworded to name the narrowing
