@@ -219,6 +219,8 @@ and holds lists.
 | `src/domain/types.ts` | `ReplacementBooking`; new fields on `Fixture`, `WeekFixture`, `CommittedPlan` |
 | `src/domain/replacementBooking.ts` | Validation, the `Cover` adapter |
 | `src/domain/capacity.ts` | Gains `adHocCovers` parameter on both compute functions |
+| `src/domain/validation.ts` | `validatePlan` gains an optional `bookings` parameter, threaded into its own `computeWeekCapacity` call, so a requested booking clears a blocker the same way R-1 or R-2 does |
+| `src/domain/fleetStatus.ts` | `fleetOverview` gains the same optional `bookings` parameter, threaded into `coverageFor`'s two calls, so today and tomorrow's coverage lines on the dashboard agree with the band and the blockers |
 | `src/domain/costs.ts` | `costSummaryFor`, the one function both surfaces call |
 | `src/domain/fixture.ts` | `replacementDayRateEur`, `budgetEur`, `defaultBudgetEur` |
 | `src/state/planReducer.ts` | `draftBookingsByWeek`, `set-booking`, `clear-booking`, commit/reset coverage |
@@ -227,8 +229,9 @@ and holds lists.
 | `src/ui/InspectPopover.tsx` | Mounts the control |
 | `src/ui/FleetView.tsx` | `AttentionCard` restructured to mount the control; new cost section |
 | `src/ui/ItemDetail.tsx` | Mounts the control |
+| `src/ui/CapacityBand.tsx` | Gains a `bookings` prop, converted to `adHocCovers` before its own capacity call, so the live band reflects a requested booking |
 | `src/ui/CommitSummary.tsx` | New cost-against-budget section |
-| `src/App.tsx` | Threads `bookings` alongside `decisions` |
+| `src/App.tsx` | Threads `bookings` alongside `decisions`, including into the `blockers` computation |
 
 ## 10. Testing
 
