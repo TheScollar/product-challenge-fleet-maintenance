@@ -55,7 +55,9 @@ resurrect it.
    moves from `not requested` to EUR 700, and the fleet dashboard's weekly cost with it.
 5. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
    No lever closes it: a standard rental is not a specialist van.
-6. Defer `V-041` with a reason, a review date and a trigger. The second blocker clears.
+6. Defer `V-041` with a reason, a review date and a trigger. The specialist shortfall clears. Then
+   open `V-027` and click **Use proposal**: watch until the 2 Nov service, with the rationale and
+   trigger already filled in. Apply it. Nothing is left to decide.
 7. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
 8. Commit. The summary carries the visits, forward availability, the cover assumptions including the
    absence of specialist cover, and the deferred follow-ups. On the fleet dashboard, V-012's card now
@@ -121,7 +123,7 @@ and no external booking exists.** Prices are scenario prices.
 The full list with evidence lives in `docs/acceptance.md`. The ones to know before judging the build:
 
 1. Week 41 additionally authors two new cases (a HU deadline and a tyre-tread estimate, both
-   landing on the same Thursday). Week 42 and later still carry only resurfaced items.
+   proposed for the same Thursday). Week 42 and later still carry only resurfaced items.
 2. The walkthrough was verified live in a browser by the build's own tooling, twice, but not observed
    with a person unfamiliar with the build, so G1 and G5 carry no independent usability evidence.
 3. Real-world booking rejection and pending confirmation are not modelled.

@@ -293,17 +293,19 @@ holding the old seeded drafts resets to the seed with the older-build notice.
 
 **Live pass.** Run in a real browser and verified by reading DOM text and attributes; the screenshot
 tool failed, so no screenshots exist for this pass. Cold open: one red, four amber, five to decide,
-cost tiles at EUR 0, no request control on any dashboard surface, band cells `37 + 1 / 38` and
-`37 + 2 / 38` with Tuesday and Thursday outlined green. Adopting the three Tuesday proposals
-(`V-012`, `V-103`, `V-118`) turned Tuesday red at `35 + 2 / 38`; `V-027` was still undecided at that
-point, so the header chips read `2 to decide` and `Tue 29 Sep · standard short 1`, and the queue
-grouped as `Blocking the week · 2` (`V-103`, `V-118`), `To decide · 2` (`V-027`, `V-041`),
-`Settled · 1` (`V-012`). Requesting five days of cover for `V-012` moved its Consequence tile from
-`not requested` to `EUR 700` and the dashboard tiles to EUR 1,440, EUR 700, EUR 2,140. Switching
-`V-118` to Watch removed its booking and cost. Later in the pass, before Commit, `V-027` was adopted
-with **Use proposal** (Watch, rationale, review date Mon 2 Nov and trigger prefilled) and applied,
-after which the header showed no chips and Commit was enabled. After the walkthrough commit,
-`V-012`'s red card read `Replacement on site · day 1 of 5`, and `day 2 of 5` on Tuesday.
+cost tiles at EUR 0, no request control on any dashboard surface, band cells `37 + 1 / 38` and `37 +
+2 / 38` with Tuesday and Thursday outlined green. Adopting the three Tuesday proposals (`V-012`,
+`V-103`, `V-118`) turned Tuesday red at `35 + 2 / 38`; `V-027` was still undecided at that point, so
+the header chips read `2 to decide` and `Tue 29 Sep · standard short 1`, and the queue grouped as
+`Blocking the week · 2` (`V-103`, `V-118`), `To decide · 2` (`V-027`, `V-041`), `Settled · 1`
+(`V-012`). Requesting five days of cover for `V-012` moved its Consequence tile from `not requested`
+to `EUR 700` and the dashboard tiles to EUR 1,440, EUR 700, EUR 2,140. Switching `V-118`'s treatment
+to Watch made its Replacement cover block read-only with the exact string `Not needed while this
+vehicle is watched.` and cleared Tuesday to `36 + 3 / 38` with one spare; no booking existed for
+`V-118`, so none was removed. Later in the pass, before Commit, `V-027` was adopted with
+**Use proposal** (Watch, rationale, review date Mon 2 Nov and trigger prefilled) and applied, after
+which the header showed no chips and Commit was enabled. After the walkthrough commit, `V-012`'s red
+card read `Replacement on site · day 1 of 5`, and `day 2 of 5` on Tuesday.
 
 **A stale replacement-cover key (found in review).** The task review of the detail pane found that
 the replacement-cover control's open form could survive switching an item to Watch and back, because
@@ -315,11 +317,13 @@ after adoption, not before; at the true cold open the queue reads `V-012, V-027,
 V-041`, and once every proposal is adopted the earlier order returns. The week-41 addendum's
 Thursday collision between `V-024` and `V-105` (above) likewise now appears only once both of that
 week's proposals are adopted, not at week 41's own cold open. The cover note's third "What you are
-about to see" paragraph, its source spec, the README walkthrough and four specs carry dated
-amendments. A fifth spec, `2026-09-24-week41-new-cases-design.md`, was not in the plan but carries
-one too: its two `consequence.coverCostEur` rows (`V-024`, `V-105`) name a field deleted along with
-the rest, found while scanning the docs tree for stale references to it, and it now carries two
-more, in §4 and §7, about the Thursday collision above appearing only once both proposals are
-adopted. The Codex attempt at the
-same fixes, reverted before any commit, is preserved as
+about to see" paragraph, its source spec and the README walkthrough were all corrected. Six specs
+carry dated amendments from this work: cover note, replacement cover, prototype design, guided-queue
+declutter, fleet overview and week 41. Two of those amendments sit outside the plan's own list: the
+replacement-cover spec's §4.2 cost formula, and the week-41 spec's amendments in full, since that
+spec was never in the plan at all. Week 41 carries its two `consequence.coverCostEur` rows (`V-024`,
+`V-105`, a field deleted along with the rest) plus its §4 and §7 on the Thursday collision above.
+The earlier addendum's two open follow-ups are both closed by this branch: the README walkthrough
+now requests a replacement (item 4), and the replacement-cover control now carries its own key
+(commit `0a044d5`). The Codex attempt at the same fixes, reverted before any commit, is preserved as
 `.superpowers/sdd/codex-fleet-scenario-fixes-2026-09-24.patch` for reference only.
