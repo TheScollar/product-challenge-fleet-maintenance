@@ -211,7 +211,7 @@ function AttentionCard({
           Open in week plan →
         </button>
       )}
-      <ReplacementBookingControl vehicleId={status.vehicleId} vehicleClass={status.vehicleClass} />
+      <ReplacementBookingControl key={status.vehicleId} vehicleId={status.vehicleId} vehicleClass={status.vehicleClass} />
     </div>
   )
 }

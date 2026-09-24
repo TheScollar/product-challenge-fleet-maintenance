@@ -62,7 +62,7 @@ export function InspectPopover({
         <dt>Status</dt>
         <dd>{facts.length > 0 ? facts.join(' · ') : 'In service · not held'}</dd>
       </dl>
-      <ReplacementBookingControl vehicleId={vehicle.id} vehicleClass={vehicle.vehicleClass} />
+      <ReplacementBookingControl key={vehicle.id} vehicleId={vehicle.id} vehicleClass={vehicle.vehicleClass} />
       {itemId !== null ? (
         <button className="foot" onClick={() => onOpenPlan(itemId)}>
           View in week plan →
