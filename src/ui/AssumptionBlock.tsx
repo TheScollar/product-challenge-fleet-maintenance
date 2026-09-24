@@ -12,9 +12,6 @@ export function AssumptionBlock({ recommendation }: { recommendation: Recommenda
       ) : (
         <p>{recommendation.assumption}</p>
       )}
-      <p style={{ color: 'var(--muted)' }}>
-        <strong>Proposed:</strong> {recommendation.proposedAction}
-      </p>
     </div>
   )
 }

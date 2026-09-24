@@ -399,9 +399,8 @@ button:disabled { cursor: not-allowed; }
   border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--r);
   padding: 9px 11px 9px 13px;
 }
-/* Every card now carries the booking control, so every card has some
-   interactive content; the hover affordance is no longer conditional on
-   being a button. */
+/* Attention cards are read-only apart from their route into the week plan;
+   the replacement request lives in the plan's detail pane. [scenario spec §5.1] */
 .acard:hover { border-color: var(--border-strong); }
 .acard.crit { border-left-color: var(--crit); }
 .acard.warn { border-left-color: var(--warn); }
@@ -412,7 +411,6 @@ button:disabled { cursor: not-allowed; }
   display: block; margin: 6px 0 0; padding: 0; background: none; border: none;
   font-size: 11px; font-weight: 600; color: var(--accent); text-align: left;
 }
-.acard .block { margin-top: 8px; }
 
 .legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); padding: 2px 0 10px; }
 .specdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--spec); }
@@ -451,8 +449,14 @@ button:disabled { cursor: not-allowed; }
 }
 .popover button.foot { background: none; border-left: none; border-right: none; border-bottom: none; color: var(--accent); }
 
-/* Replacement cover: the shared booking control, mounted per vehicle. */
+/* Replacement cover: requested only from the weekly plan's detail pane, once a visit is applied. */
 .block .bookinginfo { font-size: 12px; color: var(--text); margin: 0 0 8px; }
+.block .proposed {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  font-size: 12px; color: var(--muted); margin: 0 0 9px;
+}
+.block .proposed button { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 5px; }
+.block .proposed button:disabled { opacity: 0.5; }
 
 .cost.over { border-color: #e8bdb9; background: var(--crit-soft); }
 .cost.over .n { color: var(--crit); }
