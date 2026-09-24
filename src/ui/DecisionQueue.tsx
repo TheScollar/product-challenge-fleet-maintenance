@@ -31,7 +31,7 @@ export function DecisionQueue({
       )}
       {groups.map((group) => (
         <div className="group" key={group.kind}>
-          <p className={`grouptitle${group.kind === 'blocking' ? ' crit' : ''}`}>
+          <p className={`grouptitle${group.kind === 'blocking' ? ' crit' : group.kind === 'open' ? ' warn' : ''}`}>
             {group.label} <span className="cnt">· {group.items.length}</span>
           </p>
           {group.items.map((item) => {

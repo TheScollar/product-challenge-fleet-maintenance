@@ -68,6 +68,8 @@ button:disabled { cursor: not-allowed; }
   padding: 4px 10px; border-radius: 99px;
 }
 .planheader .bchip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--crit); }
+.planheader .bchip.warn { color: var(--warn); background: var(--warn-soft); border-color: #ead4a8; }
+.planheader .bchip.warn .dot { background: var(--warn); }
 .planheader .commit {
   font-weight: 600; font-size: 13px; padding: 7px 15px; border-radius: var(--r);
   border: 1px solid var(--accent); background: var(--accent); color: #fff;
@@ -165,6 +167,7 @@ button:disabled { cursor: not-allowed; }
   text-transform: uppercase; color: var(--faint); margin: 0 0 8px;
 }
 .grouptitle.crit { color: var(--crit); }
+.grouptitle.warn { color: var(--warn); }
 .grouptitle .cnt { font-weight: 600; color: var(--faint); }
 
 .card {
@@ -174,6 +177,7 @@ button:disabled { cursor: not-allowed; }
   border-radius: var(--r); padding: 8px 11px; margin-bottom: 6px;
 }
 .card.blocking { border-left-color: var(--crit); }
+.card.open { border-left-color: var(--warn); }
 .card.settled { border-left-color: #bfd8c9; }
 .card.settled .title { color: var(--muted); }
 .card.settled .urg, .card.settled .badge { opacity: 0.7; }
@@ -188,6 +192,7 @@ button:disabled { cursor: not-allowed; }
 .card .title { font-size: 12.5px; }
 .card .status { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
 .card .status.crit { color: var(--crit); }
+.card .status.warn { color: var(--warn); }
 .card .status.ok { color: var(--ok); }
 .empty { color: var(--muted); font-size: 12.5px; padding: 12px 0; }
 

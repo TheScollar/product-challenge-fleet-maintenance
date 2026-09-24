@@ -44,7 +44,7 @@ export function ItemCard({
   )
 }
 
-/** Status copy per [D §3]. The weekday is the first token of formatDay. */
+/** Status copy per [D §3]; the waiting states take the dashboard's amber [scenario spec §4]. The weekday is the first token of formatDay. */
 function dispositionLabel(
   decision: DraftDecision | undefined,
   blockers: Blocker[],
@@ -58,12 +58,12 @@ function dispositionLabel(
   if (blockers.some((b) => b.kind === 'infeasible-slot' || b.kind === 'parts-not-ready')) {
     return { text: 'Slot not bookable', tone: 'crit' }
   }
-  if (!decision || decision.treatment === null) return { text: 'No decision', tone: 'crit' }
+  if (!decision || decision.treatment === null) return { text: 'No decision', tone: 'warn' }
   if (decision.treatment === 'watch') {
     return decision.deferral === null
-      ? { text: 'Watch, incomplete', tone: 'crit' }
+      ? { text: 'Watch, incomplete', tone: 'warn' }
       : { text: `Watch until ${formatDay(decision.deferral.reviewDate)}`, tone: '' }
   }
-  if (decision.slotDate === null) return { text: 'No slot chosen', tone: 'crit' }
+  if (decision.slotDate === null) return { text: 'No slot chosen', tone: 'warn' }
   return { text: `${formatDay(decision.slotDate)} booked`, tone: 'ok' }
 }
