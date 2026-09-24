@@ -79,7 +79,8 @@ All ten recorded as **passed**, each with an automated home plus the live pass:
 
 ## Known limitations
 
-1. Week 41 and later contain only resurfaced items. No new work is authored for them.
+1. Week 41 additionally authors two new cases. Week 42 and later still contain only resurfaced
+   items. See the "two new week-41 cases" addendum below.
 2. The usability walkthrough was run by the build's own tooling, not observed with an unfamiliar
    person, so G1 and G5 carry no independent usability evidence.
 3. Commit is simulated and fixture-guaranteed. Real-world rejection and pending confirmation are not
@@ -185,3 +186,23 @@ fixed:
 
 No colour value, queue ordering or sibling-owned component was changed. Limitation 6 still stands:
 the projection is unit-tested, the components are verified live.
+
+## Addendum: two new week-41 cases (2026-09-24)
+
+**Build:** 2085c6c · **Commands:** `npm test` (221 tests, 14 files, all passing), `npx tsc --noEmit` (clean), `npm run build` (clean), plus a live
+browser pass of the checklist in `docs/superpowers/plans/2026-09-24-week41-new-cases.md`'s manual
+verification task.
+
+Week 41 now authors two cases of its own, in addition to whatever resurfaces from week 40:
+`V-105`'s Hauptuntersuchung (HU) deadline and `V-024`'s tyre-tread estimate
+(`docs/superpowers/specs/2026-09-24-week41-new-cases-design.md`). Both default to the same
+Thursday, which exhausts week 41's one spare unit of standard capacity and blocks commit until one
+of them moves, the same mechanism V-118's week-40 Tuesday conflict already demonstrates, replayed a
+week later with two new cases.
+
+**Verified live:** both cases appear as attention cards on the fleet overview from the moment week
+41 is reached, each with its own urgency chip and because-text. The week plan's "Blocking the week"
+group lists three items (V-024, V-105 and, if still undisposed, V-041). Moving one case's slot to
+Tuesday, Wednesday or Friday clears the Thursday shortfall in the capacity band, and moving it to
+Monday instead relocates the shortfall rather than clearing it. Committing shows both vans as
+`Booked Thu 8 Oct` on the fleet overview.

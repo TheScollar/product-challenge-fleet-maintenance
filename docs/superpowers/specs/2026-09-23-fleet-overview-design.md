@@ -251,7 +251,8 @@ derived from `today` anyway, silently.
   it to a new surface.
 - **Week 41.** Resurfaced items go amber with their prior decision visible through the queue's own
   wording. V-012 turns green once its recorded release date passes, with no special casing:
-  `isHeldOn` already answers it.
+  `isHeldOn` already answers it. Week 41 additionally authors two new cases of its own, unrelated to
+  resurfacing; see `docs/superpowers/specs/2026-09-24-week41-new-cases-design.md`.
 - **Multi-day visits.** Off the road on every covered day, `day <n> of <m>`, each van counted once
   no matter how many reasons overlap, matching §4's capacity rule.
 - **Corrupt or absent storage.** No new persistence exists. The projection is a total function
@@ -269,7 +270,8 @@ Domain suite, `src/domain/fleetStatus.test.ts`, against the seeded fixture:
 3. Advanced to Tuesday, committed: V-012 and V-103 both off the road, each exactly once; on-road
    count 43; R-1 and R-2 both on site.
 4. Multi-day scope extension on V-103: Wednesday shows `day 2 of 2`.
-5. Week 41: V-041 resurfaced amber; V-012 green after the recorded release.
+5. Week 41: V-041 resurfaced amber; V-012 green after the recorded release. (Week 41 also authors
+   two new cases of its own; see `docs/superpowers/specs/2026-09-24-week41-new-cases-design.md`.)
 6. Friday: the tomorrow line targets Monday of week 41 with its real date.
 7. One capacity semantics: in an uncommitted week 41, scheduling the resurfaced specialist item
    onto today in draft alone makes `today.covered` false with a specialist shortfall of 1, where
