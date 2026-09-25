@@ -64,7 +64,7 @@ function buildVehicle(id: VehicleId, vehicleClass: 'standard' | 'specialist', in
         ? {
             reason: 'Safety-relevant brake defect recorded at UVV inspection',
             since: '2026-09-25',
-            releaseRecordedOn: '2026-10-06',
+            releaseRecordedOn: '2026-10-05',
           }
         : null,
   }
@@ -75,10 +75,7 @@ const vehicles: Vehicle[] = [
   ...SPECIALIST_IDS.map((id, i) => buildVehicle(id, 'specialist', i + 30)),
 ]
 
-const covers: Cover[] = [
-  { id: 'R-1', vehicleClass: 'standard', confirmedDates: [...WEEK_40, ...WEEK_41], dayRateEur: 140 },
-  { id: 'R-2', vehicleClass: 'standard', confirmedDates: ['2026-09-29', '2026-10-01'], dayRateEur: 140 },
-]
+const covers: Cover[] = []
 
 const garages: Garage[] = [
   {
@@ -123,7 +120,7 @@ const items: OpenItem[] = [
         'The van is already out of service and stays out until a release is recorded. Waiting does not reduce exposure, it extends the outage.',
       serviceCostEur: 480,
       coverUnavailable: false,
-      uncoveredAssignmentsNote: 'None. R-1 covers this van for the whole week.',
+      uncoveredAssignmentsNote: 'One standard assignment uncovered every day V-012 is held.',
     },
     proposal: { treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
     // Watch is disabled for a safety-class item, so it offers no trigger.
@@ -375,7 +372,7 @@ const weeks: WeekFixture[] = [
     weekId: '2026-09-28',
     days: WEEK_40,
     demand: { standard: 38, specialist: 7 },
-    coverIds: ['R-1', 'R-2'],
+    coverIds: [],
     itemIds: ['item-v012', 'item-v041', 'item-v103', 'item-v118', 'item-v027'],
     budgetEur: 3000,
   },
