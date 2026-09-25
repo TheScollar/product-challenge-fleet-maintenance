@@ -1,4 +1,5 @@
 import { formatDay } from '../domain/clock'
+import { isDeferralComplete } from '../domain/deferral'
 import { orderQueue } from '../domain/urgency'
 import { blockersForItem } from '../domain/validation'
 import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem } from '../domain/types'
@@ -17,11 +18,14 @@ const GROUP_LABELS: Record<QueueGroupKind, string> = {
   settled: 'Settled',
 }
 
+type UndisposedBlocker = Extract<Blocker, { kind: 'undisposed-item' }>
+
 /**
- * Exhaustive classification of a queue item. Under current validation rules
- * 'open' cannot occur: an absent or incomplete decision is itself a commit
- * blocker, so undecided always means blocking. The classifier stays total so
- * a future relaxation of validation gets a third group for free. [D §4]
+ * Only a capacity, slot or parts blocker makes an item "blocking". An item
+ * with no decision, a watch without its record, or a visit treatment without
+ * a slot is "open": work still to do, in the dashboard's amber, not a failure
+ * in red. Validation is unchanged, so an open item still blocks Commit; this
+ * is the third group the declutter spec reserved. [D §4, scenario spec §4]
  */
 export function classifyItem(args: {
   item: OpenItem
@@ -30,9 +34,10 @@ export function classifyItem(args: {
   fixture: Fixture
 }): QueueGroupKind {
   const { item, decision, blockers, fixture } = args
-  if (blockersForItem(blockers, item, fixture).length > 0) return 'blocking'
+  const hard = blockersForItem(blockers, item, fixture).filter((b) => b.kind !== 'undisposed-item')
+  if (hard.length > 0) return 'blocking'
   if (!decision || decision.treatment === null) return 'open'
-  if (decision.treatment === 'watch') return decision.deferral === null ? 'open' : 'settled'
+  if (decision.treatment === 'watch') return isDeferralComplete(decision.deferral) ? 'settled' : 'open'
   return decision.slotDate === null ? 'open' : 'settled'
 }
 
@@ -57,13 +62,17 @@ export interface BlockerChip {
   key: string
   label: string
   targetItemId: ItemId | null
+  /** crit for a hard blocker, warn for a decision still waiting. */
+  tone: 'crit' | 'warn'
 }
 
 /**
- * One chip per blocker, in the order validatePlan produced them. An
- * item-attributed blocker targets its item; a capacity blocker targets the
- * first item in queue order it is attributed to, which excludes held
- * vehicles the same way the tiles do. [D §5]
+ * One chip per hard blocker, in the order validatePlan produced them. A
+ * capacity blocker targets the first item in queue order it is attributed to,
+ * which excludes held vehicles the same way the tiles do. Two or more
+ * undecided items collapse into one amber chip, in the position of the first
+ * of them, targeting the first undecided item in queue order; a single one
+ * keeps its own name. [D §5, scenario spec §4]
  */
 export function blockerChips(args: {
   blockers: Blocker[]
@@ -73,23 +82,48 @@ export function blockerChips(args: {
 }): BlockerChip[] {
   const { blockers, fixture } = args
   const ordered = orderQueue(args)
-  return blockers.map((b) => {
+  const undisposed = blockers.filter((b): b is UndisposedBlocker => b.kind === 'undisposed-item')
+  const out: BlockerChip[] = []
+  let collapsed = false
+
+  for (const b of blockers) {
+    if (b.kind === 'undisposed-item') {
+      if (undisposed.length === 1) {
+        out.push(itemChip(b, 'no decision', 'warn', fixture))
+      } else if (!collapsed) {
+        collapsed = true
+        const target = ordered.find((item) => undisposed.some((u) => u.itemId === item.id)) ?? null
+        out.push({
+          key: 'undisposed-all',
+          label: `${undisposed.length} to decide`,
+          targetItemId: target === null ? null : target.id,
+          tone: 'warn',
+        })
+      }
+      continue
+    }
     if (b.kind === 'capacity-shortfall') {
       const target =
         ordered.find((item) => blockersForItem(blockers, item, fixture).includes(b)) ?? null
-      return {
+      out.push({
         key: `capacity-${b.date}-${b.vehicleClass}`,
         label: `${formatDay(b.date)} · ${b.vehicleClass} short ${b.shortBy}`,
         targetItemId: target === null ? null : target.id,
-      }
+        tone: 'crit',
+      })
+      continue
     }
-    const vehicleId = fixture.items.find((i) => i.id === b.itemId)?.vehicleId ?? b.itemId
-    const reason =
-      b.kind === 'undisposed-item'
-        ? 'no decision'
-        : b.kind === 'parts-not-ready'
-          ? 'parts not ready'
-          : 'slot not bookable'
-    return { key: `${b.kind}-${b.itemId}`, label: `${vehicleId} · ${reason}`, targetItemId: b.itemId }
-  })
+    out.push(itemChip(b, b.kind === 'parts-not-ready' ? 'parts not ready' : 'slot not bookable', 'crit', fixture))
+  }
+  return out
+}
+
+function itemChip(
+  b: Extract<Blocker, { itemId: ItemId }>,
+  reason: string,
+  tone: 'crit' | 'warn',
+  fixture: Fixture,
+): BlockerChip {
+  const vehicleId = fixture.items.find((i) => i.id === b.itemId)?.vehicleId ?? b.itemId
+  return { key: `${b.kind}-${b.itemId}`, label: `${vehicleId} · ${reason}`, targetItemId: b.itemId, tone }
 }

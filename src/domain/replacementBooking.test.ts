@@ -3,11 +3,12 @@ import {
   adHocCoversFrom,
   bookingAsCover,
   bookingCostEur,
+  bookingsForVisits,
   isReplacementBookingComplete,
   replacementBookingErrors,
 } from './replacementBooking'
 import { fixture } from './fixture'
-import type { ReplacementBooking } from './types'
+import type { ReplacementBooking, Visit } from './types'
 
 const WEEK_40 = '2026-09-28'
 
@@ -108,5 +109,23 @@ describe('adHocCoversFrom', () => {
 
   it('returns an empty array for no bookings', () => {
     expect(adHocCoversFrom({}, 140)).toEqual([])
+  })
+})
+
+describe('bookingsForVisits', () => {
+  const visits: Visit[] = [
+    { itemId: 'item-v118', vehicleId: 'V-118', garageId: 'werkstatt-berg', startDate: '2026-09-29', days: 1, scope: 'x' },
+  ]
+  const bookings: Record<string, ReplacementBooking> = {
+    'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
+    'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 2 },
+  }
+
+  it('keeps only bookings whose vehicle has a visit', () => {
+    expect(Object.keys(bookingsForVisits(bookings, visits))).toEqual(['V-118'])
+  })
+
+  it('returns nothing when nothing visits', () => {
+    expect(bookingsForVisits(bookings, [])).toEqual({})
   })
 })

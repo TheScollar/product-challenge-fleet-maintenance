@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { computeDayCapacity, weekFixtureFor } from './capacity'
 import { slotBlockers, slotOptions } from './feasibility'
 import { fixture } from './fixture'
-import { coldOpenDecisions, item } from './testSupport'
+import { proposedDecisions, item } from './testSupport'
 import { visitsFromDecisions } from './visits'
 
 const WEEK_40 = '2026-09-28'
 
 describe('slot blockers', () => {
-  const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+  const visits = visitsFromDecisions(proposedDecisions(), fixture.items)
 
   it('accepts the proposed Tuesday slot for V-118', () => {
     expect(slotBlockers({ item: item('item-v118'), date: '2026-09-29', fixture, visits })).toEqual([])
@@ -50,7 +50,7 @@ describe('slot blockers', () => {
 })
 
 describe('slot options offered to the user', () => {
-  const decisions = coldOpenDecisions()
+  const decisions = proposedDecisions()
 
   it('offers every weekday, marking the infeasible ones with their reason', () => {
     const options = slotOptions({ item: item('item-v118'), fixture, decisions, weekId: WEEK_40 })

@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
+import {
+  capacityBreakdown,
+  capacityFigure,
+  computeDayCapacity,
+  computeWeekCapacity,
+  isHeldOn,
+  unavailableOn,
+  weekFixtureFor,
+} from './capacity'
 import { fixture } from './fixture'
 import { visitCoversDate, visitsFromDecisions } from './visits'
-import { coldOpenDecisions, vehicle } from './testSupport'
+import { proposedDecisions, vehicle } from './testSupport'
 import type { Cover, ItemId, Visit } from './types'
 
 const WEEK_40 = '2026-09-28'
@@ -14,12 +22,12 @@ function standardFor(visits: Visit[], date: string) {
 
 describe('derived visits', () => {
   it('produces one visit per scheduled item, and none for a watch', () => {
-    const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+    const visits = visitsFromDecisions(proposedDecisions(), fixture.items)
     expect(visits.map((v) => v.itemId).sort()).toEqual(['item-v012', 'item-v103', 'item-v118'])
   })
 
   it('cannot duplicate a visit however many times it is derived', () => {
-    const decisions = coldOpenDecisions()
+    const decisions = proposedDecisions()
     const once = visitsFromDecisions(decisions, fixture.items)
     const twice = visitsFromDecisions(decisions, fixture.items)
     expect(twice).toEqual(once)
@@ -44,7 +52,7 @@ describe('derived visits', () => {
 
 describe('unavailability is a set, so nothing is subtracted twice', () => {
   it('counts a held vehicle with a booked visit exactly once', () => {
-    const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+    const visits = visitsFromDecisions(proposedDecisions(), fixture.items)
     const unavailable = unavailableOn('2026-09-29', fixture.vehicles, visits)
     expect([...unavailable].sort()).toEqual(['V-012', 'V-103', 'V-118'])
   })
@@ -77,8 +85,8 @@ describe('isHeldOn is the single definition of "held on a date"', () => {
   })
 })
 
-describe('cold open capacity matches the seeded scenario', () => {
-  const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+describe('the adopted proposals reproduce the scripted scenario', () => {
+  const visits = visitsFromDecisions(proposedDecisions(), fixture.items)
 
   it('leaves Tuesday one standard van short', () => {
     const tue = standardFor(visits, '2026-09-29')
@@ -109,7 +117,7 @@ describe('cold open capacity matches the seeded scenario', () => {
 
 describe('the levers behave as the scenario requires', () => {
   function withSlot(itemId: ItemId, slotDate: string | null, days?: number) {
-    const decisions = coldOpenDecisions()
+    const decisions = proposedDecisions()
     decisions[itemId] = { ...decisions[itemId], slotDate }
     const items = days
       ? fixture.items.map((i) => (i.id === itemId ? { ...i, visitDays: days } : i))
@@ -185,7 +193,7 @@ describe('computeWeekCapacity', () => {
 
 describe('an ad hoc cover clears a shortfall exactly like a pooled one', () => {
   it('adds to the standard count on the days it confirms', () => {
-    const visits = visitsFromDecisions(coldOpenDecisions(), fixture.items)
+    const visits = visitsFromDecisions(proposedDecisions(), fixture.items)
     const tue = standardFor(visits, '2026-09-29')
     expect(tue.shortfall).toBe(1)
 
@@ -232,5 +240,47 @@ describe('an ad hoc cover clears a shortfall exactly like a pooled one', () => {
     const week = weekFixtureFor(fixture, WEEK_40)
     const tue = computeDayCapacity({ date: '2026-09-29', vehicleClass: 'standard', fixture, visits: [], week })
     expect(tue.cover).toBe(2)
+  })
+})
+
+describe('capacity figures name own vans and rentals separately', () => {
+  const adopted = visitsFromDecisions(proposedDecisions(), fixture.items)
+  const week = weekFixtureFor(fixture, WEEK_40)
+
+  it('reads own + rental / demand where rentals are on site', () => {
+    const thu = standardFor(adopted, '2026-10-01')
+    expect(thu.available).toBe(39)
+    expect(thu.coverIds).toEqual(['R-1', 'R-2'])
+    expect(capacityFigure(thu)).toBe('37 + 2 / 38')
+    expect(capacityFigure(standardFor(adopted, '2026-09-29'))).toBe('35 + 2 / 38')
+    expect(capacityFigure(standardFor([], '2026-09-30'))).toBe('37 + 1 / 38')
+  })
+
+  it('drops the rental term where no cover exists', () => {
+    const spec = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits: adopted, week })
+    expect(spec.coverIds).toEqual([])
+    expect(capacityFigure(spec)).toBe('7 / 7')
+  })
+
+  it('lists an ad hoc cover by its id', () => {
+    const extra: Cover = { id: 'V-118 replacement', vehicleClass: 'standard', confirmedDates: ['2026-09-29'], dayRateEur: 140 }
+    const tue = computeDayCapacity({
+      date: '2026-09-29',
+      vehicleClass: 'standard',
+      fixture,
+      visits: adopted,
+      week,
+      adHocCovers: [extra],
+    })
+    expect(tue.coverIds).toEqual(['R-1', 'R-2', 'V-118 replacement'])
+    expect(capacityFigure(tue)).toBe('35 + 3 / 38')
+  })
+
+  it('spells the breakdown out for the cell tooltip', () => {
+    expect(capacityBreakdown(standardFor(adopted, '2026-10-01'))).toBe(
+      '38 owned · off the road: V-012 · rentals on site: R-1, R-2',
+    )
+    const spec = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits: adopted, week })
+    expect(capacityBreakdown(spec)).toBe('7 owned · none off the road · no rental on site')
   })
 })

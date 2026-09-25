@@ -35,6 +35,11 @@ maintenance item. It is a cost rollup, service cost plus cover cost combined int
 live on the fleet dashboard as decisions are made and frozen in the commit summary once committed,
 measured against a per-week virtual budget.
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §5, §6). A
+booking is no longer freestanding: it belongs to an applied visit, is requested only from the weekly
+plan's detail pane once that visit is applied, and is removed when the visit goes. The dashboard
+shows a committed booking as a fact about the van and offers no request control.
+
 **It is not** a route to specialist cover. `V-041`'s scenario, no compatible cover exists at any
 price, is unchanged; this spec deliberately limits requests to standard-class vehicles, because
 resolving that shortfall on demand would remove the one scenario in this build that has no lever at
@@ -88,6 +93,11 @@ default sits comfortably under budget, and one or two ad hoc bookings (EUR 140 t
 enough to demonstrate going over it. The figure is a fixture edit if a tighter or looser default is
 wanted later.
 
+**Amended 2026-09-24** (scenario spec §5.5, §5.6). The item-level `coverCostEur` this figure relied
+on is deleted. EUR 2,420 is what the walkthrough costs if the user requests five days of cover for
+`V-012` and one day each for `V-103` and `V-118`; nothing is charged automatically, and R-1 and R-2
+never enter the total.
+
 ### 3.2 `src/domain/replacementBooking.ts`
 
 - `replacementBookingErrors(draft, args): string[]`: missing vehicle or start date, non-positive
@@ -124,6 +134,11 @@ export function costSummaryFor(args: {
   bookings: Record<VehicleId, ReplacementBooking>
 }): CostSummary
 ```
+
+**Amended 2026-09-24** (scenario spec §5.5, §5.6, §12). The interface comment's `coverCostEur`
+formula, "item-level coverCostEur (visited items only) + booking costs", describes the pre-amendment
+computation. The item-level term is gone: `coverCostEur` is booking cost alone, summed over
+`bookingsForVisits(bookings, visits)` for the vehicles currently visiting.
 
 "Visited items only" reuses `visitsFromDecisions` directly, the same source `summaryFor` already
 reads, so an item watched or left undecided never contributes a cost it has not yet incurred.
@@ -169,6 +184,10 @@ it never throws on a shape it does not recognise.
 | Reset | All draft and committed bookings clear, same as decisions |
 | Live or committed total exceeds `budgetEur` | Cost section shows an explicit EUR-over figure, warning-styled. Commit stays enabled |
 
+**Amended 2026-09-24** (scenario spec §5.1, §5.2). The first two rows, the fleet grid and attention
+card surfaces, are superseded: the control is mounted only in `ItemDetail`, and only once a visit is
+applied. Its states are the scenario spec's §5.2 table.
+
 ## 7. UI
 
 ### 7.1 `src/ui/ReplacementBookingControl.tsx` (new)
@@ -183,6 +202,9 @@ One component, taking a vehicle, its current draft booking if any, the active we
    the card becomes a `<div>` with "Open in week plan" as its own inner button and the booking
    control as a sibling. The only markup change this spec makes to an existing component.
 3. **`ItemDetail.tsx`**, alongside `TreatmentForm`, for vehicles reached through the plan surface.
+
+**Amended 2026-09-24** (scenario spec §5.1). Mount points 1 and 2 are removed; only 3 remains,
+gated on an applied visit.
 
 ### 7.2 Dashboard (`src/ui/FleetView.tsx`)
 
@@ -276,3 +298,4 @@ unbuilt work. Exact task numbering is resolved in the implementation plan, not h
 | Multiple concurrent bookings per vehicle per week | One active booking keeps the model simple; a second request replaces the first |
 | Booking cover beyond the active week's days | Bookings stay inside one week's grid, matching how the rest of the plan is scoped |
 | Garage-bay constraints on a booking | A rental van does not occupy the depot's own bays |
+| A request control on the dashboard or in the popover | Superseded 2026-09-24: the dashboard reports a committed booking as a fact (scenario spec §6) |

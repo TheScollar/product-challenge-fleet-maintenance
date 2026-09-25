@@ -8,7 +8,6 @@ import { usePlan } from '../state/PlanProvider'
 import { activeWeekId, queueFor } from '../state/planReducer'
 import { CostAgainstBudget } from './CostAgainstBudget'
 import { InspectPopover } from './InspectPopover'
-import { ReplacementBookingControl } from './ReplacementBookingControl'
 
 export function FleetView({
   decisions,
@@ -223,7 +222,6 @@ function AttentionCard({
           Open in week plan →
         </button>
       )}
-      <ReplacementBookingControl key={status.vehicleId} vehicleId={status.vehicleId} vehicleClass={status.vehicleClass} />
     </div>
   )
 }

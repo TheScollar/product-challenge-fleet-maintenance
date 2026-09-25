@@ -74,20 +74,21 @@ export function computeDayCapacity(args: {
 
   // Cover carries its own class, so a standard rental can never close a
   // specialist gap. The data model does not allow it. [S 3.1]
-  const poolCover = fixture.covers.filter(
+  const poolCovers = fixture.covers.filter(
     (c) =>
       week.coverIds.includes(c.id) &&
       c.vehicleClass === vehicleClass &&
       c.confirmedDates.includes(date),
-  ).length
+  )
   // A requested replacement booking is merged in as an indistinguishable
   // extra cover source, so it clears a shortfall exactly like R-1 or R-2
   // does, with no second capacity mechanism to keep in sync. [replacement
   // cover spec §4.1]
-  const extraCover = adHocCovers.filter(
+  const extraCovers = adHocCovers.filter(
     (c) => c.vehicleClass === vehicleClass && c.confirmedDates.includes(date),
-  ).length
-  const cover = poolCover + extraCover
+  )
+  const coverIds = [...poolCovers, ...extraCovers].map((c) => c.id)
+  const cover = coverIds.length
 
   const owned = inClass.length
   const available = owned - unavailable.length + cover
@@ -99,6 +100,7 @@ export function computeDayCapacity(args: {
     owned,
     unavailable,
     cover,
+    coverIds,
     available,
     demand,
     shortfall: Math.max(0, demand - available),
@@ -119,4 +121,24 @@ export function computeWeekCapacity(args: {
       computeDayCapacity({ date, vehicleClass, fixture, visits, week, adHocCovers }),
     ),
   )
+}
+
+/**
+ * Own vans and rentals, stated separately, so a day where rentals outnumber
+ * outages reads `37 + 2 / 38` rather than one total larger than the fleet.
+ * The `+ n` term appears only where cover exists. Short, spare, impacted and
+ * candidate states still key off `available` against `demand`; this changes
+ * the words, not the arithmetic. [scenario spec §7]
+ */
+export function capacityFigure(day: DayCapacity): string {
+  const own = day.owned - day.unavailable.length
+  return day.cover > 0 ? `${own} + ${day.cover} / ${day.demand}` : `${own} / ${day.demand}`
+}
+
+/** The parts behind the figure, for the cell's tooltip. [scenario spec §7] */
+export function capacityBreakdown(day: DayCapacity): string {
+  const offRoad =
+    day.unavailable.length === 0 ? 'none off the road' : `off the road: ${day.unavailable.join(', ')}`
+  const rentals = day.coverIds.length === 0 ? 'no rental on site' : `rentals on site: ${day.coverIds.join(', ')}`
+  return `${day.owned} owned · ${offRoad} · ${rentals}`
 }

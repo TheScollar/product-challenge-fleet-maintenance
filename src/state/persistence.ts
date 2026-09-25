@@ -13,7 +13,9 @@ import type {
 } from '../domain/types'
 
 export const STORAGE_KEY = 'fleet-maintenance-prototype/v1'
-const CURRENT_VERSION = 1
+// 2 since the backlog opens undecided: a browser holding the old seeded
+// drafts must reset to the new seed, and say so. [scenario spec §3.5]
+const CURRENT_VERSION = 2
 const TREATMENTS = new Set(['act-now', 'bundle', 'watch'])
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

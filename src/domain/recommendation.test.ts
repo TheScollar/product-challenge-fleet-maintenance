@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { consequenceView } from './consequence'
 import { fixture } from './fixture'
-import { recommendationFor, watchAvailable } from './recommendation'
+import { adoptProposal, recommendationFor, watchAvailable } from './recommendation'
 import { orderQueue, urgencyRank } from './urgency'
-import { coldOpenDecisions, item, vehicle } from './testSupport'
+import { proposedDecisions, item, vehicle } from './testSupport'
 import type { Blocker } from './types'
 
 describe('urgency is three states, never a score', () => {
@@ -39,7 +39,7 @@ describe('queue ordering', () => {
 
   it('puts safety first, then the undisposed decision, then the contributors', () => {
     const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
-    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers })
+    const ordered = orderQueue({ items: week40Items, decisions: proposedDecisions(), blockers })
     expect(ordered.map((i) => i.id)).toEqual([
       'item-v012',
       'item-v041',
@@ -51,25 +51,31 @@ describe('queue ordering', () => {
 
   it('is stable when nothing blocks', () => {
     const week40Items = fixture.items.filter((i) => fixture.weeks[0].itemIds.includes(i.id))
-    const ordered = orderQueue({ items: week40Items, decisions: coldOpenDecisions(), blockers: [] })
+    const ordered = orderQueue({ items: week40Items, decisions: proposedDecisions(), blockers: [] })
     expect(ordered[0].id).toBe('item-v012')
     expect(ordered).toHaveLength(5)
   })
 })
 
-describe('consequence keeps three figures apart', () => {
-  it('shows a euro figure for cover where confirmed cover exists', () => {
-    expect(consequenceView(item('item-v012')).coverCost).toBe('EUR 700')
+describe('the cover figure comes only from a requested replacement', () => {
+  it('reads not requested until a booking exists, even for the held van', () => {
+    expect(consequenceView(item('item-v012')).coverCost).toBe('not requested')
+    expect(consequenceView(item('item-v027')).coverCost).toBe('not requested')
   })
 
-  it('shows not available, never zero, where no compatible cover exists', () => {
-    const view = consequenceView(item('item-v041'))
-    expect(view.coverCost).toBe('not available')
-    expect(view.coverCost).not.toContain('0')
+  it('reads the booking cost once one is requested', () => {
+    expect(consequenceView(item('item-v012'), 700).coverCost).toBe('EUR 700')
+    expect(consequenceView(item('item-v118'), 280).coverCost).toBe('EUR 280')
   })
 
-  it('shows a genuine zero where cover exists and costs nothing', () => {
-    expect(consequenceView(item('item-v027')).coverCost).toBe('EUR 0')
+  it('shows not available, never zero or a price, where no compatible cover exists', () => {
+    expect(consequenceView(item('item-v041')).coverCost).toBe('not available')
+    expect(consequenceView(item('item-v041'), 140).coverCost).toBe('not available')
+    expect(consequenceView(item('item-v041')).coverCost).not.toContain('0')
+  })
+
+  it('keeps service cost as the fixture estimate, shown before any decision', () => {
+    expect(consequenceView(item('item-v012')).serviceCost).toBe('EUR 480')
   })
 
   it('never renders operational disruption as money', () => {
@@ -89,6 +95,8 @@ describe('the recommendation contract', () => {
     expect(r.assumption).toContain('560 km')
     expect(r.proposedAction).toContain('Tue 29 Sep')
     expect(r.consequence.serviceCost).toBe('EUR 340')
+    expect(r.consequence.coverCost).toBe('not requested')
+    expect(recommendationFor(item('item-v118'), 140).consequence.coverCost).toBe('EUR 140')
   })
 
   it('proposes an assessment rather than a waiting period where evidence is thin', () => {
@@ -117,5 +125,33 @@ describe('the safety hard stop', () => {
     expect(watchAvailable(item('item-v041'), vehicle('V-041'))).toBe(true)
     expect(watchAvailable(item('item-v027'), vehicle('V-027'))).toBe(true)
     expect(watchAvailable(item('item-v103'), vehicle('V-103'))).toBe(true)
+  })
+})
+
+describe('adoptProposal', () => {
+  it('turns a visit proposal into a staged decision with its slot', () => {
+    expect(adoptProposal(item('item-v118'))).toEqual({
+      itemId: 'item-v118',
+      treatment: 'act-now',
+      slotDate: '2026-09-29',
+      deferral: null,
+    })
+  })
+
+  it('carries the deferral for a watch proposal, and no slot', () => {
+    const d = adoptProposal(item('item-v027'))
+    expect(d.treatment).toBe('watch')
+    expect(d.slotDate).toBeNull()
+    expect(d.deferral!.reviewDate).toBe('2026-11-02')
+    expect(d.deferral!.trigger.label).toBe('Driver reports the wipe quality degrading')
+  })
+
+  it('leaves the slot open where the proposal names none', () => {
+    expect(adoptProposal(item('item-v041'))).toEqual({
+      itemId: 'item-v041',
+      treatment: 'act-now',
+      slotDate: null,
+      deferral: null,
+    })
   })
 })

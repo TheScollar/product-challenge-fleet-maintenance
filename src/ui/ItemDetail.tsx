@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
+import { bookingCostEur, bookingsForVisits } from '../domain/replacementBooking'
 import { urgencyLabel } from '../domain/urgency'
+import { isVisitTreatment, visitsFromDecisions } from '../domain/visits'
 import type { DraftDecision, ItemId, OpenItem } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
-import { activeWeekId, queueFor } from '../state/planReducer'
+import { activeWeekId, bookingsFor, queueFor } from '../state/planReducer'
 import { AssumptionBlock } from './AssumptionBlock'
 import { ConsequenceBlock } from './ConsequenceBlock'
 import { EvidenceBlock } from './EvidenceBlock'
@@ -24,25 +26,36 @@ export function ItemDetail({
   onPendingChange: (d: DraftDecision) => void
 }) {
   const { state, fixture } = usePlan()
+  const weekId = activeWeekId(state)
   const vehicle = fixture.vehicles.find((v) => v.id === item.vehicleId)!
-  const entry = queueFor({ fixture, state, weekId: activeWeekId(state) }).find(
-    (e) => e.item.id === item.id,
-  )
-  const recommendation = recommendationFor(item)
-  const committed = decisions[item.id] ?? {
+  const entry = queueFor({ fixture, state, weekId }).find((e) => e.item.id === item.id)
+  // The applied decision, as the plan holds it. The staged one lives below.
+  const applied = decisions[item.id] ?? {
     itemId: item.id,
     treatment: null,
     slotDate: null,
     deferral: null,
   }
+  // A replacement belongs to an applied visit, so both the control and the
+  // Consequence tile's cover figure read the applied draft, never the staged
+  // one. [scenario spec §5.1, §5.5]
+  const draftVisits = visitsFromDecisions(decisions, fixture.items)
+  const appliedVisit = draftVisits.find((v) => v.itemId === item.id) ?? null
+  const booking = bookingsForVisits(bookingsFor({ state, weekId }), draftVisits)[item.vehicleId] ?? null
+  const recommendation = recommendationFor(
+    item,
+    booking === null ? null : bookingCostEur(booking, fixture.replacementDayRateEur),
+  )
   // App.tsx remounts this component via key={item.id}, so switching items
-  // always reseeds from the committed decision and discards whatever was
+  // always reseeds from the applied decision and discards whatever was
   // staged here but never applied.
-  const [decision, setDecision] = useState<DraftDecision>(committed)
+  const [decision, setDecision] = useState<DraftDecision>(applied)
 
   useEffect(() => {
     onPendingChange(decision)
   }, [decision, onPendingChange])
+
+  const stagingVisit = isVisitTreatment(decision.treatment)
 
   return (
     <div className="detail">
@@ -68,7 +81,16 @@ export function ItemDetail({
       <AssumptionBlock recommendation={recommendation} />
       <ConsequenceBlock recommendation={recommendation} />
 
-      {decision.treatment !== 'watch' && (
+      <TreatmentForm
+        item={item}
+        vehicle={vehicle}
+        decision={decision}
+        proposedAction={recommendation.proposedAction}
+        onChange={setDecision}
+        onApply={onApply}
+      />
+
+      {stagingVisit && (
         <SlotPicker
           item={item}
           decisions={decisions}
@@ -77,9 +99,15 @@ export function ItemDetail({
         />
       )}
 
-      <TreatmentForm item={item} vehicle={vehicle} decision={decision} onChange={setDecision} onApply={onApply} />
-
-      <ReplacementBookingControl vehicleId={item.vehicleId} vehicleClass={vehicle.vehicleClass} />
+      <ReplacementBookingControl
+        // Remount when the visit gate flips, so an open request form and its
+        // draft never outlive the visit they were opened for. [scenario spec §5.2]
+        key={`${item.vehicleId}-${appliedVisit === null ? 'none' : 'visit'}`}
+        vehicleId={item.vehicleId}
+        vehicleClass={vehicle.vehicleClass}
+        appliedVisit={appliedVisit}
+        watched={applied.treatment === 'watch'}
+      />
     </div>
   )
 }

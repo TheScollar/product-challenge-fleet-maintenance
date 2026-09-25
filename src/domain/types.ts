@@ -43,7 +43,6 @@ export interface PartRequirement {
 export interface Consequence {
   qualitative: string
   serviceCostEur: number | null
-  coverCostEur: number | null
   coverUnavailable: boolean
   uncoveredAssignmentsNote: string
 }
@@ -162,6 +161,8 @@ export interface DayCapacity {
   owned: number
   unavailable: VehicleId[]
   cover: number
+  /** Pool rentals first, then ad hoc bookings, in the order they were counted. */
+  coverIds: string[]
   available: number
   demand: number
   shortfall: number

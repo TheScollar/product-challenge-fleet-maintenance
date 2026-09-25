@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { commitPlan, dailyConfirmation, deferralRecordsFrom, summaryFor } from './commit'
 import { fixture } from './fixture'
 import type { DraftDecision, ItemId } from './types'
-import { coldOpenDecisions } from './testSupport'
+import { proposedDecisions } from './testSupport'
 
 const WEEK_40 = '2026-09-28'
 
 function committable(): Record<ItemId, DraftDecision> {
-  const d = coldOpenDecisions()
+  const d = proposedDecisions()
   d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
   d['item-v041'] = {
     itemId: 'item-v041',
@@ -184,5 +184,59 @@ describe('a released hold does not overshadow a later visit', () => {
     const v012 = view.offRoad.find((o) => o.vehicleId === 'V-012')!
     expect(v012.reason).toContain('In for a visit')
     expect(v012.reason).not.toContain('Held')
+  })
+})
+
+describe('a committed booking is cover in the summary and the daily confirmation', () => {
+  // V-118 back on Tuesday beside V-012 and V-103: short by one without cover.
+  function tuesdayHeavy(): Record<ItemId, DraftDecision> {
+    const d = committable()
+    d['item-v118'] = { ...d['item-v118'], slotDate: '2026-09-29' }
+    return d
+  }
+  const bookings = { 'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 } }
+  const tuesdayStandard = (rows: { date: string; vehicleClass: string; shortfall: number }[]) =>
+    rows.find((a) => a.date === '2026-09-29' && a.vehicleClass === 'standard')!
+
+  it('clears the Tuesday shortfall in forward availability', () => {
+    const without = summaryFor({
+      fixture,
+      plan: commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), demoDate: '2026-09-28' }),
+    })
+    expect(tuesdayStandard(without.availability).shortfall).toBe(1)
+
+    const withBooking = summaryFor({
+      fixture,
+      plan: commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings, demoDate: '2026-09-28' }),
+    })
+    expect(tuesdayStandard(withBooking.availability).shortfall).toBe(0)
+  })
+
+  it('lists the booking as cover in use on its day, and not on others', () => {
+    const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings, demoDate: '2026-09-28' })
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual([
+      'R-1',
+      'R-2',
+      'V-118 replacement',
+    ])
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).rows.every((r) => r.shortfall === 0)).toBe(true)
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-30' }).coverInUse).toEqual(['R-1'])
+  })
+
+  it('ignores a committed booking whose vehicle has no visit', () => {
+    const stale = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+    const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings: stale, demoDate: '2026-09-28' })
+    expect(tuesdayStandard(summaryFor({ fixture, plan }).availability).shortfall).toBe(1)
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual(['R-1', 'R-2'])
+  })
+
+  it('lists only bookings whose vehicle has a visit, sorted by vehicle', () => {
+    const mixed = {
+      'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+      'V-012': { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 },
+    }
+    const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings: mixed, demoDate: '2026-09-28' })
+    expect(summaryFor({ fixture, plan }).bookings.map((b) => b.vehicleId)).toEqual(['V-012', 'V-118'])
   })
 })

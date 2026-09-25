@@ -1,3 +1,4 @@
+import { capacityFigure } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { costSummaryFor } from '../domain/costs'
 import { bookingCostEur } from '../domain/replacementBooking'
@@ -13,7 +14,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
   if (plan === null) return null
   const summary = summaryFor({ fixture, plan })
   const cost = costSummaryFor({ fixture, weekId: plan.weekId, decisions: plan.decisions, bookings: plan.bookings })
-  const bookingRows = Object.values(plan.bookings).sort((a, b) => a.vehicleId.localeCompare(b.vehicleId))
+  const bookingRows = summary.bookings
 
   return (
     <div className="summary">
@@ -47,10 +48,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
                 .filter((a) => a.date === date)
                 .map((a) => (
                   <div key={a.vehicleClass}>
-                    <span className="n">
-                      {a.available} / {a.demand}
-                    </span>{' '}
-                    {a.vehicleClass}
+                    <span className="n">{capacityFigure(a)}</span> {a.vehicleClass}
                   </div>
                 ))}
             </div>

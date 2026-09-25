@@ -1,7 +1,7 @@
 import { computeDayCapacity, isHeldOn, weekFixtureFor } from './capacity'
 import { addDays, daysBetween, formatDay, mondayOf } from './clock'
 import { latestRecord } from './deferral'
-import { adHocCoversFrom } from './replacementBooking'
+import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
 import type {
   Blocker,
   CommittedPlan,
@@ -29,7 +29,8 @@ export interface VanStatus {
   vehicleClass: VehicleClass
   kind: FleetStatusKind
   /** Sub-label lines, already worded: 'Held · …', 'In workshop · day 1 of 2',
-   *  'Booked Thu 1 Oct', 'Watching · review Mon 2 Nov'. Empty for a plain
+   *  'Booked Thu 1 Oct', 'Watching · review Mon 2 Nov', 'Replacement on site ·
+   *  day 1 of 5', 'Replacement booked Thu 1 Oct · 1 day'. Empty for a plain
    *  green van and for an amber one (the card renders the item instead). */
   facts: string[]
   /** Set when the van links into the week plan: its item is in the active
@@ -104,7 +105,6 @@ export function fleetOverview(args: {
   bookings?: Record<VehicleId, ReplacementBooking>
 }): FleetOverview {
   const { fixture, today, queueItems, decisions, blockers, committed, deferralHistory, bookings = {} } = args
-  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
 
   // A van turns red only for an operational fact: a hold, or a committed
   // visit. Coverage is a different question, and both its lines read the
@@ -112,7 +112,15 @@ export function fleetOverview(args: {
   // second capacity semantics. [spec 4, 7]
   const committedVisits =
     committed === null ? [] : visitsFromDecisions(committed.decisions, fixture.items)
+  // A committed replacement is an operational fact about the van, by the same
+  // rule as In workshop and Booked: committed, never draft, and only while its
+  // vehicle has a committed visit. [scenario spec §6]
+  const committedBookings =
+    committed === null ? {} : bookingsForVisits(committed.bookings, committedVisits)
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
+  // Draft bookings, filtered to draft visits: the same rule every other
+  // capacity reader applies. [scenario spec §5.4]
+  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, draftVisits), fixture.replacementDayRateEur)
 
   const queueByVehicle = new Map<VehicleId, OpenItem>()
   for (const item of queueItems) {
@@ -153,6 +161,17 @@ export function fleetOverview(args: {
       const latest = latestRecord(deferralHistory[item.id] ?? [])
       if (latest !== undefined) {
         planFacts.push(`Watching · review ${formatDay(latest.deferral.reviewDate)}`)
+      }
+    }
+
+    const replacement = committedBookings[vehicle.id]
+    if (replacement !== undefined) {
+      const day = daysBetween(replacement.startDate, today) + 1
+      if (day >= 1 && day <= replacement.days) {
+        planFacts.push(`Replacement on site · day ${day} of ${replacement.days}`)
+      } else if (today < replacement.startDate) {
+        const length = `${replacement.days} ${replacement.days === 1 ? 'day' : 'days'}`
+        planFacts.push(`Replacement booked ${formatDay(replacement.startDate)} · ${length}`)
       }
     }
 

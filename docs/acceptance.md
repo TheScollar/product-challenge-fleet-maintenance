@@ -274,3 +274,75 @@ rather than carrying its own; `isReplacementBookingComplete` is unused dead code
 exclusion is enforced on the UI/validation path but not at the state-write boundary, low risk for a
 single-writer localStorage prototype; the README's own walkthrough does not mention requesting a
 replacement, so an evaluator following only that script will not encounter this feature.
+
+## Addendum: scenario and cover accounting fixes (2026-09-24)
+
+**Commands:** `npm test` (296 tests, 17 files, all passing), `npx tsc --noEmit` (clean), `npm run build`
+(clean), plus the live browser pass listed in the plan's Task 10.
+
+**What changed, against `docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`.**
+The backlog opens undecided: every item is seeded open and the system's proposal is adopted only
+through **Use proposal**, then `Apply to draft`. A replacement booking belongs to an applied visit:
+the reducer prunes bookings to visiting vehicles, `set-booking` ignores a vehicle without a visit,
+and every reader filters through `bookingsForVisits`. The hand-authored item-level cover cost is
+gone; the Consequence tile reads `not requested` until a booking exists, and the weekly total charges
+service cost for visited items plus requested cover only. The dashboard shows a committed booking as
+`Replacement on site · day n of m` or `Replacement booked <day> · m days`, and offers no request
+control. Capacity cells read `own + rental / demand`. The persisted version moved to 2, so a browser
+holding the old seeded drafts resets to the seed with the older-build notice.
+
+**Live pass.** Run in a real browser and verified by reading DOM text and attributes; the screenshot
+tool failed, so no screenshots exist for this pass. Cold open: one red, four amber, five to decide,
+cost tiles at EUR 0, no request control on any dashboard surface, band cells `37 + 1 / 38` and `37 +
+2 / 38` with Tuesday and Thursday outlined green. Adopting the three Tuesday proposals (`V-012`,
+`V-103`, `V-118`) turned Tuesday red at `35 + 2 / 38`; `V-027` was still undecided at that point, so
+the header chips read `2 to decide` and `Tue 29 Sep · standard short 1`, and the queue grouped as
+`Blocking the week · 2` (`V-103`, `V-118`), `To decide · 2` (`V-027`, `V-041`), `Settled · 1`
+(`V-012`). Requesting five days of cover for `V-012` moved its Consequence tile from `not requested`
+to `EUR 700` and the dashboard tiles to EUR 1,440, EUR 700, EUR 2,140. Switching `V-118`'s treatment
+to Watch made its Replacement cover block read-only with the exact string `Not needed while this
+vehicle is watched.` and cleared Tuesday to `36 + 3 / 38` with one spare; no booking existed for
+`V-118`, so none was removed. Later in the pass, before Commit, `V-027` was adopted with
+**Use proposal** (Watch, rationale, review date Mon 2 Nov and trigger prefilled) and applied, after
+which the header showed no chips and Commit was enabled. After the walkthrough commit, `V-012`'s red
+card read `Replacement on site · day 1 of 5`, and `day 2 of 5` on Tuesday.
+
+**A stale replacement-cover key (found in review).** The task review of the detail pane found that
+the replacement-cover control's open form could survive switching an item to Watch and back, because
+its React key never changed; fixed by keying the control on the vehicle and on whether a visit is
+applied (commit `0a044d5`), and verified by re-review.
+
+**Claims corrected elsewhere.** G1's cold-open evidence (the band flagging Tuesday) now applies
+after adoption, not before; at the true cold open the queue reads `V-012, V-027, V-103, V-118,
+V-041`, and once every proposal is adopted the earlier order returns. The week-41 addendum's
+Thursday collision between `V-024` and `V-105` (above) likewise now appears only once both of that
+week's proposals are adopted, not at week 41's own cold open. The cover note's third "What you are
+about to see" paragraph, its source spec and the README walkthrough were all corrected. Six specs
+carry dated amendments from this work: cover note, replacement cover, prototype design, guided-queue
+declutter, fleet overview and week 41. Two of those amendments sit outside the plan's own list: the
+replacement-cover spec's §4.2 cost formula, and the week-41 spec's amendments in full, since that
+spec was never in the plan at all. Week 41 carries its two `consequence.coverCostEur` rows (`V-024`,
+`V-105`, a field deleted along with the rest) plus its §4 and §7 on the Thursday collision above.
+The earlier addendum's two open follow-ups are both closed by this branch: the README walkthrough
+now requests a replacement (item 4), and the replacement-cover control now carries its own key
+(commit `0a044d5`). The Codex attempt at the same fixes, reverted before any commit, is preserved as
+`.superpowers/sdd/codex-fleet-scenario-fixes-2026-09-24.patch` for reference only.
+
+**Final whole-branch review.** It found one Important issue: the commit summary's booking list read
+the committed bookings unfiltered, the one reader that skipped `bookingsForVisits` while every other
+reader, including `costSummaryFor` right beside it, filtered through it. Fixed at the domain
+boundary so `summaryFor` computes the filtered map once and exposes it as `bookings`, sorted by
+vehicle, so both capacity/cost and the summary's own list read the same filtered set (commit
+`2921e9f`), pinned by a new test. The same commit also renamed one misleading test title, shared one
+visit-treatment predicate between the domain rule and the slot-picker gate, and amended three more
+spec passages that still described the seeded cold open.
+
+Left as follow-up, all Minor: an open, unsubmitted request form keeps the previous visit's default
+start date if the applied visit moves day; `isReplacementBookingComplete` remains an unused export;
+direct assertions for "a resurfaced item opens undecided" and "the persisted version is 2" would be
+cheaper than the indirect ones that pin them today; the `useState` initial value in
+`ReplacementBookingControl` is never read; the day/days pluralisation idiom is repeated in four
+places; no test collapses undecided chips interleaved with a hard blocker; no test covers
+watch-then-back-to-visit leaving a booking absent; the detail pane resolves the visit per item and
+the booking per vehicle, safe while the fixture has one item per vehicle per week; and
+`fleetStatus.test.ts` has grown to five scenario families.

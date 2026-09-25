@@ -42,7 +42,7 @@ export function PlanHeader({
           {chips.map((chip) => (
             <button
               key={chip.key}
-              className="bchip"
+              className={`bchip ${chip.tone}`}
               disabled={chip.targetItemId === null}
               onClick={() => chip.targetItemId !== null && onSelectItem(chip.targetItemId)}
             >

@@ -7,7 +7,7 @@ import { watchAvailable } from './recommendation'
 import { canCommit, validatePlan } from './validation'
 import { visitsFromDecisions } from './visits'
 import { initialState, planReducer, queueFor, draftFor, type AppState } from '../state/planReducer'
-import { item, vehicle } from './testSupport'
+import { adoptedState, item, vehicle } from './testSupport'
 import type { DraftDecision, ItemId } from './types'
 
 const WEEK_40 = '2026-09-28'
@@ -22,7 +22,7 @@ const V041_DEFERRAL = {
 }
 
 function resolvedState(): AppState {
-  let s = initialState(fixture)
+  let s = adoptedState()
   s = reduce(s, {
     type: 'set-decision',
     weekId: WEEK_40,
@@ -44,14 +44,14 @@ describe('1. Known safety-class issue at cold open', () => {
 
   it('withholds watch, and a booked visit does not release the hold', () => {
     expect(watchAvailable(item('item-v012'), vehicle('V-012'))).toBe(false)
-    const visits = visitsFromDecisions(draftOf(initialState(fixture)), fixture.items)
+    const visits = visitsFromDecisions(draftOf(adoptedState()), fixture.items)
     expect(unavailableOn('2026-09-30', fixture.vehicles, visits).has('V-012')).toBe(true)
   })
 })
 
 describe('2. Justified routine deferral', () => {
   it('records reason, review date and trigger for V-027 without forcing service', () => {
-    const d = draftOf(initialState(fixture))['item-v027']
+    const d = draftOf(adoptedState())['item-v027']
     expect(d.treatment).toBe('watch')
     expect(d.deferral!.reason.length).toBeGreaterThan(10)
     expect(d.deferral!.reviewDate).toBe('2026-11-02')
@@ -68,7 +68,7 @@ describe('2. Justified routine deferral', () => {
 
 describe('3. Tight day with a feasible alternative', () => {
   it('clears the shortfall and enables commit when V-118 moves to Thursday', () => {
-    const before = validate(draftOf(initialState(fixture)))
+    const before = validate(draftOf(adoptedState()))
     expect(before.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
     const after = validate(draftOf(resolvedState()))
     expect(after).toEqual([])

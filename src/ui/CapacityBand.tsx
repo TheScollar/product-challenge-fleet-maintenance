@@ -1,6 +1,6 @@
-import { computeWeekCapacity, weekFixtureFor } from '../domain/capacity'
+import { capacityBreakdown, capacityFigure, computeWeekCapacity, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
-import { adHocCoversFrom } from '../domain/replacementBooking'
+import { adHocCoversFrom, bookingsForVisits } from '../domain/replacementBooking'
 import type { DayCapacity, DraftDecision, ISODate, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
@@ -19,7 +19,7 @@ export function CapacityBand({
   const weekId = activeWeekId(state)
   const week = weekFixtureFor(fixture, weekId)
   const visits = visitsFromDecisions(decisions, fixture.items)
-  const adHocCovers = adHocCoversFrom(bookings, fixture.replacementDayRateEur)
+  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, visits), fixture.replacementDayRateEur)
   const rows = computeWeekCapacity({ fixture, weekId, visits, adHocCovers })
 
   const cellFor = (date: ISODate, vehicleClass: 'standard' | 'specialist') =>
@@ -35,7 +35,7 @@ export function CapacityBand({
   return (
     <div className="band">
       <div className="head">
-        <span className="t">Week capacity · available / demand</span>
+        <span className="t">Week capacity · own + rental / demand</span>
         {selected !== null && <span className="live">Reacting to {selected.vehicleId}</span>}
         <span className="spacer" />
         <span className="cover">
@@ -102,10 +102,8 @@ function Cell({ capacity }: { capacity: DayCapacity }) {
   const short = capacity.shortfall > 0
   const spare = capacity.available > capacity.demand
   return (
-    <div className={`c${short ? ' short' : spare ? ' spare' : ''}`}>
-      <span className="n">
-        {capacity.available} / {capacity.demand}
-      </span>
+    <div className={`c${short ? ' short' : spare ? ' spare' : ''}`} title={capacityBreakdown(capacity)}>
+      <span className="n">{capacityFigure(capacity)}</span>
       {short && <span className="sub">short {capacity.shortfall}</span>}
       {spare && <span className="sub">+{capacity.available - capacity.demand}</span>}
     </div>

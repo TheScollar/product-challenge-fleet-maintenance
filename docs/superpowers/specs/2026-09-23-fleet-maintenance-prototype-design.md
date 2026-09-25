@@ -415,6 +415,11 @@ this is the side that stays defensible. Service is never forced merely to clear 
 
 Cold open, after the system proposals and before any user action:
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3). The backlog
+now opens undecided, so this table describes the week after every proposal has been adopted with
+**Use proposal**, not the cold open. At the true cold open no visit is planned, every day is met, and
+Tuesday and Thursday each carry one spare, which the band renders as `37 + 2 / 38`.
+
 > **Notation.** `unavail{...}` is the count of distinct unavailable vehicles, the `Set` from §3.1.
 > Pipes are avoided deliberately: escaped pipes inside a markdown table cell get mangled by some
 > editors, and the corruption silently flipped `+ R-1` to `- R-1` once already.
@@ -540,6 +545,11 @@ At cold open this yields `V-012`, `V-041`, `V-103`, `V-118`, `V-027`. `V-041` ra
 `assessment-needed` urgency because it is the one decision the product is actively asking for, which
 is the behaviour G1 wants: the queue surfaces what stops the week, not just what is urgent.
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3.4). The true
+cold open now orders `V-012`, `V-027`, `V-103`, `V-118`, `V-041`: safety first, then urgency, then
+item id, because every item is undecided. The quoted order above returns once every proposal is
+adopted.
+
 ### 6.5 Failure behaviour is never a dialog
 
 - A blocked plan keeps its draft, names the blocker inline, and disables commit with the count beside
@@ -581,6 +591,11 @@ records this limitation against G1 and G5 rather than claiming an observed resul
 ### 7.3 The walkthrough script, which is also the demo
 
 1. Cold open: five items, two named blockers, `V-012` already held before anything is committed
+
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3.4). The cold
+open now has five undecided items and no capacity blocker; the two named blockers appear once the
+three Tuesday proposals are adopted.
+
 2. Open `V-118`; Tuesday is red because of it; switch the slot to Thursday; Tuesday clears in the band
 3. Open `V-041`; schedule it; the **specialist** row breaks while the aggregate still reads healthy; no
    lever closes it

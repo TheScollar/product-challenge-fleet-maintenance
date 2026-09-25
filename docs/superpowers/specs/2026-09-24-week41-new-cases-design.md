@@ -97,6 +97,11 @@ invented where the evidence supports none (README, "Decisions taken").
 | `proposal` | `act-now`, slot 2026-10-08 |
 | `triggerOptions` | One odometer trigger, framed as a recheck point rather than a failure prediction: `{ vehicleId: 'V-024', thresholdKm: 64_000, label: 'Odometer passes 64,000 km' }`, computed against V-024's ordinary fixture-default odometer (no `NAMED_ODOMETER` override needed; tread is not cited against an odometer figure in the evidence, so none is implied). |
 
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §5.5). Both
+items' `consequence.coverCostEur` row above is superseded: the field is deleted from `Consequence`
+for all seven authored items, `V-024` and `V-105` included. Cover cost for either van now exists
+only if the user requests a replacement booking after applying its visit.
+
 `fixture.weeks[1].itemIds` moves from `[]` to `['item-v024', 'item-v105']` (order does not affect
 display order, which `orderQueue` computes fully; see §4).
 
@@ -128,6 +133,14 @@ carries no parts requirement and can move to Tuesday, Wednesday or Friday, while
 either one to Monday instead does not clear it (Monday has none to give), which mirrors, unplanned,
 the same "the shortage lands elsewhere" lesson V-103 already teaches in
 week 40.
+
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3.1). Both
+items now open undecided, like every authored item, so neither defaults onto Thursday on its own.
+The Thursday collision described above appears only once both proposals are adopted with `Use
+proposal` and then applied with `Apply to draft`; at week 41's cold open nothing is planned and
+Thursday is covered. The mechanism that produces the shortfall, and the ways to clear it, moving
+either item off Thursday, with V-024's parts constraint limiting it to Wednesday or Friday, are
+unchanged.
 
 **Effect on the weekly plan.** `groupQueue` (`src/ui/grouping.ts`) puts any item behind a
 `capacity-shortfall` blocker into "Blocking the week" regardless of whether it otherwise has a
@@ -193,6 +206,12 @@ the Thursday shortfall (standard, short by 1) appearing in an uncommitted week 4
 action; V-024 and V-105 both amber (`needs-decision`) with `itemId` set, from the moment week 41 is
 reached; the shortfall clearing when either item's slot moves to Tuesday, Wednesday or Friday, and
 persisting (relocated, not resolved) if moved to Monday instead.
+
+**Amended 2026-09-24** (`2026-09-24-scenario-and-cover-accounting-fixes-design.md` §3.4). The
+verification above now adopts both proposals with `Use proposal` and applies them with `Apply to
+draft` before asserting the shortfall, since neither item defaults onto Thursday on its own. This
+is pinned in `src/domain/fleetStatus.test.ts`'s `describe('fleet overview: two new week-41 cases
+collide on Thursday')` block.
 
 **Manual verification**, following the project's browser-verified-UI precedent [S §1]: reach week
 41 (via repeated "Advance 1 day" and via "Advance to next review date"); confirm V-024 and V-105

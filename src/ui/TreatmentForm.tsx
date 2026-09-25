@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { deferralErrors } from '../domain/deferral'
-import { watchAvailable, watchUnavailableReason } from '../domain/recommendation'
+import { adoptProposal, watchAvailable, watchUnavailableReason } from '../domain/recommendation'
 import type { Deferral, DraftDecision, OpenItem, TreatmentKind, Vehicle } from '../domain/types'
 
 const TREATMENTS: Array<{ kind: TreatmentKind; label: string }> = [
@@ -13,12 +13,15 @@ export function TreatmentForm({
   item,
   vehicle,
   decision,
+  proposedAction,
   onChange,
   onApply,
 }: {
   item: OpenItem
   vehicle: Vehicle
   decision: DraftDecision
+  /** The recommendation's wording of the proposal, shown beside Use proposal. */
+  proposedAction: string
   onChange: (d: DraftDecision) => void
   onApply: (d: DraftDecision) => void
 }) {
@@ -26,9 +29,24 @@ export function TreatmentForm({
   const [draft, setDraft] = useState<Partial<Deferral>>(decision.deferral ?? {})
   const errors = deferralErrors(draft)
   const needsDeferral = decision.treatment === 'watch'
-  const canApply = needsDeferral ? errors.length === 0 : decision.slotDate !== null
+  // A treatment is required: with the backlog opening undecided, a slot can
+  // be picked before a treatment exists, and that is not a decision.
+  // [scenario spec §3.3]
+  const canApply =
+    decision.treatment !== null && (needsDeferral ? errors.length === 0 : decision.slotDate !== null)
   // Two forms can be mounted for two items, so control ids carry the item id.
   const fieldId = (name: string) => `${item.id}-${name}`
+
+  // The proposal is the system's; adopting it is the user's act, staged like
+  // any other edit and settled only by Apply to draft. [scenario spec §3.2]
+  const proposal = adoptProposal(item)
+  const proposalAllowed = proposal.treatment === 'act-now' || allowWatch
+
+  function useProposal() {
+    if (!proposalAllowed) return
+    setDraft(proposal.deferral ?? {})
+    onChange(proposal)
+  }
 
   function pick(kind: TreatmentKind) {
     if (kind !== 'act-now' && !allowWatch) return
@@ -53,6 +71,19 @@ export function TreatmentForm({
   return (
     <div className="block">
       <div className="blocktitle">Treatment</div>
+      <p className="proposed">
+        <span>
+          <strong>Proposed:</strong> {proposedAction}
+        </span>
+        <button
+          className="ghost"
+          disabled={!proposalAllowed}
+          title={proposalAllowed ? undefined : watchUnavailableReason()}
+          onClick={useProposal}
+        >
+          Use proposal
+        </button>
+      </p>
       <div className="treat">
         {TREATMENTS.map((t) => (
           <button

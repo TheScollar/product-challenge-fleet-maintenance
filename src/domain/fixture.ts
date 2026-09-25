@@ -122,7 +122,6 @@ const items: OpenItem[] = [
       qualitative:
         'The van is already out of service and stays out until a release is recorded. Waiting does not reduce exposure, it extends the outage.',
       serviceCostEur: 480,
-      coverCostEur: 700,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'None. R-1 covers this van for the whole week.',
     },
@@ -157,7 +156,6 @@ const items: OpenItem[] = [
       qualitative:
         'Continued wear transfers load to the damper mounts. No regulatory deadline applies, and no failure date can be stated from one inspection.',
       serviceCostEur: 620,
-      coverCostEur: 140,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'None on the proposed day.',
     },
@@ -197,7 +195,6 @@ const items: OpenItem[] = [
       qualitative:
         'Interval overrun is a warranty and contract exposure, not a safety one. No UVV deadline applies.',
       serviceCostEur: 340,
-      coverCostEur: 140,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'Depends on the day chosen. Tuesday leaves one assignment uncovered.',
     },
@@ -237,7 +234,6 @@ const items: OpenItem[] = [
       qualitative:
         'A recurring misfire code can mean ignition, injection or a sensor fault. Nothing in the evidence establishes a safe waiting period, so the honest action is to assess rather than to predict.',
       serviceCostEur: 180,
-      coverCostEur: null,
       coverUnavailable: true,
       uncoveredAssignmentsNote: 'One specialist assignment uncovered on any day this van is in.',
     },
@@ -274,7 +270,6 @@ const items: OpenItem[] = [
       qualitative:
         'Bundling this into the service already booked for 2 Nov avoids a separate visit. Nothing in the evidence suggests it degrades before then.',
       serviceCostEur: 95,
-      coverCostEur: 0,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'None. No visit is scheduled this week.',
     },
@@ -322,7 +317,6 @@ const items: OpenItem[] = [
       qualitative:
         'Tread continues toward the legal minimum with each week driven. No regulatory deadline applies yet, and replacing now avoids a rushed booking once the margin closes.',
       serviceCostEur: 240,
-      coverCostEur: 140,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'Depends on the day chosen. Thursday leaves one assignment uncovered.',
     },
@@ -362,7 +356,6 @@ const items: OpenItem[] = [
       qualitative:
         'A missed HU deadline is an administrative offence and can affect insurance cover if the van is stopped without a valid test. Booking now, well ahead of 31 Oct, avoids a last-minute scramble if the test finds a defect needing a follow-up visit before the sticker expires.',
       serviceCostEur: 120,
-      coverCostEur: 140,
       coverUnavailable: false,
       uncoveredAssignmentsNote: 'Depends on the day chosen. Thursday leaves one assignment uncovered.',
     },

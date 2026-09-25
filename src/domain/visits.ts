@@ -1,5 +1,21 @@
 import { addDays } from './clock'
-import type { DraftDecision, ISODate, ItemId, OpenItem, Visit } from './types'
+import type { DraftDecision, ISODate, ItemId, OpenItem, TreatmentKind, Visit } from './types'
+
+const VISIT_TREATMENTS: ReadonlySet<TreatmentKind> = new Set<TreatmentKind>(['act-now', 'bundle'])
+
+/** The treatments that book a workshop visit. Shared by the domain rule and the UI gate. */
+export function isVisitTreatment(kind: TreatmentKind | null): kind is TreatmentKind {
+  return kind !== null && VISIT_TREATMENTS.has(kind)
+}
+
+/**
+ * Structural, not trusting: a visit needs a visit treatment and a slot. With
+ * the backlog opening undecided a slot can exist before a treatment does, and
+ * that is not a visit anywhere in the plan. [scenario spec §3.3]
+ */
+export function isVisitDecision(d: DraftDecision): boolean {
+  return isVisitTreatment(d.treatment) && d.slotDate !== null
+}
 
 export function visitCoversDate(visit: Visit, date: ISODate): boolean {
   return date >= visit.startDate && date < addDays(visit.startDate, visit.days)
@@ -15,7 +31,7 @@ export function visitsFromDecisions(
 ): Visit[] {
   const byId = new Map(items.map((i) => [i.id, i]))
   return Object.values(decisions)
-    .filter((d) => d.slotDate !== null && d.treatment !== 'watch')
+    .filter(isVisitDecision)
     .flatMap((d) => {
       const item = byId.get(d.itemId)
       if (!item) return []

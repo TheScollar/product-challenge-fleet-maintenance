@@ -3,6 +3,8 @@ import { addDays, mondayOf } from '../domain/clock'
 import { nextResurfaceDate, resurfacedItems } from '../domain/deferral'
 import { weekFixtureFor } from '../domain/capacity'
 import { SEED_DATE } from '../domain/fixture'
+import { bookingsForVisits } from '../domain/replacementBooking'
+import { visitsFromDecisions } from '../domain/visits'
 import type {
   CommittedPlan,
   DeferralRecord,
@@ -17,7 +19,7 @@ import type {
 } from '../domain/types'
 
 export interface AppState {
-  version: 1
+  version: 2
   demoDate: ISODate
   draftByWeek: Record<WeekId, Record<ItemId, DraftDecision>>
   draftBookingsByWeek: Record<WeekId, Record<VehicleId, ReplacementBooking>>
@@ -79,17 +81,11 @@ export function draftFor(args: {
   const seeded: Record<ItemId, DraftDecision> = {}
 
   for (const entry of queueFor({ fixture, state, weekId })) {
-    const { item, priorDecision } = entry
-    seeded[item.id] = priorDecision
-      ? // A resurfaced item comes back undisposed, but its prior rationale
-        // stays visible through priorDecision. [WP E6.4]
-        { itemId: item.id, treatment: null, slotDate: null, deferral: null }
-      : {
-          itemId: item.id,
-          treatment: item.proposal.treatment,
-          slotDate: item.proposal.slotDate,
-          deferral: item.proposal.deferral,
-        }
+    // Every entry opens undecided, authored or resurfaced alike. The
+    // proposal stays on the item and is adopted only by the user's own
+    // action (adoptProposal); a resurfaced item's earlier rationale stays
+    // visible through priorDecision. [scenario spec §3.1, WP E6.4]
+    seeded[entry.item.id] = { itemId: entry.item.id, treatment: null, slotDate: null, deferral: null }
   }
   return { ...seeded, ...(existing ?? {}) }
 }
@@ -103,7 +99,7 @@ export function bookingsFor(args: {
 
 export function initialState(_fixture: Fixture): AppState {
   return {
-    version: 1,
+    version: 2,
     demoDate: SEED_DATE,
     draftByWeek: {},
     draftBookingsByWeek: {},
@@ -121,16 +117,28 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       // site keeps a decision moved off watch from carrying a stale follow-up.
       const decision: DraftDecision =
         action.decision.treatment === 'watch' ? action.decision : { ...action.decision, deferral: null }
+      const draft = { ...current, [decision.itemId]: decision }
+      // A replacement belongs to a visit. Whenever the decisions change, the
+      // week's bookings are pruned to vehicles that still have one, so a
+      // watched or undecided item carries neither cover capacity nor cover
+      // cost. [scenario spec §5.3]
+      const bookings = bookingsForVisits(
+        bookingsFor({ state, weekId: action.weekId }),
+        visitsFromDecisions(draft, fixture.items),
+      )
       return {
         ...state,
-        draftByWeek: {
-          ...state.draftByWeek,
-          [action.weekId]: { ...current, [decision.itemId]: decision },
-        },
+        draftByWeek: { ...state.draftByWeek, [action.weekId]: draft },
+        draftBookingsByWeek: { ...state.draftBookingsByWeek, [action.weekId]: bookings },
       }
     }
 
     case 'set-booking': {
+      // Structural: no action sequence can store a booking for a vehicle
+      // whose draft has no visit. The control offers the request only once a
+      // visit is applied; this guard does not rely on that. [scenario spec §5.3]
+      const visits = visitsFromDecisions(draftFor({ fixture, state, weekId: action.weekId }), fixture.items)
+      if (!visits.some((v) => v.vehicleId === action.booking.vehicleId)) return state
       const current = bookingsFor({ state, weekId: action.weekId })
       return {
         ...state,
