@@ -5378,7 +5378,7 @@ Record each of the ten from section 9 of the work packages as passed, failed or 
 ```markdown
 # Fleet maintenance: weekly planning prototype
 
-A working prototype for the MARKT-PILOT Product Builder Challenge.
+A working prototype for a fleet-maintenance product challenge.
 
 **The user.** The part-time Fuhrparkverantwortliche at one depot of 45 vans. Fleet is a fraction of
 their job, they carry personal liability under UVV, and they can pull a vehicle from service.

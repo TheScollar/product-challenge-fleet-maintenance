@@ -25,8 +25,7 @@ it and computes nothing. `App.tsx` grows its view value to `'fleet' | 'planning'
 - No component tests, per project precedent (design spec section 1). UI is verified live in a
   browser at the end of Task 2 and Task 3.
 - Commit with CLI git, staging exact paths (`git add <file> <file>`). NEVER `git add -A` or
-  `git add .`: parallel sibling sessions leave untracked work in this tree, and the Nimbalyst
-  commit-proposal tool is broken in this workspace.
+  `git add .`: parallel sibling sessions leave untracked work in this tree.
 - Coordination boundary (spec section 11): a sibling session is redesigning the week-plan surface.
   Do not modify `DecisionQueue.tsx`, `ItemCard.tsx`, `ItemDetail.tsx`, `CapacityBand.tsx`,
   `PlanHeader.tsx`, `CommitSummary.tsx`, or existing `theme.css` blocks. Only append new CSS blocks

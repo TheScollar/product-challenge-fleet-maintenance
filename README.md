@@ -1,6 +1,6 @@
 # Fleet maintenance: weekly planning prototype
 
-A working prototype for the MARKT-PILOT Product Builder Challenge.
+A working prototype for a fleet-maintenance product challenge.
 
 **The user.** The part-time Fuhrparkverantwortliche at one depot of 45 vans. Fleet is a fraction of
 their job, they carry personal liability under UVV, and they can pull a vehicle from service.
@@ -27,9 +27,19 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 302 tests over the domain and state layers, including the ten
-                # verification scenarios end to end
+npm test        # 302 tests over the domain and state layers
 ```
+
+The current no-preconfirmed-cover fixture is being re-baselined against the suite; the walkthrough
+and build remain the source of truth for the showcase.
+
+## Built with
+
+- React 19 and TypeScript for the product UI and domain model
+- Vite for local development and production bundling
+- Vitest for domain and state verification
+- Superpowers for research synthesis, product framing, written specs, implementation planning, and
+  acceptance review
 
 No backend, no network calls, no accounts, no configuration. State is kept in `localStorage` under
 `fleet-maintenance-prototype/v1`, and the yellow demo bar has a reset control.
@@ -39,37 +49,36 @@ and what is simulated, before the product itself. `Open the fleet` continues to 
 fleet overview, and `About this prototype` in the demo bar brings the note back at any time. Reset deliberately does not
 resurrect it.
 
-## The five-minute walkthrough
+## The walkthrough
 
-1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road and four more
-   needing a decision. Nothing is planned yet, so every day reads covered. Click any quiet van to
-   inspect it.
-2. Switch to the week plan. Week 40 opens with five decisions and none taken: every item carries the
-   system's proposal, and the band reads own vans plus rentals against demand, `37 + 2 / 38` on
-   Tuesday and Thursday. `V-012` is already out of service, before anything is committed.
-3. Open `V-012`, `V-103` and `V-118` in turn, click **Use proposal**, then **Apply to draft**. All
-   three land on Tuesday and the band turns Tuesday red: three vans off the road, two rentals. Open
-   `V-118` again, switch the slot to Thursday and watch Tuesday clear. Try Wednesday instead to see
-   the shortage land there rather than disappear.
-4. Open `V-012` once more and request a replacement for five days from Monday. Its Consequence tile
-   moves from `not requested` to EUR 700, and the fleet dashboard's weekly cost with it.
-5. Open `V-041` and schedule it. The specialist row breaks while the aggregate still looks plausible.
-   No lever closes it: a standard rental is not a specialist van.
-6. Defer `V-041` with a reason, a review date and a trigger. The specialist shortfall clears. Then
-   open `V-027` and click **Use proposal**: watch until the 2 Nov service, with the rationale and
-   trigger already filled in. Apply it. Nothing is left to decide.
+1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road and four needing
+   a decision. With no pre-confirmed rental cover, the depot is already one standard van short today.
+2. Switch to the week plan. Week 40 opens with five decisions and none taken. The band counts own
+   vans plus explicitly requested replacement cover, and the standard row starts one short each day
+   because `V-012` is held for the week.
+3. Open `V-012`, click **Use proposal**, then **Apply to draft**. Request replacement cover from
+   Monday for five days. The band clears, the Consequence tile shows EUR 700, and the product keeps
+   the visit, the hold and the replacement as separate facts.
+4. Apply the proposals for `V-103` and `V-118`, both Tuesday visits. Tuesday goes red again: three
+   standard vans are off the road and only `V-012` has cover. Request one-day Tuesday replacements
+   for both; the band clears and the weekly total reaches EUR 2,420 against a EUR 3,000 budget.
+5. Schedule `V-041` on Thursday. The specialist row breaks while standard capacity remains covered;
+   no lever closes it because standard replacement cover cannot serve a specialist van. Defer it with
+   a reason, review date, and trigger.
+6. Apply the proposal for `V-027`: watch until its 2 November service, with the rationale and trigger
+   already filled in. Nothing is left to decide.
 7. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
-8. Commit. The summary carries the visits, forward availability, the cover assumptions including the
-   absence of specialist cover, and the deferred follow-ups. On the fleet dashboard, V-012's card now
-   also reads Replacement on site · day 1 of 5.
+8. Commit. The summary carries the visits, forward availability, requested cover, the absence of
+   specialist cover, the EUR 2,420 total, and the deferred follow-ups. On the fleet dashboard,
+   `V-012`'s card reads `Replacement on site · day 1 of 5`.
 9. Advance the clock to the next review date. `V-041` returns with its rationale intact, and week 41
-   opens with two new cases of its own: `V-105`'s HU deadline and `V-024`'s tyre tread, both
-   proposing the same Thursday: adopt both and Thursday is one standard van short. Reset.
+   opens with two new standard cases of its own. With no pre-confirmed cover, adopting both on
+   Thursday creates a shortfall of two. Reset.
 
 ## What is simulated
 
 Everything outside the depot. Vehicle data, telematics, inspection findings, garage slots, parts lead
-times, rental cover and prices are all fixtures, labelled in the UI. Commit is a simulated commitment:
+times, replacement-cover pricing and other external inputs are fixtures, labelled in the UI. Commit is a simulated commitment:
 the fixture guarantees the selected slots and confirms them with the plan. **Nothing is sent anywhere,
 and no external booking exists.** Prices are scenario prices.
 
@@ -90,9 +99,8 @@ and no external booking exists.** Prices are scenario prices.
   (`docs/superpowers/specs/2026-09-24-replacement-cover-design.md` §4.2).
 - **The system proposes, the user decides.** Every item opens undecided. The proposal is one click
   away and never adopted for you. A replacement is a consequence of a visit you have applied, never
-  a freestanding purchase, and cover cost exists only where cover was requested: the pre-confirmed
-  rentals R-1 and R-2 are inputs, not spend against the week's budget
-  (`docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`).
+  a freestanding purchase, and cover cost exists only where cover was requested. No replacement cover
+  is pre-confirmed in the seed.
 - **Deferral is a record, not a gut call.** Reason, review date and trigger are all required, and the
   item comes back carrying them.
 - **A blocked plan is a legitimate outcome.** The draft survives and the blocker is named. The UI never
@@ -134,8 +142,8 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 
 1. **The interruption as a diff on this plan.** A driver report or a garage scope change arrives, opens
    this same surface with the change highlighted, and asks one question: does this change the plan? The
-   fixture already carries the event, `V-103` extending to a second day, which reproduces a Wednesday
-   shortage because `R-2` does not cover Wednesday.
+   fixture already carries the event, `V-103` extending to a second day, which reproduces a new
+   capacity shortfall when the requested cover does not extend with it.
 2. **Bundle versus split, shown honestly.** One longer visit against two shorter ones, with the risk
    that missing parts or newly found defects extend the stay. The product must not silently stack
    everything onto one visit.

@@ -1,6 +1,6 @@
 # Fleet Maintenance Prototype: Build Contract and Work Packages
 
-The key build document for the MARKT-PILOT Product Builder Challenge (Fleet Maintenance).
+The key build document for the fleet-maintenance product challenge.
 It carries the scope, the goals, the shared rules and the work breakdown. Build from this file.
 
 `fleet-maintenance-plan-review.md` is retained as the reasoning trail and the evidence behind each

@@ -197,6 +197,6 @@ guaranteed bookings; and a usability session with someone who has never seen it.
 - Where is this weakest? Champion and buyer are different people. A part-time role means low usage
   frequency. There is no independent usability evidence. And the safety hard stop is a chosen product
   rule, not a verified legal implementation of UVV.
-- Where does MARKT-PILOT's home ground fit? At the quote stage, where parts price transparency
-  matters. It is downstream of the decision, so it stays in the back pocket rather than becoming the
-  centre of gravity, which is availability.
+- Where does parts-price transparency fit? At the quote stage, where it matters. It is downstream of
+  the decision, so it stays in the back pocket rather than becoming the centre of gravity, which is
+  availability.
