@@ -127,6 +127,16 @@ describe('advancing the clock', () => {
     expect(v041.priorDecision!.deferral.reason).toContain('No specialist cover')
   })
 
+  it('opens the resurfaced item undecided, its earlier rationale carried beside it', () => {
+    const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
+    expect(draftFor({ fixture, state: s, weekId: '2026-10-05' })['item-v041']).toEqual({
+      itemId: 'item-v041',
+      treatment: null,
+      slotDate: null,
+      deferral: null,
+    })
+  })
+
   it('leaves V-027 down, since neither its date nor its trigger has arrived', () => {
     const s = reduce(committedWeek40(), { type: 'advance-to-next-review' })
     expect(queueFor({ fixture, state: s, weekId: '2026-10-05' }).some((q) => q.item.id === 'item-v027')).toBe(false)
@@ -256,6 +266,11 @@ describe('reset', () => {
 
 describe('booking a replacement', () => {
   const v118 = { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 }
+  const watchV118: Deferral = {
+    reason: 'The interval is still 2,180 km away on the stated rate.',
+    reviewDate: '2026-10-09',
+    trigger: { kind: 'odometer', vehicleId: 'V-118', thresholdKm: 49_500, label: 'Odometer passes 49,500 km' },
+  }
 
   it('records a draft booking for a visiting vehicle, scoped to its own week', () => {
     const s = reduce(adoptedState(), { type: 'set-booking', weekId: '2026-09-28', booking: v118 })
@@ -296,17 +311,24 @@ describe('booking a replacement', () => {
     s = reduce(s, {
       type: 'set-decision',
       weekId: '2026-09-28',
-      decision: {
-        itemId: 'item-v118',
-        treatment: 'watch',
-        slotDate: null,
-        deferral: {
-          reason: 'The interval is still 2,180 km away on the stated rate.',
-          reviewDate: '2026-10-09',
-          trigger: { kind: 'odometer', vehicleId: 'V-118', thresholdKm: 49_500, label: 'Odometer passes 49,500 km' },
-        },
-      },
+      decision: { itemId: 'item-v118', treatment: 'watch', slotDate: null, deferral: watchV118 },
     })
+    expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({})
+  })
+
+  it('does not restore the booking when a watched item returns to a visit', () => {
+    let s = reduce(adoptedState(), { type: 'set-booking', weekId: '2026-09-28', booking: v118 })
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'watch', slotDate: null, deferral: watchV118 },
+    })
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-10-01', deferral: null },
+    })
+    // The booking went with the visit. Requesting again is one click. [scenario spec §10]
     expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({})
   })
 

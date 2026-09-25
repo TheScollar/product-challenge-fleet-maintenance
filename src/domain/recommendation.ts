@@ -1,4 +1,4 @@
-import { formatDay } from './clock'
+import { formatDay, formatDayCount } from './clock'
 import { consequenceView, type ConsequenceView } from './consequence'
 import type { DraftDecision, ISODate, OpenItem, Urgency, Vehicle } from './types'
 
@@ -23,8 +23,7 @@ function proposedAction(item: OpenItem): string {
     // No date is invented where the evidence supports none. [S 3.2]
     return `Assess. A diagnostic visit is proposed, and a slot has not been chosen yet.`
   }
-  const days = item.visitDays === 1 ? '1 day' : `${item.visitDays} days`
-  return `Book a visit: ${formatDay(slotDate)}, ${days}.`
+  return `Book a visit: ${formatDay(slotDate)}, ${formatDayCount(item.visitDays)}.`
 }
 
 /**

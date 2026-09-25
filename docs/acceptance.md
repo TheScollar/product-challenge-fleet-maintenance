@@ -346,3 +346,18 @@ places; no test collapses undecided chips interleaved with a hard blocker; no te
 watch-then-back-to-visit leaving a booking absent; the detail pane resolves the visit per item and
 the booking per vehicle, safe while the fixture has one item per vehicle per week; and
 `fleetStatus.test.ts` has grown to five scenario families.
+
+**Follow-ups closed (2026-09-25).** All but one of the items above are closed on `main`. The
+replacement-cover control's key now also carries the applied visit's day, so an open request form
+does not outlive a visit that moves day; this is a key expression with no component test, checked
+by the type-check and the build, not live. `isReplacementBookingComplete` is deleted.
+`CURRENT_VERSION` is exported and pinned at 2 together with the seed's version. A resurfaced item's
+open draft, the absence of a booking after watch-then-back-to-visit, and the collapse of undecided
+chips on either side of a hard blocker (`2 to decide`, `V-118 · slot not bookable`, `Mon 28 Sep ·
+standard short 1`) each have a direct test. The control's `useState` seed is an empty draft with its
+purpose stated. `formatDayCount` in `clock.ts` replaces the day/days idiom at seven sites, three
+more than the review counted. The per-item visit versus per-vehicle booking assumption is stated in
+`ItemDetail`. Left deliberately: `fleetStatus.test.ts` stays one file, because 37 passages across
+nine documents cite it and its describe titles by name, and splitting it would stale every one for
+no behavioural gain. Commands: `npm test` (302 tests, 17 files, all passing), `npx tsc --noEmit`
+(clean), `npm run build` (clean).
