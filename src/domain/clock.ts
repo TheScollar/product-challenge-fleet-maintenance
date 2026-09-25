@@ -64,6 +64,11 @@ export function formatLongDay(d: ISODate): string {
   return `${DAYS_LONG[t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS_LONG[t.getUTCMonth()]} ${t.getUTCFullYear()}`
 }
 
+/** A count of days, read as "1 day", "3 days", "0 days". One definition for every surface. */
+export function formatDayCount(n: number): string {
+  return `${n} ${n === 1 ? 'day' : 'days'}`
+}
+
 /**
  * Odometer triggers project against this rather than against live data,
  * so advancing the clock is the only action needed to fire one. [S 3.6]

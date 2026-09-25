@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { weekFixtureFor } from '../domain/capacity'
-import { formatDay } from '../domain/clock'
+import { formatDay, formatDayCount } from '../domain/clock'
 import { bookingCostEur, replacementBookingErrors } from '../domain/replacementBooking'
 import type { ReplacementBooking, VehicleClass, VehicleId, Visit } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
@@ -10,7 +10,9 @@ import { activeWeekId } from '../state/planReducer'
  * A replacement belongs to a visit. Mounted only in the weekly plan's detail
  * pane, and it offers the request only once a visit is applied for this
  * vehicle; the dashboard reports a committed booking as a fact and offers no
- * control. Callers mount it with a key that changes with the vehicle and with whether a visit is applied, so editing state never outlives the gate. [scenario spec §5.1, §5.2]
+ * control. Callers mount it with a key that changes with the vehicle and with
+ * the applied visit's day, so an open form and its draft never outlive the
+ * visit they were opened for. [scenario spec §5.1, §5.2]
  */
 export function ReplacementBookingControl({
   vehicleId,
@@ -37,7 +39,9 @@ export function ReplacementBookingControl({
     startDate: appliedVisit?.startDate ?? week.days[0],
     days: appliedVisit?.days ?? 1,
   })
-  const [draft, setDraft] = useState<Partial<ReplacementBooking>>(booking ?? defaults())
+  // Seeded by whichever action opens the form, Change or Request replacement,
+  // and never read before one of them runs.
+  const [draft, setDraft] = useState<Partial<ReplacementBooking>>({})
 
   if (appliedVisit === null) {
     return (
@@ -65,7 +69,7 @@ export function ReplacementBookingControl({
       <div className="block">
         <div className="blocktitle">Replacement cover</div>
         <div className="bookinginfo">
-          Booked {booking.days} {booking.days === 1 ? 'day' : 'days'} from {formatDay(booking.startDate)} ·
+          Booked {formatDayCount(booking.days)} from {formatDay(booking.startDate)} ·
           EUR {cost.toLocaleString('en-GB')}
         </div>
         <div className="actions">
@@ -145,7 +149,7 @@ export function ReplacementBookingControl({
         />
       </div>
       <div className="bookinginfo">
-        Downtime: {previewDays} {previewDays === 1 ? 'day' : 'days'} · EUR {previewCost.toLocaleString('en-GB')}
+        Downtime: {formatDayCount(previewDays)} · EUR {previewCost.toLocaleString('en-GB')}
       </div>
       {errors.length > 0 && <div className="missing">{errors.join('. ')}.</div>}
       <div className="actions">

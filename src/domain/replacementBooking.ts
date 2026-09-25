@@ -36,13 +36,6 @@ export function replacementBookingErrors(
   return errors
 }
 
-export function isReplacementBookingComplete(
-  draft: Partial<ReplacementBooking> | null,
-  args: { fixture: Fixture; weekId: WeekId },
-): boolean {
-  return replacementBookingErrors(draft, args).length === 0
-}
-
 /** Only the decision is stored; cost and downtime are both derived. [spec §3.1] */
 export function bookingCostEur(booking: ReplacementBooking, dayRateEur: number): number {
   return booking.days * dayRateEur

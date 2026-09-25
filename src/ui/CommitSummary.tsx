@@ -1,5 +1,5 @@
 import { capacityFigure } from '../domain/capacity'
-import { formatDay } from '../domain/clock'
+import { formatDay, formatDayCount } from '../domain/clock'
 import { costSummaryFor } from '../domain/costs'
 import { bookingCostEur } from '../domain/replacementBooking'
 import { summaryFor } from '../domain/commit'
@@ -32,7 +32,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
           <div className="row" key={v.itemId}>
             <strong>{v.vehicleId}</strong> · {v.scope}
             <div className="meta">
-              {v.garage}, {v.dateLabel}, {v.days === 1 ? '1 day' : `${v.days} days`}
+              {v.garage}, {v.dateLabel}, {formatDayCount(v.days)}
             </div>
           </div>
         ))}
@@ -72,7 +72,7 @@ export function CommitSummary({ onEdit }: { onEdit: () => void }) {
           <ul>
             {bookingRows.map((b) => (
               <li key={b.vehicleId}>
-                {b.vehicleId}: {b.days} {b.days === 1 ? 'day' : 'days'} from {formatDay(b.startDate)}, EUR{' '}
+                {b.vehicleId}: {formatDayCount(b.days)} from {formatDay(b.startDate)}, EUR{' '}
                 {bookingCostEur(b, fixture.replacementDayRateEur).toLocaleString('en-GB')}
               </li>
             ))}

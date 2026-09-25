@@ -125,3 +125,38 @@ describe('classifyItem', () => {
     expect(classifyItem({ item: v118, decision: booked, blockers, fixture })).toBe('blocking')
   })
 })
+
+describe('blockerChips with undecided items on either side of a hard blocker', () => {
+  // validatePlan walks the items in fixture order (V-012, V-103, V-118, V-041,
+  // V-027), so V-118's Monday slot blocker sits between the two undecided
+  // items. Monday also goes short: V-012 is held and R-2 does not cover it.
+  const adopted = proposedDecisions()
+  const interleaved: Record<string, DraftDecision> = {
+    ...adopted,
+    [idOf('V-103')]: { itemId: idOf('V-103'), treatment: null, slotDate: null, deferral: null },
+    [idOf('V-118')]: { ...adopted[idOf('V-118')], slotDate: '2026-09-28' },
+    [idOf('V-041')]: { itemId: idOf('V-041'), treatment: null, slotDate: null, deferral: null },
+  }
+  const blockers = validatePlan({ fixture, weekId, decisions: interleaved })
+
+  it('produces the blockers in that interleaved order', () => {
+    expect(blockers.map((b) => b.kind)).toEqual([
+      'undisposed-item',
+      'infeasible-slot',
+      'undisposed-item',
+      'capacity-shortfall',
+    ])
+  })
+
+  it("collapses both undecided items into one chip in the first one's position", () => {
+    const chips = blockerChips({ blockers, items, decisions: interleaved, fixture })
+    expect(chips.map((c) => [c.label, c.tone])).toEqual([
+      ['2 to decide', 'warn'],
+      ['V-118 · slot not bookable', 'crit'],
+      ['Mon 28 Sep · standard short 1', 'crit'],
+    ])
+    expect(chips[0].targetItemId).toBe(idOf('V-103'))
+    expect(chips[1].targetItemId).toBe(idOf('V-118'))
+    expect(chips[2].targetItemId).toBe(idOf('V-118'))
+  })
+})

@@ -4,7 +4,6 @@ import {
   bookingAsCover,
   bookingCostEur,
   bookingsForVisits,
-  isReplacementBookingComplete,
   replacementBookingErrors,
 } from './replacementBooking'
 import { fixture } from './fixture'
@@ -67,7 +66,6 @@ describe('replacementBookingErrors', () => {
   it('accepts a valid one-day booking', () => {
     const booking = { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 }
     expect(replacementBookingErrors(booking, { fixture, weekId: WEEK_40 })).toEqual([])
-    expect(isReplacementBookingComplete(booking, { fixture, weekId: WEEK_40 })).toBe(true)
   })
 
   it('accepts a booking that fills the whole week', () => {

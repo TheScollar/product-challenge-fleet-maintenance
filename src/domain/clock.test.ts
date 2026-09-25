@@ -4,6 +4,7 @@ import {
   addDays,
   daysBetween,
   formatDay,
+  formatDayCount,
   hasEventFired,
   isoWeekNumber,
   mondayOf,
@@ -94,5 +95,14 @@ describe('scheduled events', () => {
 
   it('never fires an event the fixture does not schedule', () => {
     expect(hasEventFired(fixture, 'v027-wipe-degrades', '2026-12-31')).toBe(false)
+  })
+})
+
+describe('formatDayCount', () => {
+  it('reads "1 day" for one and "N days" otherwise, zero included', () => {
+    expect(formatDayCount(1)).toBe('1 day')
+    expect(formatDayCount(2)).toBe('2 days')
+    expect(formatDayCount(5)).toBe('5 days')
+    expect(formatDayCount(0)).toBe('0 days')
   })
 })

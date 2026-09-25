@@ -1,5 +1,5 @@
 import { computeDayCapacity, weekFixtureFor } from '../domain/capacity'
-import { formatDay } from '../domain/clock'
+import { formatDay, formatDayCount } from '../domain/clock'
 import { slotOptions } from '../domain/feasibility'
 import type { DayCapacity, DraftDecision, ISODate, ItemId, OpenItem } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
@@ -66,7 +66,7 @@ export function SlotPicker({
   return (
     <div className="block">
       <div className="blocktitle">
-        Slot · {garage} · {item.visitDays === 1 ? '1 day' : `${item.visitDays} days`}
+        Slot · {garage} · {formatDayCount(item.visitDays)}
       </div>
       {options.map((option) => {
         const effect = option.feasible

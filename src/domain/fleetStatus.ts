@@ -1,5 +1,5 @@
 import { computeDayCapacity, isHeldOn, weekFixtureFor } from './capacity'
-import { addDays, daysBetween, formatDay, mondayOf } from './clock'
+import { addDays, daysBetween, formatDay, formatDayCount, mondayOf } from './clock'
 import { latestRecord } from './deferral'
 import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
 import type {
@@ -170,8 +170,9 @@ export function fleetOverview(args: {
       if (day >= 1 && day <= replacement.days) {
         planFacts.push(`Replacement on site · day ${day} of ${replacement.days}`)
       } else if (today < replacement.startDate) {
-        const length = `${replacement.days} ${replacement.days === 1 ? 'day' : 'days'}`
-        planFacts.push(`Replacement booked ${formatDay(replacement.startDate)} · ${length}`)
+        planFacts.push(
+          `Replacement booked ${formatDay(replacement.startDate)} · ${formatDayCount(replacement.days)}`,
+        )
       }
     }
 

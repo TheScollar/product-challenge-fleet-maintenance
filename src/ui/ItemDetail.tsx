@@ -38,7 +38,10 @@ export function ItemDetail({
   }
   // A replacement belongs to an applied visit, so both the control and the
   // Consequence tile's cover figure read the applied draft, never the staged
-  // one. [scenario spec §5.1, §5.5]
+  // one. The visit is the item's and the booking is the vehicle's; the two
+  // agree while a vehicle carries at most one open item in a week, which every
+  // authored week does. A second item on one van would need a per-item booking.
+  // [scenario spec §5.1, §5.5]
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
   const appliedVisit = draftVisits.find((v) => v.itemId === item.id) ?? null
   const booking = bookingsForVisits(bookingsFor({ state, weekId }), draftVisits)[item.vehicleId] ?? null
@@ -100,9 +103,10 @@ export function ItemDetail({
       )}
 
       <ReplacementBookingControl
-        // Remount when the visit gate flips, so an open request form and its
-        // draft never outlive the visit they were opened for. [scenario spec §5.2]
-        key={`${item.vehicleId}-${appliedVisit === null ? 'none' : 'visit'}`}
+        // Remount when the visit gate flips or the visit moves day, so an open
+        // request form and its draft never outlive the visit they were opened
+        // for. [scenario spec §5.2]
+        key={`${item.vehicleId}-${appliedVisit?.startDate ?? 'none'}`}
         vehicleId={item.vehicleId}
         vehicleClass={vehicle.vehicleClass}
         appliedVisit={appliedVisit}

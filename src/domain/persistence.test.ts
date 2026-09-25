@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from './fixture'
 import { initialState, planReducer, type AppState } from '../state/planReducer'
-import { loadState, saveState, STORAGE_KEY } from '../state/persistence'
+import { CURRENT_VERSION, loadState, saveState, STORAGE_KEY } from '../state/persistence'
 
 const reduce = (s: AppState, a: Parameters<typeof planReducer>[1]) => planReducer(s, a, fixture)
 
@@ -333,5 +333,12 @@ describe('saveState', () => {
     } finally {
       delete (globalThis as { window?: unknown }).window
     }
+  })
+})
+
+describe('the persisted state version', () => {
+  it('is 2, and the seed carries it', () => {
+    expect(CURRENT_VERSION).toBe(2)
+    expect(initialState(fixture).version).toBe(CURRENT_VERSION)
   })
 })
