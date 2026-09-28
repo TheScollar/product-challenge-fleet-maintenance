@@ -111,6 +111,8 @@ never enter the total.
 
 ### 4.1 Capacity (`src/domain/capacity.ts`)
 
+> Superseded by 2026-09-28-no-pool-cover-design.md (D1, D3).
+
 `computeDayCapacity` and `computeWeekCapacity` gain an optional `adHocCovers: Cover[]` parameter,
 default `[]`, merged with `fixture.covers` before the existing class-and-date filter runs. The filter
 itself does not change. A requested booking clears a shortfall exactly the way R-1 or R-2 already do,
