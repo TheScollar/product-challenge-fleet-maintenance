@@ -3,7 +3,7 @@ import { addDays, mondayOf } from '../domain/clock'
 import { nextResurfaceDate, resurfacedItems } from '../domain/deferral'
 import { weekFixtureFor } from '../domain/capacity'
 import { SEED_DATE } from '../domain/fixture'
-import { bookingsForVisits } from '../domain/replacementBooking'
+import { eligibleBookings } from '../domain/replacementBooking'
 import { visitsFromDecisions } from '../domain/visits'
 import type {
   CommittedPlan,
@@ -122,10 +122,11 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       // week's bookings are pruned to vehicles that still have one, so a
       // watched or undecided item carries neither cover capacity nor cover
       // cost. [scenario spec §5.3]
-      const bookings = bookingsForVisits(
-        bookingsFor({ state, weekId: action.weekId }),
-        visitsFromDecisions(draft, fixture.items),
-      )
+      const bookings = eligibleBookings(bookingsFor({ state, weekId: action.weekId }), {
+        fixture,
+        weekId: action.weekId,
+        visits: visitsFromDecisions(draft, fixture.items),
+      })
       return {
         ...state,
         draftByWeek: { ...state.draftByWeek, [action.weekId]: draft },

@@ -59,6 +59,17 @@ describe('costSummaryFor', () => {
     expect(s.totalEur).toBe(480)
   })
 
+  it('charges a held-vehicle booking in a week with no visit for it', () => {
+    const summary = costSummaryFor({
+      fixture,
+      weekId: '2026-10-05',
+      decisions: {},
+      bookings: { 'V-012': { vehicleId: 'V-012', startDate: '2026-10-05', days: 1 } },
+    })
+    expect(summary.coverCostEur).toBe(140)
+    expect(summary.totalEur).toBe(140)
+  })
+
   it('reports no overage under budget, and the exact overage above it', () => {
     const under = costSummaryFor({ fixture, weekId: WEEK_40, decisions: proposedDecisions(), bookings: {} })
     expect(under.overByEur).toBeNull()

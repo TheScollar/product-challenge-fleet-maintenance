@@ -1,6 +1,6 @@
 import { capacityBreakdown, capacityFigure, computeWeekCapacity, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
-import { adHocCoversFrom, bookingsForVisits } from '../domain/replacementBooking'
+import { adHocCoversFrom, eligibleBookings } from '../domain/replacementBooking'
 import type { DayCapacity, DraftDecision, ISODate, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
@@ -19,7 +19,7 @@ export function CapacityBand({
   const weekId = activeWeekId(state)
   const week = weekFixtureFor(fixture, weekId)
   const visits = visitsFromDecisions(decisions, fixture.items)
-  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, visits), fixture.replacementDayRateEur)
+  const adHocCovers = adHocCoversFrom(eligibleBookings(bookings, { fixture, weekId, visits }), fixture.replacementDayRateEur)
   const rows = computeWeekCapacity({ fixture, weekId, visits, adHocCovers })
 
   const cellFor = (date: ISODate, vehicleClass: 'standard' | 'specialist') =>

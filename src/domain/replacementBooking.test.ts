@@ -3,7 +3,8 @@ import {
   adHocCoversFrom,
   bookingAsCover,
   bookingCostEur,
-  bookingsForVisits,
+  canCarryBooking,
+  eligibleBookings,
   replacementBookingErrors,
 } from './replacementBooking'
 import { fixture } from './fixture'
@@ -110,20 +111,44 @@ describe('adHocCoversFrom', () => {
   })
 })
 
-describe('bookingsForVisits', () => {
-  const visits: Visit[] = [
-    { itemId: 'item-v118', vehicleId: 'V-118', garageId: 'werkstatt-berg', startDate: '2026-09-29', days: 1, scope: 'x' },
-  ]
-  const bookings: Record<string, ReplacementBooking> = {
-    'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
-    'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 2 },
+describe('eligibleBookings', () => {
+  const v103: ReplacementBooking = { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 }
+  const v012: ReplacementBooking = { vehicleId: 'V-012', startDate: '2026-10-05', days: 1 }
+  const v027: ReplacementBooking = { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 }
+  const visitV103: Visit = {
+    itemId: 'item-v103',
+    vehicleId: 'V-103',
+    garageId: 'werkstatt-berg',
+    startDate: '2026-09-29',
+    days: 1,
+    scope: 'suspension',
   }
 
-  it('keeps only bookings whose vehicle has a visit', () => {
-    expect(Object.keys(bookingsForVisits(bookings, visits))).toEqual(['V-118'])
+  it('keeps a booking whose vehicle has a visit this week', () => {
+    const kept = eligibleBookings({ 'V-103': v103 }, { fixture, weekId: WEEK_40, visits: [visitV103] })
+    expect(kept).toEqual({ 'V-103': v103 })
   })
 
-  it('returns nothing when nothing visits', () => {
-    expect(bookingsForVisits(bookings, [])).toEqual({})
+  it('keeps a booking for a vehicle held this week with no visit', () => {
+    const kept = eligibleBookings({ 'V-012': v012 }, { fixture, weekId: '2026-10-05', visits: [] })
+    expect(kept).toEqual({ 'V-012': v012 })
+  })
+
+  it('drops a booking for a vehicle neither visiting nor held', () => {
+    expect(eligibleBookings({ 'V-027': v027 }, { fixture, weekId: WEEK_40, visits: [] })).toEqual({})
+  })
+
+  it('drops a held vehicle once its hold has ended before the week', () => {
+    const later = { vehicleId: 'V-012', startDate: '2026-10-12', days: 1 }
+    expect(eligibleBookings({ 'V-012': later }, { fixture, weekId: '2026-10-12', visits: [] })).toEqual({})
+  })
+})
+
+describe('canCarryBooking', () => {
+  it('is true for V-012 in week 41, on its hold alone', () => {
+    expect(canCarryBooking('V-012', { fixture, weekId: '2026-10-05', visits: [] })).toBe(true)
+  })
+  it('is false for an idle van', () => {
+    expect(canCarryBooking('V-027', { fixture, weekId: WEEK_40, visits: [] })).toBe(false)
   })
 })

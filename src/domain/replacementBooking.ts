@@ -1,4 +1,4 @@
-import { weekFixtureFor } from './capacity'
+import { isHeldOn, weekFixtureFor } from './capacity'
 import { addDays } from './clock'
 import type { Cover, Fixture, ReplacementBooking, VehicleId, Visit, WeekId } from './types'
 
@@ -62,15 +62,28 @@ export function adHocCoversFrom(
 }
 
 /**
- * A replacement belongs to a visit. Every reader filters through here first,
- * so a booking that reached storage by any route other than the reducer, or
- * that outlived its visit, adds neither capacity nor cost. Structural, not
- * trusting, like deferralRecordsFrom. [scenario spec §5.4]
+ * A replacement belongs to an unavailability: a visit this week, or a hold on
+ * any day of it. Every reader and the reducer go through here, so a booking
+ * that reached storage by any other route, or that outlived its reason, adds
+ * neither capacity nor cost. Structural, not trusting. [no pool cover spec D3,
+ * superseding scenario spec §5.4]
  */
-export function bookingsForVisits(
+export function canCarryBooking(
+  vehicleId: VehicleId,
+  args: { fixture: Fixture; weekId: WeekId; visits: Visit[] },
+): boolean {
+  const { fixture, weekId, visits } = args
+  if (visits.some((v) => v.vehicleId === vehicleId)) return true
+  const vehicle = fixture.vehicles.find((v) => v.id === vehicleId)
+  if (vehicle === undefined) return false
+  return weekFixtureFor(fixture, weekId).days.some((d) => isHeldOn(vehicle, d))
+}
+
+export function eligibleBookings(
   bookings: Record<VehicleId, ReplacementBooking>,
-  visits: Visit[],
+  args: { fixture: Fixture; weekId: WeekId; visits: Visit[] },
 ): Record<VehicleId, ReplacementBooking> {
-  const visiting = new Set(visits.map((v) => v.vehicleId))
-  return Object.fromEntries(Object.entries(bookings).filter(([vehicleId]) => visiting.has(vehicleId)))
+  return Object.fromEntries(
+    Object.entries(bookings).filter(([vehicleId]) => canCarryBooking(vehicleId, args)),
+  )
 }

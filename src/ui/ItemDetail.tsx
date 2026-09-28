@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
-import { bookingCostEur, bookingsForVisits } from '../domain/replacementBooking'
+import { bookingCostEur, eligibleBookings } from '../domain/replacementBooking'
 import { urgencyLabel } from '../domain/urgency'
 import { isVisitTreatment, visitsFromDecisions } from '../domain/visits'
 import type { DraftDecision, ItemId, OpenItem } from '../domain/types'
@@ -44,7 +44,8 @@ export function ItemDetail({
   // [scenario spec §5.1, §5.5]
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
   const appliedVisit = draftVisits.find((v) => v.itemId === item.id) ?? null
-  const booking = bookingsForVisits(bookingsFor({ state, weekId }), draftVisits)[item.vehicleId] ?? null
+  const booking =
+    eligibleBookings(bookingsFor({ state, weekId }), { fixture, weekId, visits: draftVisits })[item.vehicleId] ?? null
   const recommendation = recommendationFor(
     item,
     booking === null ? null : bookingCostEur(booking, fixture.replacementDayRateEur),

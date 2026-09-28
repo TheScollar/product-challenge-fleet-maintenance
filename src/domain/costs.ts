@@ -1,5 +1,5 @@
 import { weekFixtureFor } from './capacity'
-import { bookingCostEur, bookingsForVisits } from './replacementBooking'
+import { bookingCostEur, eligibleBookings } from './replacementBooking'
 import type { DraftDecision, Fixture, ItemId, ReplacementBooking, VehicleId, WeekId } from './types'
 import { visitsFromDecisions } from './visits'
 
@@ -18,8 +18,8 @@ export interface CostSummary {
  *
  * Service cost is charged for every item with a visit this week. Cover cost
  * is charged only for a replacement the user actually requested, and only
- * while its vehicle has a visit; the pre-confirmed rentals R-1 and R-2 are
- * fixture inputs, like the budget itself, and never enter this total.
+ * while its vehicle has a visit or a hold. No cover is pre-confirmed. [no
+ * pool cover spec D1, D3]
  * Operational disruption is not part of it either: it stays a count, never
  * money [C §3.6, as amended 2026-09-24]. [scenario spec §5.6]
  */
@@ -40,7 +40,7 @@ export function costSummaryFor(args: {
   }
 
   let coverCostEur = 0
-  for (const booking of Object.values(bookingsForVisits(bookings, visits))) {
+  for (const booking of Object.values(eligibleBookings(bookings, { fixture, weekId, visits }))) {
     coverCostEur += bookingCostEur(booking, fixture.replacementDayRateEur)
   }
 
