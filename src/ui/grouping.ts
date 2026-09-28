@@ -1,8 +1,9 @@
+import { isHeldOn } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { isDeferralComplete } from '../domain/deferral'
 import { orderQueue } from '../domain/urgency'
 import { blockersForItem } from '../domain/validation'
-import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem } from '../domain/types'
+import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem, VehicleId, WeekId } from '../domain/types'
 
 export type QueueGroupKind = 'blocking' | 'open' | 'settled'
 
@@ -58,10 +59,12 @@ export function groupQueue(args: {
     .map((kind) => ({ kind, label: GROUP_LABELS[kind], items: by[kind] }))
 }
 
+export type Selection = { kind: 'item'; itemId: ItemId } | { kind: 'held-vehicle'; vehicleId: VehicleId }
+
 export interface BlockerChip {
   key: string
   label: string
-  targetItemId: ItemId | null
+  target: Selection | null
   /** crit for a hard blocker, warn for a decision still waiting. */
   tone: 'crit' | 'warn'
 }
@@ -79,6 +82,7 @@ export function blockerChips(args: {
   items: OpenItem[]
   decisions: Record<ItemId, DraftDecision>
   fixture: Fixture
+  weekId: WeekId
 }): BlockerChip[] {
   const { blockers, fixture } = args
   const ordered = orderQueue(args)
@@ -96,19 +100,38 @@ export function blockerChips(args: {
         out.push({
           key: 'undisposed-all',
           label: `${undisposed.length} to decide`,
-          targetItemId: target === null ? null : target.id,
+          target: target === null ? null : { kind: 'item', itemId: target.id },
           tone: 'warn',
         })
       }
       continue
     }
     if (b.kind === 'capacity-shortfall') {
-      const target =
-        ordered.find((item) => blockersForItem(blockers, item, fixture).includes(b)) ?? null
+      const target = ordered.find((item) => blockersForItem(blockers, item, fixture).includes(b)) ?? null
+      // Attribution excludes held vans, so a shortfall caused only by a hold
+      // has no item target. Point at the held van's own item when it is
+      // queued (V-012 in week 40), otherwise at the held van itself, so its
+      // cover can be requested. [no pool cover spec §2.2]
+      const heldId =
+        target === null
+          ? (b.contributors.find((id) => {
+              const v = fixture.vehicles.find((x) => x.id === id)
+              return v !== undefined && isHeldOn(v, b.date)
+            }) ?? null)
+          : null
+      const heldItem = heldId === null ? undefined : ordered.find((i) => i.vehicleId === heldId)
+      const chipTarget: Selection | null =
+        target !== null
+          ? { kind: 'item', itemId: target.id }
+          : heldItem !== undefined
+            ? { kind: 'item', itemId: heldItem.id }
+            : heldId !== null
+              ? { kind: 'held-vehicle', vehicleId: heldId }
+              : null
       out.push({
         key: `capacity-${b.date}-${b.vehicleClass}`,
         label: `${formatDay(b.date)} · ${b.vehicleClass} short ${b.shortBy}`,
-        targetItemId: target === null ? null : target.id,
+        target: chipTarget,
         tone: 'crit',
       })
       continue
@@ -125,5 +148,5 @@ function itemChip(
   fixture: Fixture,
 ): BlockerChip {
   const vehicleId = fixture.items.find((i) => i.id === b.itemId)?.vehicleId ?? b.itemId
-  return { key: `${b.kind}-${b.itemId}`, label: `${vehicleId} · ${reason}`, targetItemId: b.itemId, tone }
+  return { key: `${b.kind}-${b.itemId}`, label: `${vehicleId} · ${reason}`, target: { kind: 'item', itemId: b.itemId }, tone }
 }

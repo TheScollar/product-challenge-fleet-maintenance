@@ -7,18 +7,20 @@ import { usePlan } from '../state/PlanProvider'
 import { activeWeekId } from '../state/planReducer'
 
 /**
- * A replacement belongs to a visit. Mounted only in the weekly plan's detail
- * pane, and it offers the request only once a visit is applied for this
- * vehicle; the dashboard reports a committed booking as a fact and offers no
- * control. Callers mount it with a key that changes with the vehicle and with
- * the applied visit's day, so an open form and its draft never outlive the
- * visit they were opened for. [scenario spec §5.1, §5.2]
+ * A replacement belongs to a visit or a hold. Mounted only in the weekly
+ * plan's detail pane, and it offers the request only once a visit is applied
+ * for this vehicle, or the vehicle is held; the dashboard reports a committed
+ * booking as a fact and offers no control. Callers mount it with a key that
+ * changes with the vehicle and with the applied visit's day, so an open form
+ * and its draft never outlive the visit they were opened for. [scenario spec
+ * §5.1, §5.2]
  */
 export function ReplacementBookingControl({
   vehicleId,
   vehicleClass,
   appliedVisit,
   watched,
+  held,
 }: {
   vehicleId: VehicleId
   vehicleClass: VehicleClass
@@ -26,11 +28,14 @@ export function ReplacementBookingControl({
   appliedVisit: Visit | null
   /** True when the item's applied treatment is watch, for the explanatory line. */
   watched: boolean
+  /** True when the vehicle is held on some day this week, which alone permits a request. [no pool cover spec D3] */
+  held: boolean
 }) {
   const { state, dispatch, fixture } = usePlan()
   const weekId = activeWeekId(state)
   const week = weekFixtureFor(fixture, weekId)
-  const booking = appliedVisit === null ? null : (state.draftBookingsByWeek[weekId]?.[vehicleId] ?? null)
+  const canRequest = appliedVisit !== null || held
+  const booking = canRequest ? (state.draftBookingsByWeek[weekId]?.[vehicleId] ?? null) : null
   const [editing, setEditing] = useState(false)
   // Defaults follow the visit: its day, its length. Both stay editable within
   // the week, so a held van can be covered Monday to Friday.
@@ -43,7 +48,7 @@ export function ReplacementBookingControl({
   // and never read before one of them runs.
   const [draft, setDraft] = useState<Partial<ReplacementBooking>>({})
 
-  if (appliedVisit === null) {
+  if (!canRequest) {
     return (
       <div className="block">
         <div className="blocktitle">Replacement cover</div>

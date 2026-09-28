@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isHeldOn, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { recommendationFor } from '../domain/recommendation'
 import { bookingCostEur, eligibleBookings } from '../domain/replacementBooking'
@@ -112,6 +113,7 @@ export function ItemDetail({
         vehicleClass={vehicle.vehicleClass}
         appliedVisit={appliedVisit}
         watched={applied.treatment === 'watch'}
+        held={weekFixtureFor(fixture, weekId).days.some((d) => isHeldOn(vehicle, d))}
       />
     </div>
   )

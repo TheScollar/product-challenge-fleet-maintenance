@@ -1,19 +1,21 @@
-import { capacityBreakdown, capacityFigure, computeWeekCapacity, weekFixtureFor } from '../domain/capacity'
+import { capacityBreakdown, capacityFigure, computeWeekCapacity, isHeldOn, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { adHocCoversFrom, eligibleBookings } from '../domain/replacementBooking'
 import type { DayCapacity, DraftDecision, ISODate, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
-import { activeWeekId } from '../state/planReducer'
+import { activeWeekId, queueFor } from '../state/planReducer'
 
 export function CapacityBand({
   decisions,
   selectedItemId,
   bookings,
+  onSelectHeld,
 }: {
   decisions: Record<ItemId, DraftDecision>
   selectedItemId: ItemId | null
   bookings: Record<VehicleId, ReplacementBooking>
+  onSelectHeld: (vehicleId: VehicleId) => void
 }) {
   const { state, fixture } = usePlan()
   const weekId = activeWeekId(state)
@@ -21,6 +23,7 @@ export function CapacityBand({
   const visits = visitsFromDecisions(decisions, fixture.items)
   const adHocCovers = adHocCoversFrom(eligibleBookings(bookings, { fixture, weekId, visits }), fixture.replacementDayRateEur)
   const rows = computeWeekCapacity({ fixture, weekId, visits, adHocCovers })
+  const queuedVehicleIds = new Set(queueFor({ fixture, state, weekId }).map((e) => e.item.vehicleId))
 
   const cellFor = (date: ISODate, vehicleClass: 'standard' | 'specialist') =>
     rows.find((r) => r.date === date && r.vehicleClass === vehicleClass) as DayCapacity
@@ -59,13 +62,26 @@ export function CapacityBand({
           const impacted = std.shortfall > 0 || spec.shortfall > 0
           const candidate = !impacted && (std.available > std.demand || spec.available > spec.demand)
           const exception = impacted || candidate
+          const heldOnly =
+            std.shortfall > 0
+              ? (std.unavailable.find((id) => {
+                  const v = fixture.vehicles.find((x) => x.id === id)
+                  return v !== undefined && isHeldOn(v, date) && !queuedVehicleIds.has(id)
+                }) ?? null)
+              : null
           return (
             <div
               key={date}
               className={`day${exception ? ' exc' : ''}${impacted ? ' impacted' : ''}${candidate ? ' candidate' : ''}`}
             >
               <div className="dh">{formatDay(date)}</div>
-              <Cell capacity={std} />
+              {heldOnly !== null ? (
+                <button className="cellbtn" onClick={() => onSelectHeld(heldOnly)} aria-label={`Request cover for ${heldOnly}`}>
+                  <Cell capacity={std} />
+                </button>
+              ) : (
+                <Cell capacity={std} />
+              )}
               <Cell capacity={spec} />
             </div>
           )

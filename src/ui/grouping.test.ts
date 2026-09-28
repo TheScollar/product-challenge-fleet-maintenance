@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from '../domain/fixture'
-import { proposedDecisions } from '../domain/testSupport'
+import { item, proposedDecisions } from '../domain/testSupport'
 import { validatePlan } from '../domain/validation'
-import type { DraftDecision } from '../domain/types'
+import type { DraftDecision, ItemId } from '../domain/types'
 import { activeWeekId, draftFor, initialState, queueFor } from '../state/planReducer'
 import { blockerChips, classifyItem, groupQueue } from './grouping'
 
@@ -23,9 +23,9 @@ describe('groupQueue at the true cold open', () => {
   })
 
   it('collapses the five undecided items into one amber chip that selects the first of them', () => {
-    const chips = blockerChips({ blockers, items, decisions, fixture })
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
     expect(chips).toEqual([
-      { key: 'undisposed-all', label: '5 to decide', targetItemId: idOf('V-012'), tone: 'warn' },
+      { key: 'undisposed-all', label: '5 to decide', target: { kind: 'item', itemId: idOf('V-012') }, tone: 'warn' },
     ])
   })
 })
@@ -54,13 +54,13 @@ describe('groupQueue with every proposal adopted', () => {
   })
 
   it('renders one chip per blocker, a single undecided item by name', () => {
-    const chips = blockerChips({ blockers, items, decisions, fixture })
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
     expect(chips.map((c) => [c.label, c.tone])).toEqual([
       ['V-041 · no decision', 'warn'],
       ['Tue 29 Sep · standard short 1', 'crit'],
     ])
-    expect(chips[0].targetItemId).toBe(idOf('V-041'))
-    expect(chips[1].targetItemId).toBe(idOf('V-103'))
+    expect(chips[0].target).toEqual({ kind: 'item', itemId: idOf('V-041') })
+    expect(chips[1].target).toEqual({ kind: 'item', itemId: idOf('V-103') })
   })
 })
 
@@ -149,14 +149,41 @@ describe('blockerChips with undecided items on either side of a hard blocker', (
   })
 
   it("collapses both undecided items into one chip in the first one's position", () => {
-    const chips = blockerChips({ blockers, items, decisions: interleaved, fixture })
+    const chips = blockerChips({ blockers, items, decisions: interleaved, fixture, weekId })
     expect(chips.map((c) => [c.label, c.tone])).toEqual([
       ['2 to decide', 'warn'],
       ['V-118 · slot not bookable', 'crit'],
       ['Mon 28 Sep · standard short 1', 'crit'],
     ])
-    expect(chips[0].targetItemId).toBe(idOf('V-103'))
-    expect(chips[1].targetItemId).toBe(idOf('V-118'))
-    expect(chips[2].targetItemId).toBe(idOf('V-118'))
+    expect(chips[0].target).toEqual({ kind: 'item', itemId: idOf('V-103') })
+    expect(chips[1].target).toEqual({ kind: 'item', itemId: idOf('V-118') })
+    expect(chips[2].target).toEqual({ kind: 'item', itemId: idOf('V-118') })
+  })
+})
+
+describe('a shortfall caused only by a hold targets the held vehicle', () => {
+  it('points the week 41 Monday chip at V-012', () => {
+    const weekId = '2026-10-05'
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v024': { itemId: 'item-v024', treatment: null, slotDate: null, deferral: null },
+      'item-v105': { itemId: 'item-v105', treatment: null, slotDate: null, deferral: null },
+    }
+    const blockers = validatePlan({ fixture, weekId, decisions })
+    const chips = blockerChips({ blockers, items: [item('item-v024'), item('item-v105')], decisions, fixture, weekId })
+    const monday = chips.find((c) => c.key === 'capacity-2026-10-05-standard')!
+    expect(monday.target).toEqual({ kind: 'held-vehicle', vehicleId: 'V-012' })
+  })
+
+  it("points a week 40 cold-open shortfall chip at the held van's own item", () => {
+    const weekId = '2026-09-28'
+    const s = initialState(fixture)
+    const decisions = draftFor({ fixture, state: s, weekId })
+    const blockers = validatePlan({ fixture, weekId, decisions })
+    const items = queueFor({ fixture, state: s, weekId }).map((e) => e.item)
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
+    expect(chips.find((c) => c.key === 'capacity-2026-09-28-standard')!.target).toEqual({
+      kind: 'item',
+      itemId: 'item-v012',
+    })
   })
 })
