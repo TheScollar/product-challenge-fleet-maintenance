@@ -123,6 +123,6 @@ and the "being re-baselined" caveat once the suite is green.
 ## 6. Done
 
 Full suite green with the count stated in the README; `tsc` and `npm run build` pass; every figure
-in §3 is asserted by a test; the same week 40 total appears in README, speaker script, cover note
-and tests; a live walkthrough pass is recorded in a new dated section of `docs/acceptance.md`. The
+in §3 is asserted by a test; the same week 40 total appears in the README, the speaker script and
+the tests; a live walkthrough pass is recorded in a new dated section of `docs/acceptance.md`. The
 branch lands through a reviewed PR.
