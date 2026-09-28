@@ -64,7 +64,7 @@ function buildVehicle(id: VehicleId, vehicleClass: 'standard' | 'specialist', in
         ? {
             reason: 'Safety-relevant brake defect recorded at UVV inspection',
             since: '2026-09-25',
-            releaseRecordedOn: '2026-10-05',
+            releaseRecordedOn: '2026-10-06',
           }
         : null,
   }
@@ -372,6 +372,9 @@ const weeks: WeekFixture[] = [
     weekId: '2026-09-28',
     days: WEEK_40,
     demand: { standard: 38, specialist: 7 },
+    // One free standard van on Thursday, so moving a visit is a real lever
+    // and not only a relocated shortfall. [no pool cover spec D5]
+    demandByDay: { '2026-10-01': { standard: 37 } },
     coverIds: [],
     itemIds: ['item-v012', 'item-v041', 'item-v103', 'item-v118', 'item-v027'],
     budgetEur: 3000,
@@ -380,7 +383,8 @@ const weeks: WeekFixture[] = [
     weekId: '2026-10-05',
     days: WEEK_41,
     demand: { standard: 38, specialist: 7 },
-    coverIds: ['R-1'],
+    demandByDay: { '2026-10-07': { standard: 37 }, '2026-10-08': { standard: 37 } },
+    coverIds: [],
     itemIds: ['item-v024', 'item-v105'],
     budgetEur: 3000,
   },
@@ -394,7 +398,7 @@ export const fixture: Fixture = {
   garages,
   weeks,
   defaultDemand: { standard: 38, specialist: 7 },
-  defaultCoverIds: ['R-1'],
+  defaultCoverIds: [],
   events,
   replacementDayRateEur: 140,
   defaultBudgetEur: 3000,

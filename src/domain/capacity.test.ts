@@ -4,6 +4,7 @@ import {
   capacityFigure,
   computeDayCapacity,
   computeWeekCapacity,
+  demandOn,
   isHeldOn,
   unavailableOn,
   weekFixtureFor,
@@ -82,6 +83,27 @@ describe('isHeldOn is the single definition of "held on a date"', () => {
 
   it('is false for a vehicle that has never been held', () => {
     expect(isHeldOn(vehicle('V-103'), '2026-10-05')).toBe(false)
+  })
+})
+
+describe('demandOn reads a day override and falls back to the week', () => {
+  it('uses the override for the class it names', () => {
+    expect(demandOn(weekFixtureFor(fixture, '2026-09-28'), '2026-10-01', 'standard')).toBe(37)
+  })
+  it('falls back to week.demand for a class the override omits', () => {
+    expect(demandOn(weekFixtureFor(fixture, '2026-09-28'), '2026-10-01', 'specialist')).toBe(7)
+  })
+  it('falls back to week.demand on a day with no override', () => {
+    expect(demandOn(weekFixtureFor(fixture, '2026-09-28'), '2026-09-29', 'standard')).toBe(38)
+  })
+  it('holds V-012 on every day of week 40 and on Monday of week 41 only', () => {
+    const v012 = vehicle('V-012')
+    for (const d of ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-05']) {
+      expect(isHeldOn(v012, d)).toBe(true)
+    }
+    for (const d of ['2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09']) {
+      expect(isHeldOn(v012, d)).toBe(false)
+    }
   })
 })
 

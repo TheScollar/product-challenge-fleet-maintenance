@@ -15,7 +15,7 @@ import { visitCoversDate } from './visits'
 
 /**
  * Weeks the fixture does not author fall back to a default template:
- * normal demand, R-1 only, and no new items. Week 41 is no longer an
+ * normal demand, no cover, and no new items. Week 41 is no longer an
  * example of this fallback; it authors its own items. [S 3.7]
  */
 export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
@@ -29,6 +29,11 @@ export function weekFixtureFor(fixture: Fixture, weekId: WeekId): WeekFixture {
     itemIds: [],
     budgetEur: fixture.defaultBudgetEur,
   }
+}
+
+/** A day override wins for the class it names; everything else is the week's. [no pool cover spec D5] */
+export function demandOn(week: WeekFixture, date: ISODate, vehicleClass: VehicleClass): number {
+  return week.demandByDay?.[date]?.[vehicleClass] ?? week.demand[vehicleClass]
 }
 
 /** A hold is never cleared, only stamped with a release, so "held" is always
@@ -92,7 +97,7 @@ export function computeDayCapacity(args: {
 
   const owned = inClass.length
   const available = owned - unavailable.length + cover
-  const demand = vehicleClass === 'standard' ? week.demand.standard : week.demand.specialist
+  const demand = demandOn(week, date, vehicleClass)
 
   return {
     date,

@@ -131,6 +131,8 @@ export interface WeekFixture {
   weekId: WeekId
   days: ISODate[]
   demand: Demand
+  /** Per-day overrides. A day or class not listed uses `demand`. */
+  demandByDay?: Record<ISODate, Partial<Demand>>
   coverIds: string[]
   itemIds: ItemId[]
   budgetEur: number
