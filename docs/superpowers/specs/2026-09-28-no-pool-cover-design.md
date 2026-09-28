@@ -5,8 +5,8 @@ replacement, and gives the depot named light days so rescheduling is still a rea
 
 **Status.** Decided in a grilling session on 2026-09-25, written 2026-09-28.
 
-**Supersedes.** Replacement cover spec §4.1 (cover merged "exactly like R-1 or R-2") and §5.4 (a
-replacement belongs to a visit), and scenario spec §5.6 (the pre-confirmed rentals never enter the
+**Supersedes.** Replacement cover spec §4.1 (cover merged "exactly like R-1 or R-2"), and scenario
+spec §5.4 (a replacement belongs to a visit) and §5.6 (the pre-confirmed rentals never enter the
 total). Each carries a one-line pointer here.
 
 **Reference convention.** `[RC §n]` points into `2026-09-24-replacement-cover-design.md`, `[SC §n]`
