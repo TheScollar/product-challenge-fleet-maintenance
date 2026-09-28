@@ -43,6 +43,17 @@ export function isHeldOn(vehicle: Vehicle, date: ISODate): boolean {
   return hold !== null && (hold.releaseRecordedOn === null || date < hold.releaseRecordedOn)
 }
 
+/** The first of `vehicleIds` held on `date`, or null. One definition for the
+ *  shortfall chip and the band cell. [no pool cover spec §2.2] */
+export function heldAmong(vehicleIds: VehicleId[], date: ISODate, fixture: Fixture): VehicleId | null {
+  return (
+    vehicleIds.find((id) => {
+      const v = fixture.vehicles.find((x) => x.id === id)
+      return v !== undefined && isHeldOn(v, date)
+    }) ?? null
+  )
+}
+
 /**
  * One Set, so a vehicle that is both held and booked counts once. [S 3.1]
  * A hold persists until the fixture records a release on or before the day.

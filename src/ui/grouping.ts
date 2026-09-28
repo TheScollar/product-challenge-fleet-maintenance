@@ -1,4 +1,4 @@
-import { isHeldOn } from '../domain/capacity'
+import { heldAmong } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { isDeferralComplete } from '../domain/deferral'
 import { orderQueue } from '../domain/urgency'
@@ -112,13 +112,7 @@ export function blockerChips(args: {
       // has no item target. Point at the held van's own item when it is
       // queued (V-012 in week 40), otherwise at the held van itself, so its
       // cover can be requested. [no pool cover spec §2.2]
-      const heldId =
-        target === null
-          ? (b.contributors.find((id) => {
-              const v = fixture.vehicles.find((x) => x.id === id)
-              return v !== undefined && isHeldOn(v, b.date)
-            }) ?? null)
-          : null
+      const heldId = target === null ? heldAmong(b.contributors, b.date, fixture) : null
       const heldItem = heldId === null ? undefined : ordered.find((i) => i.vehicleId === heldId)
       const chipTarget: Selection | null =
         target !== null

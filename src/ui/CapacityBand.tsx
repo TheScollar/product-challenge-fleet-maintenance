@@ -1,4 +1,4 @@
-import { capacityBreakdown, capacityFigure, computeWeekCapacity, isHeldOn, weekFixtureFor } from '../domain/capacity'
+import { capacityBreakdown, capacityFigure, computeWeekCapacity, heldAmong, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import { adHocCoversFrom, eligibleBookings } from '../domain/replacementBooking'
 import type { DayCapacity, DraftDecision, ISODate, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
@@ -64,10 +64,11 @@ export function CapacityBand({
           const exception = impacted || candidate
           const heldOnly =
             std.shortfall > 0
-              ? (std.unavailable.find((id) => {
-                  const v = fixture.vehicles.find((x) => x.id === id)
-                  return v !== undefined && isHeldOn(v, date) && !queuedVehicleIds.has(id)
-                }) ?? null)
+              ? heldAmong(
+                  std.unavailable.filter((id) => !queuedVehicleIds.has(id)),
+                  date,
+                  fixture,
+                )
               : null
           return (
             <div

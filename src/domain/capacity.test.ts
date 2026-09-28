@@ -5,6 +5,7 @@ import {
   computeDayCapacity,
   computeWeekCapacity,
   demandOn,
+  heldAmong,
   isHeldOn,
   unavailableOn,
   weekFixtureFor,
@@ -83,6 +84,16 @@ describe('isHeldOn is the single definition of "held on a date"', () => {
 
   it('is false for a vehicle that has never been held', () => {
     expect(isHeldOn(vehicle('V-103'), '2026-10-05')).toBe(false)
+  })
+})
+
+describe('heldAmong', () => {
+  it('finds V-012 among the Monday contributors of week 41', () => {
+    expect(heldAmong(['V-024', 'V-012'], '2026-10-05', fixture)).toBe('V-012')
+  })
+
+  it('is null once the hold has ended', () => {
+    expect(heldAmong(['V-012'], '2026-10-06', fixture)).toBeNull()
   })
 })
 
