@@ -10,24 +10,36 @@ const WEEK_40 = '2026-09-28'
 const validate = (decisions: Record<ItemId, DraftDecision>) =>
   validatePlan({ fixture, weekId: WEEK_40, decisions })
 
-describe('the adopted proposals carry exactly two blockers', () => {
+type Shortfall = Extract<Blocker, { kind: 'capacity-shortfall' }>
+const shortfalls = (blockers: Blocker[]) =>
+  blockers.filter((b): b is Shortfall => b.kind === 'capacity-shortfall')
+
+// V-012 is held all week and no pool cover exists, so its replacement is an
+// explicit request, Monday for five days. [no pool cover spec §3.1]
+const V012_COVER = { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 }
+const V103_COVER = { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 }
+
+describe('the adopted proposals carry the V-041 decision and the uncovered days', () => {
   const blockers = validate(proposed())
 
-  it('reports the Tuesday shortfall and the undisposed decision, and nothing else', () => {
-    expect(blockers.map((b) => b.kind).sort()).toEqual(['capacity-shortfall', 'undisposed-item'])
+  it('reports the undisposed V-041 decision and a standard shortfall on every day but Thursday', () => {
+    expect(blockers.filter((b) => b.kind === 'undisposed-item')).toEqual([
+      { kind: 'undisposed-item', itemId: 'item-v041' },
+    ])
+    expect(shortfalls(blockers).map((b) => [b.date, b.vehicleClass, b.shortBy])).toEqual([
+      ['2026-09-28', 'standard', 1],
+      ['2026-09-29', 'standard', 3],
+      ['2026-09-30', 'standard', 1],
+      ['2026-10-02', 'standard', 1],
+    ])
+    expect(blockers).toHaveLength(5)
   })
 
-  it('names the day, the class and the contributors on the shortfall', () => {
-    const shortfall = blockers.find((b) => b.kind === 'capacity-shortfall') as {
-      date: string
-      vehicleClass: string
-      shortBy: number
-      contributors: string[]
-    }
-    expect(shortfall.date).toBe('2026-09-29')
-    expect(shortfall.vehicleClass).toBe('standard')
-    expect(shortfall.shortBy).toBe(1)
-    expect(shortfall.contributors.sort()).toEqual(['V-012', 'V-103', 'V-118'])
+  it('names the day, the class and the contributors on the Tuesday shortfall', () => {
+    const tue = shortfalls(blockers).find((b) => b.date === '2026-09-29')!
+    expect(tue.vehicleClass).toBe('standard')
+    expect(tue.shortBy).toBe(3)
+    expect([...tue.contributors].sort()).toEqual(['V-012', 'V-103', 'V-118'])
   })
 
   it('does not let the plan commit', () => {
@@ -39,30 +51,41 @@ describe('the adopted proposals carry exactly two blockers', () => {
   })
 })
 
-describe('a requested booking clears a capacity blocker only for a vehicle with a visit', () => {
-  it('removes the Tuesday shortfall once the visiting van is covered', () => {
+describe('a requested booking clears a capacity blocker only for a vehicle with a visit or a hold', () => {
+  it('removes a Tuesday shortfall once the visiting van is covered', () => {
+    const without = validatePlan({ fixture, weekId: WEEK_40, decisions: proposed() })
     const bookings = { 'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 } }
     const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: proposed(), bookings })
-    expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(false)
+    const tueShort = (bs: Blocker[]) => shortfalls(bs).find((b) => b.date === '2026-09-29')?.shortBy
+    expect(tueShort(without)).toBe(3)
+    expect(tueShort(blockers)).toBe(2)
+  })
+
+  it('clears every shortfall for the held V-012, which has no visit', () => {
+    const open = draftFor({ fixture, state: initialState(fixture), weekId: WEEK_40 })
+    const bookings = { 'V-012': V012_COVER }
+    expect(shortfalls(validate(open))).toHaveLength(4)
+    const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: open, bookings })
+    expect(shortfalls(blockers)).toEqual([])
   })
 
   it('does nothing for a booking on a different day', () => {
     const bookings = { 'V-118': { vehicleId: 'V-118', startDate: '2026-09-30', days: 1 } }
     const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: proposed(), bookings })
-    expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
+    expect(shortfalls(blockers).find((b) => b.date === '2026-09-29')?.shortBy).toBe(3)
   })
 
-  it('does nothing for a vehicle that has no visit', () => {
+  it('does nothing for a vehicle that has no visit and no hold', () => {
     const bookings = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
     const blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: proposed(), bookings })
-    expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
+    expect(blockers).toEqual(validate(proposed()))
   })
 })
 
 describe('the journey to a committable plan', () => {
-  function resolved(): Record<ItemId, DraftDecision> {
-    const d = proposed()
-    d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
+  const WALKTHROUGH_BOOKINGS = { 'V-012': V012_COVER, 'V-103': V103_COVER }
+
+  function watchV041(d: Record<ItemId, DraftDecision>) {
     d['item-v041'] = {
       itemId: 'item-v041',
       treatment: 'watch',
@@ -73,17 +96,46 @@ describe('the journey to a committable plan', () => {
         trigger: { kind: 'event', eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' },
       },
     }
+  }
+
+  function resolved(): Record<ItemId, DraftDecision> {
+    const d = proposed()
+    d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
+    watchV041(d)
     return d
   }
 
-  it('clears the shortfall when V-118 moves to Thursday but keeps the undisposed blocker', () => {
+  const validateWith = (decisions: Record<ItemId, DraftDecision>, bookings = WALKTHROUGH_BOOKINGS) =>
+    validatePlan({ fixture, weekId: WEEK_40, decisions, bookings })
+
+  it('follows the capacity table one step at a time, and commits only after all four', () => {
     const d = proposed()
+
+    // 1. Book V-012 Monday for five days: only Tuesday stays short, by 2.
+    let blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: d, bookings: { 'V-012': V012_COVER } })
+    expect(shortfalls(blockers).map((b) => [b.date, b.shortBy])).toEqual([['2026-09-29', 2]])
+    expect(canCommit(blockers)).toBe(false)
+
+    // 2. Move V-118 to Thursday: Tuesday is short by 1, Thursday holds.
     d['item-v118'] = { ...d['item-v118'], slotDate: '2026-10-01' }
-    expect(validate(d).map((b) => b.kind)).toEqual(['undisposed-item'])
+    blockers = validatePlan({ fixture, weekId: WEEK_40, decisions: d, bookings: { 'V-012': V012_COVER } })
+    expect(shortfalls(blockers).map((b) => [b.date, b.shortBy])).toEqual([['2026-09-29', 1]])
+    expect(canCommit(blockers)).toBe(false)
+
+    // 3. Book V-103 Tuesday for one day: the band is clear, V-041 is still undecided.
+    blockers = validateWith(d)
+    expect(blockers).toEqual([{ kind: 'undisposed-item', itemId: 'item-v041' }])
+    expect(canCommit(blockers)).toBe(false)
+
+    // 4. Watch V-041 with a complete deferral: nothing blocks.
+    watchV041(d)
+    blockers = validateWith(d)
+    expect(blockers).toEqual([])
+    expect(canCommit(blockers)).toBe(true)
   })
 
-  it('commits once both are resolved', () => {
-    const blockers = validate(resolved())
+  it('commits once every step is taken', () => {
+    const blockers = validateWith(resolved())
     expect(blockers).toEqual([])
     expect(canCommit(blockers)).toBe(true)
   })
@@ -91,7 +143,7 @@ describe('the journey to a committable plan', () => {
   it('blocks again if V-041 is scheduled instead of deferred, with no lever to close it', () => {
     const d = resolved()
     d['item-v041'] = { itemId: 'item-v041', treatment: 'act-now', slotDate: '2026-10-01', deferral: null }
-    const blockers = validate(d)
+    const blockers = validateWith(d)
     const spec = blockers.find(
       (b) => b.kind === 'capacity-shortfall' && b.vehicleClass === 'specialist',
     )
@@ -102,13 +154,13 @@ describe('the journey to a committable plan', () => {
   it('treats a watch with an incomplete deferral as undisposed', () => {
     const d = resolved()
     d['item-v041'] = { itemId: 'item-v041', treatment: 'watch', slotDate: null, deferral: null }
-    expect(validate(d).some((b) => b.kind === 'undisposed-item' && b.itemId === 'item-v041')).toBe(true)
+    expect(validateWith(d).some((b) => b.kind === 'undisposed-item' && b.itemId === 'item-v041')).toBe(true)
   })
 
   it('reports an infeasible slot rather than accepting it', () => {
     const d = resolved()
     d['item-v118'] = { ...d['item-v118'], slotDate: '2026-09-28' }
-    const blockers = validate(d)
+    const blockers = validateWith(d)
     expect(blockers.some((b) => b.kind === 'infeasible-slot' && b.itemId === 'item-v118')).toBe(true)
     expect(canCommit(blockers)).toBe(false)
   })
@@ -116,7 +168,7 @@ describe('the journey to a committable plan', () => {
   it('reports parts not ready with the date', () => {
     const d = resolved()
     d['item-v012'] = { ...d['item-v012'], slotDate: '2026-09-28' }
-    const parts = validate(d).find((b) => b.kind === 'parts-not-ready') as { readyOn: string }
+    const parts = validateWith(d).find((b) => b.kind === 'parts-not-ready') as { readyOn: string }
     expect(parts.readyOn).toBe('2026-09-29')
   })
 })
@@ -158,11 +210,10 @@ describe('attributing a shortfall to an item', () => {
 
 describe('blockers are named in plain language', () => {
   it('describes a shortfall by day and class', () => {
-    const shortfall = validate(proposed()).find((b) => b.kind === 'capacity-shortfall')!
-    const text = describeBlocker(shortfall, fixture)
-    expect(text).toContain('Tue 29 Sep')
-    expect(text).toContain('standard')
-    expect(text).toContain('short by 1')
+    const tue = shortfalls(validate(proposed())).find((b) => b.date === '2026-09-29')!
+    expect(describeBlocker(tue, fixture)).toBe(
+      'Tue 29 Sep: standard short by 3. Off the road: V-012, V-103, V-118.',
+    )
   })
 
   it('describes an infeasible slot with its reasons and the vehicle', () => {
@@ -200,10 +251,17 @@ describe('blockers are named in plain language', () => {
 })
 
 describe('the true cold open', () => {
-  it('carries one undisposed blocker per item and no shortfall, because nothing is planned', () => {
+  it('carries one undisposed blocker per item and four shortfalls, because V-012 is held with no cover', () => {
     const open = draftFor({ fixture, state: initialState(fixture), weekId: WEEK_40 })
     const blockers = validate(open)
-    expect(blockers.map((b) => b.kind)).toEqual(Array(5).fill('undisposed-item'))
+    expect(blockers.filter((b) => b.kind === 'undisposed-item')).toHaveLength(5)
+    expect(shortfalls(blockers).map((b) => [b.date, b.vehicleClass, b.shortBy])).toEqual([
+      ['2026-09-28', 'standard', 1],
+      ['2026-09-29', 'standard', 1],
+      ['2026-09-30', 'standard', 1],
+      ['2026-10-02', 'standard', 1],
+    ])
+    expect(blockers).toHaveLength(9)
     expect(canCommit(blockers)).toBe(false)
   })
 })
