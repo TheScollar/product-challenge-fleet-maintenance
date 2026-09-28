@@ -58,7 +58,8 @@ an option, and booking Tuesday's visit does not release the hold.
 [Under Replacement cover, click Request replacement. Choose Monday 28 September and five days, then
 request it.]
 
-The cover control appears only after a visit is applied. I request five days because the hold lasts
+The cover control appears because a replacement can be requested against a visit or a hold, and
+V-012 has both here. I request five days because the hold lasts
 the whole week, not because the repair itself takes five days. That adds EUR 700 at EUR 140 per day,
 and the band clears Monday to Friday, with Thursday showing one spare van because demand there is 37.
 The product keeps the visit, the hold and the replacement as three different facts.
@@ -126,8 +127,8 @@ does not support one. Predictive failure modelling was tempting and wrong. A bla
 
 Second, honesty about feasibility. Garage slots, parts dates and requested cover are checked before
 commit, because a plan that cannot be staffed is not a thin plan, it is a different and weaker claim.
-There is no pre-confirmed rental safety net. Standard replacement cover must be requested against an
-applied visit; specialist cover does not exist. A blocked plan is a legitimate outcome: the draft
+There is no pre-confirmed rental safety net. Standard replacement cover must be requested against a
+visit or a hold; specialist cover does not exist. A blocked plan is a legitimate outcome: the draft
 survives and the blocker is named.
 
 Third, the system proposes, the user decides. That principle got sharper through use. An earlier
@@ -175,7 +176,11 @@ guaranteed bookings; and a usability session with someone who has never seen it.
   dashboard. The product has to generate something the user can carry upward; that is a byproduct of
   the workflow, not a report.
 - Why is no rental cover pre-confirmed? Because cover is a decision with a cost, not a free fixture
-  assumption. It exists only after a visit is applied and the user explicitly requests it.
+  assumption. It exists only once a visit or a hold makes the vehicle unavailable, and the user
+  explicitly requests it.
+- Why does the week 41 booking for V-012 default to one day? It can run beyond Monday, but it only
+  adds spare vans after the hold ends that week, and costs EUR 140 a day, so the panel defaults to
+  the one day that closes the gap.
 - Why does only one of the two Tuesday visits need replacement cover? Demand already uses all 38
   standard vans, and V-012 is held for the week, so its replacement restores the baseline. Thursday
   has one spare standard van, so moving V-118 there absorbs it for free; V-103 stays on Tuesday and
