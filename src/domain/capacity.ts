@@ -155,6 +155,7 @@ export function capacityFigure(day: DayCapacity): string {
 export function capacityBreakdown(day: DayCapacity): string {
   const offRoad =
     day.unavailable.length === 0 ? 'none off the road' : `off the road: ${day.unavailable.join(', ')}`
-  const rentals = day.coverIds.length === 0 ? 'no rental on site' : `rentals on site: ${day.coverIds.join(', ')}`
-  return `${day.owned} owned · ${offRoad} · ${rentals}`
+  const cover =
+    day.coverIds.length === 0 ? 'no replacement on site' : `replacements on site: ${day.coverIds.join(', ')}`
+  return `${day.owned} owned · ${offRoad} · ${cover}`
 }
