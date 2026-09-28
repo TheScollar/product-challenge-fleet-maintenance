@@ -44,9 +44,10 @@ it is the thing every decision moves. It counts own vans plus explicitly request
 against demand, per day and per vehicle class. Below it, five decisions. Every one opens undecided.
 The system proposes; it never decides for you.
 
-The whole standard row starts one short. V-012 is held from Monday to Friday, demand already uses all
-38 standard vans, and there is no pre-confirmed rental hiding that fact. Replacement cover is a
-decision and a cost, not a fixture assumption.
+The standard row starts one short on every day but Thursday, where demand is one lower. V-012 is held
+from Monday to Friday, demand already uses all 38 standard vans on the other four days, and there is
+no pre-confirmed rental hiding that fact. Replacement cover is a decision and a cost, not a fixture
+assumption.
 
 [Open V-012. Click Use proposal, then Apply to draft. Point at the disabled levers.]
 

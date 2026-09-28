@@ -51,8 +51,8 @@ resurrect it.
 1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road and four needing
    a decision. With no pre-confirmed rental cover, the depot is one standard van short today.
 2. Switch to the week plan. Week 40 opens with five decisions and none taken. The band counts own
-   vans plus explicitly requested replacement cover, and the standard row starts one short each day
-   because `V-012` is held for the week.
+   vans plus explicitly requested replacement cover, and the standard row starts one short on every
+   day but Thursday, where demand is one lower, because `V-012` is held for the week.
 3. Open `V-012`, click **Use proposal**, then **Apply to draft**. Request replacement cover from
    Monday for five days. The band clears except Thursday, which shows one spare, and the
    Consequence tile shows EUR 700.
@@ -158,7 +158,7 @@ The full list with evidence lives in `docs/acceptance.md`. The ones to know befo
 - `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`: the fleet overview landing screen, specified separately
 - `docs/superpowers/specs/2026-09-24-replacement-cover-design.md`: requesting and costing replacement cover, specified separately
 - `docs/superpowers/specs/2026-09-24-scenario-and-cover-accounting-fixes-design.md`: the undecided
-  backlog, visit-bound replacement cover, and the own-plus-rental capacity figures
+  backlog, visit-bound replacement cover, and the own-plus-cover capacity figures
 - `docs/fleet-maintenance-research-findings.md`: research and framing
 - `docs/mockups/`: layout decisions and the alternatives they were made from, including the
   guided-queue declutter proposal the current surface follows
