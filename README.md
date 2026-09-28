@@ -27,11 +27,8 @@ npm run build   # writes dist/, which can be opened directly from the filesystem
 To run the tests:
 
 ```bash
-npm test        # 302 tests over the domain and state layers
+npm test        # 323 tests over the domain and state layers
 ```
-
-The current no-preconfirmed-cover fixture is being re-baselined against the suite; the walkthrough
-and build remain the source of truth for the showcase.
 
 ## Built with
 
@@ -52,16 +49,17 @@ resurrect it.
 ## The walkthrough
 
 1. The app opens on **Fleet today**: 45 vans at a glance, one already off the road and four needing
-   a decision. With no pre-confirmed rental cover, the depot is already one standard van short today.
+   a decision. With no pre-confirmed rental cover, the depot is one standard van short today.
 2. Switch to the week plan. Week 40 opens with five decisions and none taken. The band counts own
    vans plus explicitly requested replacement cover, and the standard row starts one short each day
    because `V-012` is held for the week.
 3. Open `V-012`, click **Use proposal**, then **Apply to draft**. Request replacement cover from
-   Monday for five days. The band clears, the Consequence tile shows EUR 700, and the product keeps
-   the visit, the hold and the replacement as separate facts.
-4. Apply the proposals for `V-103` and `V-118`, both Tuesday visits. Tuesday goes red again: three
-   standard vans are off the road and only `V-012` has cover. Request one-day Tuesday replacements
-   for both; the band clears and the weekly total reaches EUR 2,420 against a EUR 3,000 budget.
+   Monday for five days. The band clears except Thursday, which shows one spare, and the
+   Consequence tile shows EUR 700.
+4. Apply the proposals for `V-103` and `V-118`, both Tuesday visits. Tuesday goes two short. Move
+   `V-118` to Thursday, where the spare van absorbs it at no cost, and request a one-day Tuesday
+   replacement for `V-103`. The band clears and the weekly total reaches EUR 2,280 against a
+   EUR 3,000 budget.
 5. Schedule `V-041` on Thursday. The specialist row breaks while standard capacity remains covered;
    no lever closes it because standard replacement cover cannot serve a specialist van. Defer it with
    a reason, review date, and trigger.
@@ -69,11 +67,13 @@ resurrect it.
    already filled in. Nothing is left to decide.
 7. Look at `V-012`. Bundle and watch are disabled, with the UVV reason shown rather than hidden.
 8. Commit. The summary carries the visits, forward availability, requested cover, the absence of
-   specialist cover, the EUR 2,420 total, and the deferred follow-ups. On the fleet dashboard,
+   specialist cover, the EUR 2,280 total, and the deferred follow-ups. On the fleet dashboard,
    `V-012`'s card reads `Replacement on site · day 1 of 5`.
 9. Advance the clock to the next review date. `V-041` returns with its rationale intact, and week 41
-   opens with two new standard cases of its own. With no pre-confirmed cover, adopting both on
-   Thursday creates a shortfall of two. Reset.
+   opens one standard van short on Monday, because `V-012`'s hold runs until 6 Oct. Its shortfall
+   chip opens the held van, where one day of cover closes it. The two new standard cases both
+   propose Thursday; adopting both leaves Thursday one short, and moving `V-105` to Wednesday
+   clears it. Reset.
 
 ## What is simulated
 

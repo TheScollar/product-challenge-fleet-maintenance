@@ -3,13 +3,6 @@
 About nine minutes with the live demo, seven without it. Square brackets are stage directions.
 Lines marked (cut) can go if time is short.
 
-> **Readiness note — 25 September 2026.** The walkthrough below reflects the latest fixture, with no
-> pre-confirmed rental cover. The implementation path and final EUR 2,420 total have been checked
-> directly, but the fixture change has not yet been reconciled with the existing automated
-> expectations: 247 of 302 tests pass and 55 still encode the prior pre-confirmed-cover scenario. Do
-> not claim a green suite in the presentation until those expectations and the acceptance record are
-> updated.
-
 ## 1. The framing (40 seconds)
 
 The brief asked for a product that helps a company with 40 to 50 vans manage maintenance, and it
@@ -41,7 +34,7 @@ nothing deferred without a reason and a follow-up.
 [Open the app. Land on Fleet today.]
 
 You land on the fleet: 45 vans, one already off the road, four needing a decision. Because no rental
-cover has been booked, the depot is already one standard van short today. This answers the daily
+cover is pre-confirmed, the depot is one standard van short today. This answers the daily
 question, is today fine, before you plan the week. There is no 45-row list.
 
 [Switch to the week plan.]
@@ -66,21 +59,20 @@ request it.]
 
 The cover control appears only after a visit is applied. I request five days because the hold lasts
 the whole week, not because the repair itself takes five days. That adds EUR 700 at EUR 140 per day,
-and the band clears Monday to Friday. The product keeps the visit, the hold and the replacement as
-three different facts.
+and the band clears Monday to Friday, with Thursday showing one spare van because demand there is 37.
+The product keeps the visit, the hold and the replacement as three different facts.
 
 [Open V-103 and V-118. Click Use proposal, then Apply to draft, on each.]
 
-Take the other two Tuesday proposals as they come and Tuesday goes red again. Three standard vans are
-off the road and only V-012 has replacement cover, so the band moves from 35 own plus one replacement
-against demand of 38: two assignments are uncovered.
+Take the other two Tuesday proposals as they come and Tuesday goes two short: three standard vans are
+now off the road and only V-012's replacement covers one of them.
 
-[Request a one-day Tuesday replacement for V-103, then for V-118.]
+[Move V-118 to Thursday. Request a one-day Tuesday replacement for V-103.]
 
-Each explicit request closes one unit of the gap. Tuesday reaches 35 own plus three replacements
-against 38 demand, and the weekly cost moves to EUR 1,440 of service plus EUR 980 of requested cover:
-EUR 2,420 against a EUR 3,000 budget. Pre-confirmed rentals never appear as spend; only cover I chose
-enters the total.
+Moving V-118 costs nothing, because Thursday has a spare van; requesting cover for V-103 closes the
+last gap. The band clears everywhere, and the weekly cost moves to EUR 1,440 of service plus EUR 840
+of requested cover: EUR 2,280 against a EUR 3,000 budget. No rental is pre-confirmed; only cover I
+chose enters the total.
 
 [Open V-041. Use proposal, choose Thursday, then Apply to draft.]
 
@@ -104,8 +96,8 @@ queue.
 [Commit.]
 
 Commit is only possible when every item is decided and nothing blocks. The summary carries the three
-visits, forward availability for the dispatcher, the three requested replacements, the absence of
-specialist cover, the EUR 2,420 total and the deferred follow-ups. Nothing is sent anywhere; the
+visits, forward availability for the dispatcher, the two requested replacements, the absence of
+specialist cover, the EUR 2,280 total and the deferred follow-ups. Nothing is sent anywhere; the
 commitments are simulated and labelled as such.
 
 [Return to Fleet today.] (cut)
@@ -116,10 +108,11 @@ collapsed into one green state.
 
 [Advance the clock to the review date.] (cut)
 
-Advance the clock and V-041 returns with its rationale intact. V-012's release is recorded on Monday
-of week 41, and two new standard cases both propose Thursday. With no pre-confirmed cover, adopting
-both creates a shortfall of two, so the same capacity accounting has to be resolved again rather than
-silently inherited from the previous week.
+Advance the clock and V-041 returns with its rationale intact. V-012's hold now runs into Monday of
+week 41, so week 41 opens one standard van short there; its shortfall chip opens the held van, where
+one day of cover closes it. The two new standard cases both propose Thursday; adopting both leaves
+Thursday one short, and moving V-105 to Wednesday clears it, so the same capacity accounting has to
+be resolved again rather than silently inherited from the previous week.
 
 ## 4. How I made the decisions (90 seconds)
 
@@ -163,13 +156,11 @@ mockups with the rejected layouts, and the acceptance record.
 
 What the interaction demonstrates: the journey holds together, requested cover changes capacity and
 cost in the same place, and a specialist gap cannot be disguised with standard capacity. What it does
-not yet prove on this branch: the no-pre-confirmed-rental fixture has not been brought back to a green
-automated baseline. It also claims no real-world reduction in cost or breakdowns, and nobody
-unfamiliar with the build has run it yet.
+not yet prove: it claims no real-world reduction in cost or breakdowns, and nobody unfamiliar with the
+build has run it yet.
 
-Next, in order: reconcile the automated expectations and acceptance record with the no-rental seed;
-then the interruption as a diff on this same plan, using the scope-change event already in the
-fixture; bundle versus split shown honestly, which is specified but not built; pending rather than
+Next, in order: the interruption as a diff on this same plan, using the scope-change event already in
+the fixture; bundle versus split shown honestly, which is specified but not built; pending rather than
 guaranteed bookings; and a usability session with someone who has never seen it.
 
 ## If they ask
@@ -184,9 +175,10 @@ guaranteed bookings; and a usability session with someone who has never seen it.
   the workflow, not a report.
 - Why is no rental cover pre-confirmed? Because cover is a decision with a cost, not a free fixture
   assumption. It exists only after a visit is applied and the user explicitly requests it.
-- Why do all three standard visits need replacement cover? Demand already uses all 38 standard vans,
-  and V-012 is held for the week. Its replacement restores the baseline; every additional standard
-  van sent to the workshop creates another one-unit gap.
+- Why does only one of the two Tuesday visits need replacement cover? Demand already uses all 38
+  standard vans, and V-012 is held for the week, so its replacement restores the baseline. Thursday
+  has one spare standard van, so moving V-118 there absorbs it for free; V-103 stays on Tuesday and
+  needs a one-day replacement to close that gap.
 - Why no route reassignment as a lever? With no reserve vehicles it cannot create capacity. Offering
   it would suggest a lever that does not work, so the daily confirmation is read-only.
 - Why is disruption never shown in euros? Turning uncovered assignments into money needs a
