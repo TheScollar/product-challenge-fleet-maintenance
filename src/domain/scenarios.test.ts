@@ -5,15 +5,18 @@ import { fixture } from './fixture'
 import { slotBlockers } from './feasibility'
 import { watchAvailable } from './recommendation'
 import { canCommit, validatePlan } from './validation'
+import { adHocCoversFrom } from './replacementBooking'
 import { visitsFromDecisions } from './visits'
-import { initialState, planReducer, queueFor, draftFor, type AppState } from '../state/planReducer'
+import { bookingsFor, initialState, planReducer, queueFor, draftFor, type AppState } from '../state/planReducer'
 import { adoptedState, item, vehicle } from './testSupport'
-import type { DraftDecision, ItemId } from './types'
 
 const WEEK_40 = '2026-09-28'
 const reduce = (s: AppState, a: Parameters<typeof planReducer>[1]) => planReducer(s, a, fixture)
 const draftOf = (s: AppState) => draftFor({ fixture, state: s, weekId: WEEK_40 })
-const validate = (d: Record<ItemId, DraftDecision>) => validatePlan({ fixture, weekId: WEEK_40, decisions: d })
+const validate = (s: AppState) =>
+  validatePlan({ fixture, weekId: WEEK_40, decisions: draftOf(s), bookings: bookingsFor({ state: s, weekId: WEEK_40 }) })
+const coversOf = (s: AppState) =>
+  adHocCoversFrom(bookingsFor({ state: s, weekId: WEEK_40 }), fixture.replacementDayRateEur)
 
 const V041_DEFERRAL = {
   reason: 'No specialist cover exists this week, and the code has not recurred since 17 Sep.',
@@ -21,8 +24,16 @@ const V041_DEFERRAL = {
   trigger: { kind: 'event' as const, eventId: 'v041-dtc-recurs', label: 'DTC P0300 recurs' },
 }
 
-function resolvedState(): AppState {
+/** The adopted proposals plus the two requested replacements of the
+ *  walkthrough: V-012 Monday for five days, V-103 Tuesday for one. [no pool cover spec §3.1] */
+function bookedState(): AppState {
   let s = adoptedState()
+  s = reduce(s, { type: 'set-booking', weekId: WEEK_40, booking: { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 } })
+  return reduce(s, { type: 'set-booking', weekId: WEEK_40, booking: { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 } })
+}
+
+function resolvedState(): AppState {
+  let s = bookedState()
   s = reduce(s, {
     type: 'set-decision',
     weekId: WEEK_40,
@@ -68,9 +79,11 @@ describe('2. Justified routine deferral', () => {
 
 describe('3. Tight day with a feasible alternative', () => {
   it('clears the shortfall and enables commit when V-118 moves to Thursday', () => {
-    const before = validate(draftOf(adoptedState()))
-    expect(before.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
-    const after = validate(draftOf(resolvedState()))
+    const before = validate(bookedState())
+    expect(before.filter((b) => b.kind === 'capacity-shortfall')).toEqual([
+      expect.objectContaining({ date: '2026-09-29', vehicleClass: 'standard', shortBy: 1 }),
+    ])
+    const after = validate(resolvedState())
     expect(after).toEqual([])
     expect(canCommit(after)).toBe(true)
   })
@@ -83,18 +96,20 @@ describe('4. Aggregate capacity hides a specialist gap', () => {
       weekId: WEEK_40,
       decision: { itemId: 'item-v041', treatment: 'act-now', slotDate: '2026-10-01', deferral: null },
     })
-    const blockers = validate(draftOf(s))
-    const spec = blockers.find((b) => b.kind === 'capacity-shortfall' && b.vehicleClass === 'specialist')
-    expect(spec).toBeDefined()
+    const blockers = validate(s)
+    expect(blockers).toEqual([
+      expect.objectContaining({ kind: 'capacity-shortfall', date: '2026-10-01', vehicleClass: 'specialist', shortBy: 1 }),
+    ])
 
-    // The aggregate reads one van short of 45, which a glance forgives. Per
+    // The aggregate reads one van short of 44, which a glance forgives. Per
     // class is what shows the real problem: standard is fully covered, and
     // the specialist gap has no cover at all to close it. The aggregate
     // neither names the van nor shows that nothing available can fill it.
     const week = weekFixtureFor(fixture, WEEK_40)
     const visits = visitsFromDecisions(draftOf(s), fixture.items)
-    const std = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'standard', fixture, visits, week })
-    const sp = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits, week })
+    const adHocCovers = coversOf(s)
+    const std = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'standard', fixture, visits, week, adHocCovers })
+    const sp = computeDayCapacity({ date: '2026-10-01', vehicleClass: 'specialist', fixture, visits, week, adHocCovers })
     expect(std.shortfall).toBe(0)
     expect(std.available).toBe(std.demand)
     expect(sp.shortfall).toBe(1)
@@ -106,11 +121,18 @@ describe('4. Aggregate capacity hides a specialist gap', () => {
 describe('5. Multi-day visit overlaps an existing hold', () => {
   it('counts every affected day, each vehicle once, without implying a release', () => {
     const items = fixture.items.map((i) => (i.id === 'item-v103' ? { ...i, visitDays: 2 } : i))
-    const visits = visitsFromDecisions(draftOf(resolvedState()), items)
+    const s = resolvedState()
+    const visits = visitsFromDecisions(draftOf(s), items)
     const week = weekFixtureFor(fixture, WEEK_40)
-    const wed = computeDayCapacity({ date: '2026-09-30', vehicleClass: 'standard', fixture, visits, week })
-    expect(wed.unavailable.sort()).toEqual(['V-012', 'V-103'])
-    expect(wed.shortfall).toBe(1)
+    const day = (date: string, adHocCovers = coversOf(s)) =>
+      computeDayCapacity({ date, vehicleClass: 'standard', fixture, visits, week, adHocCovers })
+    // Tuesday: V-012 held and visiting counts once; V-103 is covered that day.
+    expect(day('2026-09-29').unavailable.sort()).toEqual(['V-012', 'V-103'])
+    expect(day('2026-09-29').shortfall).toBe(0)
+    // Wednesday: the second day has no V-103 replacement, so only V-012's is on site.
+    expect(day('2026-09-30').unavailable.sort()).toEqual(['V-012', 'V-103'])
+    expect(day('2026-09-30').shortfall).toBe(1)
+    expect(day('2026-09-30', []).shortfall).toBe(2)
     expect(unavailableOn('2026-09-30', fixture.vehicles, visits).has('V-012')).toBe(true)
   })
 })
@@ -127,7 +149,7 @@ describe('6. Slot or part unavailable', () => {
       weekId: WEEK_40,
       decision: { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-09-28', deferral: null },
     })
-    expect(canCommit(validate(draftOf(s)))).toBe(false)
+    expect(canCommit(validate(s))).toBe(false)
   })
 })
 
@@ -161,7 +183,7 @@ describe('9. No feasible plan exists', () => {
       weekId: WEEK_40,
       decision: { itemId: 'item-v041', treatment: 'act-now', slotDate: '2026-09-30', deferral: null },
     })
-    const blockers = validate(draftOf(s))
+    const blockers = validate(s)
     expect(canCommit(blockers)).toBe(false)
     expect(blockers.some((b) => b.kind === 'capacity-shortfall')).toBe(true)
     // The draft survives the failed state.
