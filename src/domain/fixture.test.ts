@@ -53,7 +53,7 @@ describe('fixture integrity', () => {
     expect(fixture.vehicles.find((v) => v.id === 'V-105')?.vehicleClass).toBe('standard')
   })
 
-  it('leaves V-041 undisposed so the cold open carries one shortfall, not two', () => {
+  it('leaves V-041 undisposed so the cold open has no specialist shortfall', () => {
     const v041 = fixture.items.find((i) => i.id === 'item-v041')!
     expect(v041.proposal.slotDate).toBeNull()
   })
