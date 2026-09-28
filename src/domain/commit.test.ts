@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { commitPlan, dailyConfirmation, deferralRecordsFrom, summaryFor } from './commit'
 import { fixture } from './fixture'
-import type { DraftDecision, ItemId } from './types'
+import type { DraftDecision, Fixture, ItemId, ReplacementBooking, VehicleId } from './types'
 import { proposedDecisions } from './testSupport'
 
 const WEEK_40 = '2026-09-28'
@@ -20,6 +20,13 @@ function committable(): Record<ItemId, DraftDecision> {
     },
   }
   return d
+}
+
+// The requested replacements of the walkthrough: V-012 is held all week with
+// no pool cover, V-103 visits on Tuesday. [no pool cover spec §3.1]
+const WALKTHROUGH_BOOKINGS: Record<VehicleId, ReplacementBooking> = {
+  'V-012': { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 },
+  'V-103': { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 },
 }
 
 describe('committing', () => {
@@ -80,7 +87,12 @@ describe('bookings travel with the commit', () => {
 })
 
 describe('the commit summary', () => {
-  const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), demoDate: '2026-09-28' })
+  const plan = commitPlan({
+    weekId: WEEK_40,
+    decisions: committable(),
+    bookings: WALKTHROUGH_BOOKINGS,
+    demoDate: '2026-09-28',
+  })
   const summary = summaryFor({ fixture, plan })
 
   it('lists the three confirmed visits', () => {
@@ -90,12 +102,24 @@ describe('the commit summary', () => {
   it('carries forward availability with no shortfall left', () => {
     expect(summary.availability.every((d) => d.shortfall === 0)).toBe(true)
     expect(summary.availability).toHaveLength(10)
+    const standard = summary.availability.filter((d) => d.vehicleClass === 'standard')
+    expect(standard.map((d) => [d.owned - d.unavailable.length, d.cover, d.demand])).toEqual([
+      [37, 1, 38],
+      [36, 2, 38],
+      [37, 1, 38],
+      [36, 1, 37],
+      [37, 1, 38],
+    ])
+  })
+
+  it('lists the two requested replacements', () => {
+    expect(summary.bookings).toEqual([WALKTHROUGH_BOOKINGS['V-012'], WALKTHROUGH_BOOKINGS['V-103']])
   })
 
   it('states the cover assumptions explicitly', () => {
-    expect(summary.coverAssumptions.join(' ')).toContain('R-1')
-    expect(summary.coverAssumptions.join(' ')).toContain('R-2')
-    expect(summary.coverAssumptions.join(' ')).toContain('No specialist cover')
+    expect(summary.coverAssumptions).toEqual([
+      'No specialist cover is available this week. A standard rental does not substitute.',
+    ])
   })
 
   it('lists both deferred follow-ups with their review date and trigger', () => {
@@ -144,16 +168,29 @@ describe('deferral records extracted from a commit', () => {
 })
 
 describe('a cover the week carries but no day confirms', () => {
+  // The fixture carries no pool cover any more, so this guard is exercised
+  // on a fixture that does. [no pool cover spec D1]
+  const withPool: Fixture = {
+    ...fixture,
+    covers: [{ id: 'P-1', vehicleClass: 'standard', confirmedDates: [], dayRateEur: 95 }],
+    defaultCoverIds: ['P-1'],
+  }
+
   it('says so rather than rendering a confirmed sentence with the days missing', () => {
     const plan = commitPlan({ weekId: '2026-10-12', decisions: {}, demoDate: '2026-10-12' })
-    const line = summaryFor({ fixture, plan }).coverAssumptions.find((a) => a.startsWith('R-1'))!
-    expect(line).toBe('R-1, standard cover, not confirmed for any day this week.')
+    const line = summaryFor({ fixture: withPool, plan }).coverAssumptions.find((a) => a.startsWith('P-1'))!
+    expect(line).toBe('P-1, standard cover, not confirmed for any day this week.')
     expect(line).not.toContain('EUR')
   })
 })
 
 describe('the daily confirmation is a read-only projection', () => {
-  const plan = commitPlan({ weekId: WEEK_40, decisions: committable(), demoDate: '2026-09-28' })
+  const plan = commitPlan({
+    weekId: WEEK_40,
+    decisions: committable(),
+    bookings: WALKTHROUGH_BOOKINGS,
+    demoDate: '2026-09-28',
+  })
 
   it('reports Tuesday with V-012 and V-103 off the road and their reasons', () => {
     const view = dailyConfirmation({ fixture, plan, forDate: '2026-09-29' })
@@ -163,8 +200,11 @@ describe('the daily confirmation is a read-only projection', () => {
   })
 
   it('names the cover in use that day', () => {
-    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse.sort()).toEqual(['R-1', 'R-2'])
-    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-30' }).coverInUse).toEqual(['R-1'])
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual([
+      'V-012 replacement',
+      'V-103 replacement',
+    ])
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-30' }).coverInUse).toEqual(['V-012 replacement'])
   })
 
   it('shows both classes meeting demand', () => {
@@ -188,20 +228,29 @@ describe('a released hold does not overshadow a later visit', () => {
 })
 
 describe('a committed booking is cover in the summary and the daily confirmation', () => {
-  // V-118 back on Tuesday beside V-012 and V-103: short by one without cover.
+  // V-118 back on Tuesday beside V-012 and V-103: short by one with only the
+  // walkthrough replacements on site.
   function tuesdayHeavy(): Record<ItemId, DraftDecision> {
     const d = committable()
     d['item-v118'] = { ...d['item-v118'], slotDate: '2026-09-29' }
     return d
   }
-  const bookings = { 'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 } }
+  const bookings = {
+    ...WALKTHROUGH_BOOKINGS,
+    'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
+  }
   const tuesdayStandard = (rows: { date: string; vehicleClass: string; shortfall: number }[]) =>
     rows.find((a) => a.date === '2026-09-29' && a.vehicleClass === 'standard')!
 
   it('clears the Tuesday shortfall in forward availability', () => {
     const without = summaryFor({
       fixture,
-      plan: commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), demoDate: '2026-09-28' }),
+      plan: commitPlan({
+        weekId: WEEK_40,
+        decisions: tuesdayHeavy(),
+        bookings: WALKTHROUGH_BOOKINGS,
+        demoDate: '2026-09-28',
+      }),
     })
     expect(tuesdayStandard(without.availability).shortfall).toBe(1)
 
@@ -215,22 +264,28 @@ describe('a committed booking is cover in the summary and the daily confirmation
   it('lists the booking as cover in use on its day, and not on others', () => {
     const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings, demoDate: '2026-09-28' })
     expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual([
-      'R-1',
-      'R-2',
+      'V-012 replacement',
+      'V-103 replacement',
       'V-118 replacement',
     ])
     expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).rows.every((r) => r.shortfall === 0)).toBe(true)
-    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-30' }).coverInUse).toEqual(['R-1'])
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-30' }).coverInUse).toEqual(['V-012 replacement'])
   })
 
-  it('ignores a committed booking whose vehicle has no visit', () => {
-    const stale = { 'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 } }
+  it('ignores a committed booking whose vehicle has no visit and no hold', () => {
+    const stale = {
+      ...WALKTHROUGH_BOOKINGS,
+      'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
+    }
     const plan = commitPlan({ weekId: WEEK_40, decisions: tuesdayHeavy(), bookings: stale, demoDate: '2026-09-28' })
     expect(tuesdayStandard(summaryFor({ fixture, plan }).availability).shortfall).toBe(1)
-    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual(['R-1', 'R-2'])
+    expect(dailyConfirmation({ fixture, plan, forDate: '2026-09-29' }).coverInUse).toEqual([
+      'V-012 replacement',
+      'V-103 replacement',
+    ])
   })
 
-  it('lists only bookings whose vehicle has a visit, sorted by vehicle', () => {
+  it('lists only bookings whose vehicle has a visit or a hold, sorted by vehicle', () => {
     const mixed = {
       'V-118': { vehicleId: 'V-118', startDate: '2026-09-29', days: 1 },
       'V-027': { vehicleId: 'V-027', startDate: '2026-09-29', days: 1 },
