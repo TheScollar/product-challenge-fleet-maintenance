@@ -3,7 +3,7 @@ import { addDays, mondayOf } from '../domain/clock'
 import { nextResurfaceDate, resurfacedItems } from '../domain/deferral'
 import { weekFixtureFor } from '../domain/capacity'
 import { SEED_DATE } from '../domain/fixture'
-import { eligibleBookings } from '../domain/replacementBooking'
+import { canCarryBooking, eligibleBookings } from '../domain/replacementBooking'
 import { visitsFromDecisions } from '../domain/visits'
 import type {
   CommittedPlan,
@@ -19,7 +19,7 @@ import type {
 } from '../domain/types'
 
 export interface AppState {
-  version: 2
+  version: 3
   demoDate: ISODate
   draftByWeek: Record<WeekId, Record<ItemId, DraftDecision>>
   draftBookingsByWeek: Record<WeekId, Record<VehicleId, ReplacementBooking>>
@@ -99,7 +99,7 @@ export function bookingsFor(args: {
 
 export function initialState(_fixture: Fixture): AppState {
   return {
-    version: 2,
+    version: 3,
     demoDate: SEED_DATE,
     draftByWeek: {},
     draftBookingsByWeek: {},
@@ -118,10 +118,10 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
       const decision: DraftDecision =
         action.decision.treatment === 'watch' ? action.decision : { ...action.decision, deferral: null }
       const draft = { ...current, [decision.itemId]: decision }
-      // A replacement belongs to a visit. Whenever the decisions change, the
-      // week's bookings are pruned to vehicles that still have one, so a
-      // watched or undecided item carries neither cover capacity nor cover
-      // cost. [scenario spec §5.3]
+      // A replacement belongs to a visit or a hold. Whenever the decisions
+      // change, the week's bookings are pruned to vehicles that still have
+      // one, so a watched or undecided item carries neither cover capacity nor
+      // cover cost unless its van is held. [no pool cover spec D3]
       const bookings = eligibleBookings(bookingsFor({ state, weekId: action.weekId }), {
         fixture,
         weekId: action.weekId,
@@ -135,11 +135,10 @@ export function planReducer(state: AppState, action: PlanAction, fixture: Fixtur
     }
 
     case 'set-booking': {
-      // Structural: no action sequence can store a booking for a vehicle
-      // whose draft has no visit. The control offers the request only once a
-      // visit is applied; this guard does not rely on that. [scenario spec §5.3]
+      // Structural: no action sequence can store a booking for a vehicle with
+      // neither a visit nor a hold this week. [no pool cover spec D3]
       const visits = visitsFromDecisions(draftFor({ fixture, state, weekId: action.weekId }), fixture.items)
-      if (!visits.some((v) => v.vehicleId === action.booking.vehicleId)) return state
+      if (!canCarryBooking(action.booking.vehicleId, { fixture, weekId: action.weekId, visits })) return state
       const current = bookingsFor({ state, weekId: action.weekId })
       return {
         ...state,
