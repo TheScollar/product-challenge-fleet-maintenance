@@ -118,7 +118,7 @@ describe('the commit summary', () => {
 
   it('states the cover assumptions explicitly', () => {
     expect(summary.coverAssumptions).toEqual([
-      'No specialist cover is available this week. A standard rental does not substitute.',
+      'No specialist cover is available this week. A standard replacement does not substitute.',
     ])
   })
 

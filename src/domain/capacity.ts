@@ -88,7 +88,7 @@ export function computeDayCapacity(args: {
   const unavailableAll = unavailableOn(date, fixture.vehicles, visits)
   const unavailable = inClass.filter((v) => unavailableAll.has(v.id)).map((v) => v.id)
 
-  // Cover carries its own class, so a standard rental can never close a
+  // Cover carries its own class, so a standard replacement can never close a
   // specialist gap. The data model does not allow it. [S 3.1]
   const poolCovers = fixture.covers.filter(
     (c) =>
@@ -96,10 +96,9 @@ export function computeDayCapacity(args: {
       c.vehicleClass === vehicleClass &&
       c.confirmedDates.includes(date),
   )
-  // A requested replacement booking is merged in as an indistinguishable
-  // extra cover source, so it clears a shortfall exactly like R-1 or R-2
-  // does, with no second capacity mechanism to keep in sync. [replacement
-  // cover spec §4.1]
+  // A requested replacement booking is merged in as an extra cover source,
+  // so it clears a shortfall with no second capacity mechanism to keep in
+  // sync. [replacement cover spec §4.1, as amended by no pool cover spec D1]
   const extraCovers = adHocCovers.filter(
     (c) => c.vehicleClass === vehicleClass && c.confirmedDates.includes(date),
   )
@@ -140,11 +139,11 @@ export function computeWeekCapacity(args: {
 }
 
 /**
- * Own vans and rentals, stated separately, so a day where rentals outnumber
- * outages reads `37 + 2 / 38` rather than one total larger than the fleet.
- * The `+ n` term appears only where cover exists. Short, spare, impacted and
- * candidate states still key off `available` against `demand`; this changes
- * the words, not the arithmetic. [scenario spec §7]
+ * Own vans and replacements, stated separately, so a day where replacements
+ * outnumber outages reads `37 + 2 / 38` rather than one total larger than
+ * the fleet. The `+ n` term appears only where cover exists. Short, spare,
+ * impacted and candidate states still key off `available` against `demand`;
+ * this changes the words, not the arithmetic. [scenario spec §7]
  */
 export function capacityFigure(day: DayCapacity): string {
   const own = day.owned - day.unavailable.length

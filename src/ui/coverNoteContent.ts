@@ -80,7 +80,7 @@ export const coverNoteContent: CoverNoteContent = {
       paragraphs: [
         'You land on the fleet first: 45 vans, one already off the road, and a short list of what needs you. It answers the daily question, is today fine, before you plan the week. The weekly plan is one tab over, and everything below describes it.',
         'One planning week. A capacity band across the top that stays visible while you work, because it is the thing every decision moves. Below it, five decisions waiting on you.',
-        'Five decisions wait, and none is taken for you. Each carries the system\'s proposal; adopt it or choose differently. Take the three Tuesday proposals as they come and Tuesday goes one van short, because three standard vans would be off the road at once and the rental cover only stretches to two of them: moving one visit clears it. V-041, the only specialist van in the queue, has no proposed day at all. No specialist cover exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.',
+        'Five decisions wait, and none is taken for you. Each carries the system\'s proposal; adopt it or choose differently. The depot starts one standard van short every day V-012 is held, because no rental is pre-confirmed: cover is a decision with a cost. Take the three Tuesday proposals as they come and Tuesday goes three short. Thursday has one free van, so moving one visit there costs nothing; the rest needs requested cover. V-041, the only specialist van in the queue, has no proposed day at all. No specialist cover exists this week, so scheduling it leaves an assignment uncovered that nothing available can fill.',
         'V-012 is already out of service before you commit anything, on a brake defect found at inspection. It stays out until a release is recorded, and the week plans around it.',
         'The plan cannot be committed until every item is decided and the blockers are cleared. That is deliberate.',
       ],
@@ -158,7 +158,7 @@ export const coverNoteContent: CoverNoteContent = {
       id: 'simulated',
       heading: 'What is simulated',
       paragraphs: [
-        'Everything outside the depot. Vehicle data, telematics, inspection findings, garage slots, parts lead times, rental cover and prices are all fixtures, and they are labelled in the product.',
+        'Everything outside the depot. Vehicle data, telematics, inspection findings, garage slots, parts lead times, replacement-cover pricing and prices are all fixtures, and they are labelled in the product.',
         'Commit is a simulated commitment. The scenario guarantees the selected slots and confirms them. **Nothing is sent anywhere, and no external booking exists.** Every price is a scenario price.',
       ],
     },

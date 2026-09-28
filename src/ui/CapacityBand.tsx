@@ -38,7 +38,7 @@ export function CapacityBand({
   return (
     <div className="band">
       <div className="head">
-        <span className="t">Week capacity · own + rental / demand</span>
+        <span className="t">Week capacity · own + replacement / demand</span>
         {selected !== null && <span className="live">Reacting to {selected.vehicleId}</span>}
         <span className="spacer" />
         <span className="cover">

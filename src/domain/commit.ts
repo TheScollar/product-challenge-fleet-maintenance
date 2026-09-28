@@ -101,7 +101,7 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
       return `${c.id}, ${c.vehicleClass} cover, confirmed ${inWeek.map(formatDay).join(', ')} at EUR ${c.dayRateEur} per day.`
     })
   if (!fixture.covers.some((c) => week.coverIds.includes(c.id) && c.vehicleClass === 'specialist')) {
-    coverAssumptions.push('No specialist cover is available this week. A standard rental does not substitute.')
+    coverAssumptions.push('No specialist cover is available this week. A standard replacement does not substitute.')
   }
 
   return {
