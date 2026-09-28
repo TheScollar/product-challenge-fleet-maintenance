@@ -1,6 +1,8 @@
+import { isHeldOn, weekFixtureFor } from '../domain/capacity'
 import { formatDay } from '../domain/clock'
 import type { VehicleId } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
+import { activeWeekId } from '../state/planReducer'
 import { ReplacementBookingControl } from './ReplacementBookingControl'
 
 /**
@@ -10,10 +12,14 @@ import { ReplacementBookingControl } from './ReplacementBookingControl'
  * spec D4, §2.2]
  */
 export function HeldVehiclePanel({ vehicleId }: { vehicleId: VehicleId }) {
-  const { fixture } = usePlan()
+  const { state, fixture } = usePlan()
   const vehicle = fixture.vehicles.find((v) => v.id === vehicleId)
   if (vehicle === undefined || vehicle.hold === null) {
     return <p className="empty">This vehicle is not held.</p>
+  }
+  const week = weekFixtureFor(fixture, activeWeekId(state))
+  if (!week.days.some((d) => isHeldOn(vehicle, d))) {
+    return <p className="empty">This vehicle is not held this week.</p>
   }
   const { hold } = vehicle
   return (
@@ -37,7 +43,6 @@ export function HeldVehiclePanel({ vehicleId }: { vehicleId: VehicleId }) {
         vehicleClass={vehicle.vehicleClass}
         appliedVisit={null}
         watched={false}
-        held
       />
     </div>
   )

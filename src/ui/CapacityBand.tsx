@@ -77,7 +77,7 @@ export function CapacityBand({
             >
               <div className="dh">{formatDay(date)}</div>
               {heldOnly !== null ? (
-                <button className="cellbtn" onClick={() => onSelectHeld(heldOnly)} aria-label={`Request cover for ${heldOnly}`}>
+                <button className="cellbtn" onClick={() => onSelectHeld(heldOnly)} aria-label={`Open held van ${heldOnly}`}>
                   <Cell capacity={std} />
                 </button>
               ) : (

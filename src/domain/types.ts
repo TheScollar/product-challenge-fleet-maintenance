@@ -163,7 +163,7 @@ export interface DayCapacity {
   owned: number
   unavailable: VehicleId[]
   cover: number
-  /** Pool covers first, then ad hoc bookings, in the order they were counted. */
+  /** Every eligible booking, in the order they were counted; there is no pool cover. */
   coverIds: string[]
   available: number
   demand: number
