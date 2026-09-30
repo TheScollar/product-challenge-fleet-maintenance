@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { fixture } from '../domain/fixture'
-import { proposedDecisions } from '../domain/testSupport'
+import { item, proposedDecisions } from '../domain/testSupport'
 import { validatePlan } from '../domain/validation'
-import type { DraftDecision } from '../domain/types'
+import type { DraftDecision, ItemId, ReplacementBooking, VehicleId } from '../domain/types'
 import { activeWeekId, draftFor, initialState, queueFor } from '../state/planReducer'
 import { blockerChips, classifyItem, groupQueue } from './grouping'
 
@@ -11,6 +11,12 @@ const weekId = activeWeekId(state)
 const entries = queueFor({ fixture, state, weekId })
 const items = entries.map((e) => e.item)
 const idOf = (vehicleId: string) => items.find((i) => i.vehicleId === vehicleId)!.id
+
+// V-012 is held all week with no pool cover, so its replacement is requested,
+// Monday for five days. [no pool cover spec §3.1]
+const V012_COVER: Record<VehicleId, ReplacementBooking> = {
+  'V-012': { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 },
+}
 
 describe('groupQueue at the true cold open', () => {
   const decisions = draftFor({ fixture, state, weekId })
@@ -23,10 +29,25 @@ describe('groupQueue at the true cold open', () => {
   })
 
   it('collapses the five undecided items into one amber chip that selects the first of them', () => {
-    const chips = blockerChips({ blockers, items, decisions, fixture })
-    expect(chips).toEqual([
-      { key: 'undisposed-all', label: '5 to decide', targetItemId: idOf('V-012'), tone: 'warn' },
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
+    expect(chips[0]).toEqual({
+      key: 'undisposed-all',
+      label: '5 to decide',
+      target: { kind: 'item', itemId: idOf('V-012') },
+      tone: 'warn',
+    })
+  })
+
+  it('follows it with one red chip per day V-012 leaves uncovered, each pointing at its item', () => {
+    // validatePlan lists items first, then capacity, so the amber chip leads.
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
+    expect(chips.slice(1).map((c) => [c.label, c.tone])).toEqual([
+      ['Mon 28 Sep · standard short 1', 'crit'],
+      ['Tue 29 Sep · standard short 1', 'crit'],
+      ['Wed 30 Sep · standard short 1', 'crit'],
+      ['Fri 2 Oct · standard short 1', 'crit'],
     ])
+    for (const chip of chips.slice(1)) expect(chip.target).toEqual({ kind: 'item', itemId: idOf('V-012') })
   })
 })
 
@@ -54,13 +75,18 @@ describe('groupQueue with every proposal adopted', () => {
   })
 
   it('renders one chip per blocker, a single undecided item by name', () => {
-    const chips = blockerChips({ blockers, items, decisions, fixture })
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
     expect(chips.map((c) => [c.label, c.tone])).toEqual([
       ['V-041 · no decision', 'warn'],
-      ['Tue 29 Sep · standard short 1', 'crit'],
+      ['Mon 28 Sep · standard short 1', 'crit'],
+      ['Tue 29 Sep · standard short 3', 'crit'],
+      ['Wed 30 Sep · standard short 1', 'crit'],
+      ['Fri 2 Oct · standard short 1', 'crit'],
     ])
-    expect(chips[0].targetItemId).toBe(idOf('V-041'))
-    expect(chips[1].targetItemId).toBe(idOf('V-103'))
+    expect(chips[0].target).toEqual({ kind: 'item', itemId: idOf('V-041') })
+    // Tuesday is attributed to the visiting vans; the hold-only days point at V-012's item.
+    expect(chips[2].target).toEqual({ kind: 'item', itemId: idOf('V-103') })
+    for (const i of [1, 3, 4]) expect(chips[i].target).toEqual({ kind: 'item', itemId: idOf('V-012') })
   })
 })
 
@@ -79,10 +105,15 @@ describe('groupQueue once the week is clear', () => {
         trigger: v041.triggerOptions[0],
       },
     },
-    // Moving V-118 to Thursday clears the Tuesday shortfall.
+    // Moving V-118 to Thursday leaves Tuesday one short, which the V-103
+    // replacement closes. [no pool cover spec §3.1]
     [idOf('V-118')]: { ...decisions[idOf('V-118')], slotDate: '2026-10-01' },
   }
-  const clearedBlockers = validatePlan({ fixture, weekId, decisions: cleared })
+  const bookings: Record<VehicleId, ReplacementBooking> = {
+    ...V012_COVER,
+    'V-103': { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 },
+  }
+  const clearedBlockers = validatePlan({ fixture, weekId, decisions: cleared, bookings })
 
   it('has no blockers left', () => {
     expect(clearedBlockers).toEqual([])
@@ -129,7 +160,8 @@ describe('classifyItem', () => {
 describe('blockerChips with undecided items on either side of a hard blocker', () => {
   // validatePlan walks the items in fixture order (V-012, V-103, V-118, V-041,
   // V-027), so V-118's Monday slot blocker sits between the two undecided
-  // items. Monday also goes short: V-012 is held and R-2 does not cover it.
+  // items. Monday also goes short: V-012 is replaced all week, so the one
+  // van missing there is V-118.
   const adopted = proposedDecisions()
   const interleaved: Record<string, DraftDecision> = {
     ...adopted,
@@ -137,7 +169,7 @@ describe('blockerChips with undecided items on either side of a hard blocker', (
     [idOf('V-118')]: { ...adopted[idOf('V-118')], slotDate: '2026-09-28' },
     [idOf('V-041')]: { itemId: idOf('V-041'), treatment: null, slotDate: null, deferral: null },
   }
-  const blockers = validatePlan({ fixture, weekId, decisions: interleaved })
+  const blockers = validatePlan({ fixture, weekId, decisions: interleaved, bookings: V012_COVER })
 
   it('produces the blockers in that interleaved order', () => {
     expect(blockers.map((b) => b.kind)).toEqual([
@@ -149,14 +181,41 @@ describe('blockerChips with undecided items on either side of a hard blocker', (
   })
 
   it("collapses both undecided items into one chip in the first one's position", () => {
-    const chips = blockerChips({ blockers, items, decisions: interleaved, fixture })
+    const chips = blockerChips({ blockers, items, decisions: interleaved, fixture, weekId })
     expect(chips.map((c) => [c.label, c.tone])).toEqual([
       ['2 to decide', 'warn'],
       ['V-118 · slot not bookable', 'crit'],
       ['Mon 28 Sep · standard short 1', 'crit'],
     ])
-    expect(chips[0].targetItemId).toBe(idOf('V-103'))
-    expect(chips[1].targetItemId).toBe(idOf('V-118'))
-    expect(chips[2].targetItemId).toBe(idOf('V-118'))
+    expect(chips[0].target).toEqual({ kind: 'item', itemId: idOf('V-103') })
+    expect(chips[1].target).toEqual({ kind: 'item', itemId: idOf('V-118') })
+    expect(chips[2].target).toEqual({ kind: 'item', itemId: idOf('V-118') })
+  })
+})
+
+describe('a shortfall caused only by a hold targets the held vehicle', () => {
+  it('points the week 41 Monday chip at V-012', () => {
+    const weekId = '2026-10-05'
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v024': { itemId: 'item-v024', treatment: null, slotDate: null, deferral: null },
+      'item-v105': { itemId: 'item-v105', treatment: null, slotDate: null, deferral: null },
+    }
+    const blockers = validatePlan({ fixture, weekId, decisions })
+    const chips = blockerChips({ blockers, items: [item('item-v024'), item('item-v105')], decisions, fixture, weekId })
+    const monday = chips.find((c) => c.key === 'capacity-2026-10-05-standard')!
+    expect(monday.target).toEqual({ kind: 'held-vehicle', vehicleId: 'V-012' })
+  })
+
+  it("points a week 40 cold-open shortfall chip at the held van's own item", () => {
+    const weekId = '2026-09-28'
+    const s = initialState(fixture)
+    const decisions = draftFor({ fixture, state: s, weekId })
+    const blockers = validatePlan({ fixture, weekId, decisions })
+    const items = queueFor({ fixture, state: s, weekId }).map((e) => e.item)
+    const chips = blockerChips({ blockers, items, decisions, fixture, weekId })
+    expect(chips.find((c) => c.key === 'capacity-2026-09-28-standard')!.target).toEqual({
+      kind: 'item',
+      itemId: 'item-v012',
+    })
   })
 })

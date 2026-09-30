@@ -1,7 +1,7 @@
 import { computeDayCapacity, isHeldOn, weekFixtureFor } from './capacity'
 import { addDays, daysBetween, formatDay, formatDayCount, mondayOf } from './clock'
 import { latestRecord } from './deferral'
-import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
+import { adHocCoversFrom, eligibleBookings } from './replacementBooking'
 import type {
   Blocker,
   CommittedPlan,
@@ -114,13 +114,18 @@ export function fleetOverview(args: {
     committed === null ? [] : visitsFromDecisions(committed.decisions, fixture.items)
   // A committed replacement is an operational fact about the van, by the same
   // rule as In workshop and Booked: committed, never draft, and only while its
-  // vehicle has a committed visit. [scenario spec §6]
+  // vehicle has a visit or a hold. [scenario spec §6]
   const committedBookings =
-    committed === null ? {} : bookingsForVisits(committed.bookings, committedVisits)
+    committed === null
+      ? {}
+      : eligibleBookings(committed.bookings, { fixture, weekId: committed.weekId, visits: committedVisits })
   const draftVisits = visitsFromDecisions(decisions, fixture.items)
   // Draft bookings, filtered to draft visits: the same rule every other
-  // capacity reader applies. [scenario spec §5.4]
-  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, draftVisits), fixture.replacementDayRateEur)
+  // capacity reader applies, only while its vehicle has a visit or a hold.
+  const adHocCovers = adHocCoversFrom(
+    eligibleBookings(bookings, { fixture, weekId: mondayOf(today), visits: draftVisits }),
+    fixture.replacementDayRateEur,
+  )
 
   const queueByVehicle = new Map<VehicleId, OpenItem>()
   for (const item of queueItems) {

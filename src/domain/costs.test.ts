@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { costSummaryFor } from './costs'
 import { fixture } from './fixture'
-import { proposedDecisions } from './testSupport'
+import { adoptProposal } from './recommendation'
+import { item, proposedDecisions } from './testSupport'
 import { draftFor, initialState } from '../state/planReducer'
 import type { DraftDecision, ItemId, ReplacementBooking, VehicleId } from './types'
 
@@ -59,6 +60,17 @@ describe('costSummaryFor', () => {
     expect(s.totalEur).toBe(480)
   })
 
+  it('charges a held-vehicle booking in a week with no visit for it', () => {
+    const summary = costSummaryFor({
+      fixture,
+      weekId: '2026-10-05',
+      decisions: {},
+      bookings: { 'V-012': { vehicleId: 'V-012', startDate: '2026-10-05', days: 1 } },
+    })
+    expect(summary.coverCostEur).toBe(140)
+    expect(summary.totalEur).toBe(140)
+  })
+
   it('reports no overage under budget, and the exact overage above it', () => {
     const under = costSummaryFor({ fixture, weekId: WEEK_40, decisions: proposedDecisions(), bookings: {} })
     expect(under.overByEur).toBeNull()
@@ -73,5 +85,50 @@ describe('costSummaryFor', () => {
     const over = costSummaryFor({ fixture, weekId: WEEK_40, decisions: proposedDecisions(), bookings })
     expect(over.totalEur).toBe(1440 + 3 * 5 * rate)
     expect(over.overByEur).toBe(1440 + 3 * 5 * rate - 3000)
+  })
+
+  it('pins the week 40 walkthrough end state to its spec §3.1 total', () => {
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v012': { itemId: 'item-v012', treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+      'item-v103': { itemId: 'item-v103', treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
+      'item-v118': { itemId: 'item-v118', treatment: 'act-now', slotDate: '2026-10-01', deferral: null },
+      'item-v041': {
+        itemId: 'item-v041',
+        treatment: 'watch',
+        slotDate: null,
+        deferral: {
+          reason: 'Recurring misfire code with no measured trend and no deadline.',
+          reviewDate: '2026-10-05',
+          trigger: item('item-v041').triggerOptions[0],
+        },
+      },
+      'item-v027': adoptProposal(item('item-v027')),
+    }
+    const bookings: Record<VehicleId, ReplacementBooking> = {
+      'V-012': { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 },
+      'V-103': { vehicleId: 'V-103', startDate: '2026-09-29', days: 1 },
+    }
+    const s = costSummaryFor({ fixture, weekId: WEEK_40, decisions, bookings })
+    expect(s).toEqual({
+      serviceCostEur: 1440,
+      coverCostEur: 840,
+      totalEur: 2280,
+      budgetEur: 3000,
+      overByEur: null,
+    })
+  })
+
+  it('pins the week 41 walkthrough end state to its spec §3.2 total', () => {
+    const decisions: Record<ItemId, DraftDecision> = {
+      'item-v024': { itemId: 'item-v024', treatment: 'act-now', slotDate: '2026-10-08', deferral: null },
+      'item-v105': { itemId: 'item-v105', treatment: 'act-now', slotDate: '2026-10-07', deferral: null },
+    }
+    const bookings: Record<VehicleId, ReplacementBooking> = {
+      'V-012': { vehicleId: 'V-012', startDate: '2026-10-05', days: 1 },
+    }
+    const s = costSummaryFor({ fixture, weekId: '2026-10-05', decisions, bookings })
+    expect(s.serviceCostEur).toBe(360)
+    expect(s.coverCostEur).toBe(140)
+    expect(s.totalEur).toBe(500)
   })
 })

@@ -2,7 +2,7 @@ import { computeWeekCapacity, isHeldOn } from './capacity'
 import { formatDay } from './clock'
 import { isDeferralComplete } from './deferral'
 import { slotBlockers } from './feasibility'
-import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
+import { adHocCoversFrom, eligibleBookings } from './replacementBooking'
 import type { Blocker, DraftDecision, Fixture, ItemId, OpenItem, ReplacementBooking, VehicleId, WeekId } from './types'
 import { visitsFromDecisions } from './visits'
 
@@ -22,8 +22,8 @@ export function validatePlan(args: {
   // after the first author none of their own.
   const items = fixture.items.filter((i) => decisions[i.id] !== undefined)
   const visits = visitsFromDecisions(decisions, fixture.items)
-  // A booking counts as cover only while its vehicle has a visit. [scenario spec §5.4]
-  const adHocCovers = adHocCoversFrom(bookingsForVisits(bookings, visits), fixture.replacementDayRateEur)
+  // A booking counts as cover only while its vehicle has a visit or a hold. [no pool cover spec D3]
+  const adHocCovers = adHocCoversFrom(eligibleBookings(bookings, { fixture, weekId, visits }), fixture.replacementDayRateEur)
   const out: Blocker[] = []
 
   for (const item of items) {

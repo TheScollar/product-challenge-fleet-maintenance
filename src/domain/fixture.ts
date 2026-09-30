@@ -75,10 +75,7 @@ const vehicles: Vehicle[] = [
   ...SPECIALIST_IDS.map((id, i) => buildVehicle(id, 'specialist', i + 30)),
 ]
 
-const covers: Cover[] = [
-  { id: 'R-1', vehicleClass: 'standard', confirmedDates: [...WEEK_40, ...WEEK_41], dayRateEur: 140 },
-  { id: 'R-2', vehicleClass: 'standard', confirmedDates: ['2026-09-29', '2026-10-01'], dayRateEur: 140 },
-]
+const covers: Cover[] = []
 
 const garages: Garage[] = [
   {
@@ -123,7 +120,7 @@ const items: OpenItem[] = [
         'The van is already out of service and stays out until a release is recorded. Waiting does not reduce exposure, it extends the outage.',
       serviceCostEur: 480,
       coverUnavailable: false,
-      uncoveredAssignmentsNote: 'None. R-1 covers this van for the whole week.',
+      uncoveredAssignmentsNote: 'One standard assignment uncovered every day V-012 is held.',
     },
     proposal: { treatment: 'act-now', slotDate: '2026-09-29', deferral: null },
     // Watch is disabled for a safety-class item, so it offers no trigger.
@@ -375,7 +372,10 @@ const weeks: WeekFixture[] = [
     weekId: '2026-09-28',
     days: WEEK_40,
     demand: { standard: 38, specialist: 7 },
-    coverIds: ['R-1', 'R-2'],
+    // One free standard van on Thursday, so moving a visit is a real lever
+    // and not only a relocated shortfall. [no pool cover spec D5]
+    demandByDay: { '2026-10-01': { standard: 37 } },
+    coverIds: [],
     itemIds: ['item-v012', 'item-v041', 'item-v103', 'item-v118', 'item-v027'],
     budgetEur: 3000,
   },
@@ -383,7 +383,8 @@ const weeks: WeekFixture[] = [
     weekId: '2026-10-05',
     days: WEEK_41,
     demand: { standard: 38, specialist: 7 },
-    coverIds: ['R-1'],
+    demandByDay: { '2026-10-07': { standard: 37 }, '2026-10-08': { standard: 37 } },
+    coverIds: [],
     itemIds: ['item-v024', 'item-v105'],
     budgetEur: 3000,
   },
@@ -397,7 +398,7 @@ export const fixture: Fixture = {
   garages,
   weeks,
   defaultDemand: { standard: 38, specialist: 7 },
-  defaultCoverIds: ['R-1'],
+  defaultCoverIds: [],
   events,
   replacementDayRateEur: 140,
   defaultBudgetEur: 3000,

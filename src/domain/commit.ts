@@ -1,6 +1,6 @@
 import { computeDayCapacity, computeWeekCapacity, isHeldOn, unavailableOn, weekFixtureFor } from './capacity'
 import { formatDay, formatLongDay } from './clock'
-import { adHocCoversFrom, bookingsForVisits } from './replacementBooking'
+import { adHocCoversFrom, eligibleBookings } from './replacementBooking'
 import type {
   CommittedPlan,
   DayCapacity,
@@ -86,7 +86,7 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
   const { fixture, plan } = args
   const week = weekFixtureFor(fixture, plan.weekId)
   const visits = visitsFromDecisions(plan.decisions, fixture.items)
-  const visitBookings = bookingsForVisits(plan.bookings, visits)
+  const visitBookings = eligibleBookings(plan.bookings, { fixture, weekId: plan.weekId, visits })
   // A committed replacement is cover in the summary too. Until now the band
   // counted it and this table did not. [scenario spec §6]
   const adHocCovers = adHocCoversFrom(visitBookings, fixture.replacementDayRateEur)
@@ -101,7 +101,7 @@ export function summaryFor(args: { fixture: Fixture; plan: CommittedPlan }): Com
       return `${c.id}, ${c.vehicleClass} cover, confirmed ${inWeek.map(formatDay).join(', ')} at EUR ${c.dayRateEur} per day.`
     })
   if (!fixture.covers.some((c) => week.coverIds.includes(c.id) && c.vehicleClass === 'specialist')) {
-    coverAssumptions.push('No specialist cover is available this week. A standard rental does not substitute.')
+    coverAssumptions.push('No specialist cover is available this week. A standard replacement does not substitute.')
   }
 
   return {
@@ -162,7 +162,10 @@ export function dailyConfirmation(args: {
   const { fixture, plan, forDate } = args
   const week = weekFixtureFor(fixture, plan.weekId)
   const visits = visitsFromDecisions(plan.decisions, fixture.items)
-  const adHocCovers = adHocCoversFrom(bookingsForVisits(plan.bookings, visits), fixture.replacementDayRateEur)
+  const adHocCovers = adHocCoversFrom(
+    eligibleBookings(plan.bookings, { fixture, weekId: plan.weekId, visits }),
+    fixture.replacementDayRateEur,
+  )
   const classes: VehicleClass[] = ['standard', 'specialist']
 
   const offRoad = [...unavailableOn(forDate, fixture.vehicles, visits)]

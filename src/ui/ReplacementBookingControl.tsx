@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { weekFixtureFor } from '../domain/capacity'
 import { formatDay, formatDayCount } from '../domain/clock'
-import { bookingCostEur, replacementBookingErrors } from '../domain/replacementBooking'
+import { bookingCostEur, canCarryBooking, replacementBookingErrors } from '../domain/replacementBooking'
 import type { ReplacementBooking, VehicleClass, VehicleId, Visit } from '../domain/types'
+import { visitsFromDecisions } from '../domain/visits'
 import { usePlan } from '../state/PlanProvider'
-import { activeWeekId } from '../state/planReducer'
+import { activeWeekId, draftFor } from '../state/planReducer'
 
 /**
- * A replacement belongs to a visit. Mounted only in the weekly plan's detail
- * pane, and it offers the request only once a visit is applied for this
- * vehicle; the dashboard reports a committed booking as a fact and offers no
- * control. Callers mount it with a key that changes with the vehicle and with
- * the applied visit's day, so an open form and its draft never outlive the
- * visit they were opened for. [scenario spec §5.1, §5.2]
+ * A replacement belongs to a visit or a hold. Mounted only in the weekly
+ * plan's detail pane, and it offers the request only once the vehicle carries
+ * one of the two, checked through the same `canCarryBooking` predicate the
+ * reducer and the cost engine use; the dashboard reports a committed booking
+ * as a fact and offers no control. Callers mount it with a key that changes
+ * with the vehicle and with the applied visit's day, so an open form and its
+ * draft never outlive the visit they were opened for. [no pool cover spec D3,
+ * scenario spec §5.1, §5.2]
  */
 export function ReplacementBookingControl({
   vehicleId,
@@ -30,7 +33,9 @@ export function ReplacementBookingControl({
   const { state, dispatch, fixture } = usePlan()
   const weekId = activeWeekId(state)
   const week = weekFixtureFor(fixture, weekId)
-  const booking = appliedVisit === null ? null : (state.draftBookingsByWeek[weekId]?.[vehicleId] ?? null)
+  const visits = visitsFromDecisions(draftFor({ fixture, state, weekId }), fixture.items)
+  const canRequest = canCarryBooking(vehicleId, { fixture, weekId, visits })
+  const booking = canRequest ? (state.draftBookingsByWeek[weekId]?.[vehicleId] ?? null) : null
   const [editing, setEditing] = useState(false)
   // Defaults follow the visit: its day, its length. Both stay editable within
   // the week, so a held van can be covered Monday to Friday.
@@ -43,7 +48,7 @@ export function ReplacementBookingControl({
   // and never read before one of them runs.
   const [draft, setDraft] = useState<Partial<ReplacementBooking>>({})
 
-  if (appliedVisit === null) {
+  if (!canRequest) {
     return (
       <div className="block">
         <div className="blocktitle">Replacement cover</div>

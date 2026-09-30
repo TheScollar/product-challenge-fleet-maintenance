@@ -230,6 +230,8 @@ booking is gone).
 
 ### 5.4 Every reader filters structurally (`src/domain/replacementBooking.ts`)
 
+> Superseded by 2026-09-28-no-pool-cover-design.md (D1, D3).
+
 ```ts
 export function bookingsForVisits(
   bookings: Record<VehicleId, ReplacementBooking>,
@@ -260,6 +262,8 @@ the number the decision is weighed against. Operational disruption stays a count
 `V-012`'s EUR 700 therefore appears only if the user books five days for it.
 
 ### 5.6 The weekly total (`src/domain/costs.ts`)
+
+> Superseded by 2026-09-28-no-pool-cover-design.md (D1, D3).
 
 ```
 serviceCostEur = Σ item.consequence.serviceCostEur over items with a visit this week

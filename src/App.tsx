@@ -10,13 +10,16 @@ import { CoverNote } from './ui/CoverNote'
 import { DecisionQueue } from './ui/DecisionQueue'
 import { DemoBar } from './ui/DemoBar'
 import { FleetView } from './ui/FleetView'
+import type { Selection } from './ui/grouping'
+import { HeldVehiclePanel } from './ui/HeldVehiclePanel'
 import { ItemDetail } from './ui/ItemDetail'
 import { NavTabs } from './ui/NavTabs'
 import { PlanHeader } from './ui/PlanHeader'
 
 export default function App() {
   const { state, dispatch, fixture } = usePlan()
-  const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null)
+  const [selection, setSelection] = useState<Selection | null>(null)
+  const selectedItemId = selection?.kind === 'item' ? selection.itemId : null
   // The selected item's staged-but-not-yet-applied decision, kept here (not
   // just inside ItemDetail) so the capacity band can preview it before Apply
   // to draft is clicked. Reset whenever the selection changes, below.
@@ -39,7 +42,7 @@ export default function App() {
   useEffect(() => {
     setTab('fleet')
     setPlanView('planning')
-    setSelectedItemId(null)
+    setSelection(null)
   }, [weekId])
 
   // A stale preview must not survive past the item it previewed, whether the
@@ -63,7 +66,7 @@ export default function App() {
   // Crossing to the plan side never decides which face it wears: an untouched
   // committed week keeps showing its summary. Only selection moves. [FO spec 3]
   const openPlan = (itemId: ItemId | null) => {
-    if (itemId !== null) setSelectedItemId(itemId)
+    if (itemId !== null) setSelection({ kind: 'item', itemId })
     setTab('plan')
   }
 
@@ -91,7 +94,7 @@ export default function App() {
         onReset={() => {
           setTab('fleet')
           setPlanView('planning')
-          setSelectedItemId(null)
+          setSelection(null)
         }}
       />
       <NavTabs active={tab} onNavigate={setTab} />
@@ -106,9 +109,14 @@ export default function App() {
               dispatch({ type: 'commit', weekId })
               setPlanView('summary')
             }}
-            onSelectItem={setSelectedItemId}
+            onSelect={setSelection}
           />
-          <CapacityBand decisions={previewDecisions} selectedItemId={selectedItemId} bookings={bookings} />
+          <CapacityBand
+            decisions={previewDecisions}
+            selectedItemId={selectedItemId}
+            bookings={bookings}
+            onSelectHeld={(vehicleId) => setSelection({ kind: 'held-vehicle', vehicleId })}
+          />
           {planView === 'summary' && state.committedByWeek[weekId] ? (
             <CommitSummary onEdit={() => setPlanView('planning')} />
           ) : (
@@ -117,10 +125,12 @@ export default function App() {
                 decisions={decisions}
                 blockers={blockers}
                 selectedItemId={selectedItemId}
-                onSelect={setSelectedItemId}
+                onSelect={(itemId) => setSelection({ kind: 'item', itemId })}
               />
               <div className="pane right">
-                {selectedItem === null ? (
+                {selection?.kind === 'held-vehicle' ? (
+                  <HeldVehiclePanel key={selection.vehicleId} vehicleId={selection.vehicleId} />
+                ) : selectedItem === null ? (
                   <p className="empty">Select an item to see its evidence and options.</p>
                 ) : (
                   <ItemDetail

@@ -6,4 +6,6 @@ dist/
 .env.*
 .vite/
 coverage/
+.nimbalyst/
 .superpowers/
+*.tsbuildinfo

@@ -4,18 +4,18 @@ import { canCommit } from '../domain/validation'
 import type { Blocker, DraftDecision, ItemId } from '../domain/types'
 import { usePlan } from '../state/PlanProvider'
 import { activeWeekId, queueFor } from '../state/planReducer'
-import { blockerChips } from './grouping'
+import { blockerChips, type Selection } from './grouping'
 
 export function PlanHeader({
   blockers,
   decisions,
   onCommit,
-  onSelectItem,
+  onSelect,
 }: {
   blockers: Blocker[]
   decisions: Record<ItemId, DraftDecision>
   onCommit: () => void
-  onSelectItem: (id: ItemId) => void
+  onSelect: (s: Selection) => void
 }) {
   const { state, fixture } = usePlan()
   const weekId = activeWeekId(state)
@@ -27,6 +27,7 @@ export function PlanHeader({
     items: queueFor({ fixture, state, weekId }).map((e) => e.item),
     decisions,
     fixture,
+    weekId,
   })
 
   return (
@@ -43,8 +44,8 @@ export function PlanHeader({
             <button
               key={chip.key}
               className={`bchip ${chip.tone}`}
-              disabled={chip.targetItemId === null}
-              onClick={() => chip.targetItemId !== null && onSelectItem(chip.targetItemId)}
+              disabled={chip.target === null}
+              onClick={() => chip.target !== null && onSelect(chip.target)}
             >
               <span className="dot" />
               {chip.label}

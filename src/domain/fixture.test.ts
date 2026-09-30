@@ -21,7 +21,7 @@ describe('fixture integrity', () => {
     expect(classOf('V-041')).toBe('specialist')
   })
 
-  it('holds V-012 out of service from the seed date', () => {
+  it('holds V-012 out of service from the seed date until 6 Oct', () => {
     const v012 = fixture.vehicles.find((v) => v.id === 'V-012')!
     expect(v012.hold).not.toBeNull()
     expect(v012.hold!.since).toBe('2026-09-25')
@@ -53,7 +53,7 @@ describe('fixture integrity', () => {
     expect(fixture.vehicles.find((v) => v.id === 'V-105')?.vehicleClass).toBe('standard')
   })
 
-  it('leaves V-041 undisposed so the cold open carries one shortfall, not two', () => {
+  it('leaves V-041 undisposed so the cold open has no specialist shortfall', () => {
     const v041 = fixture.items.find((i) => i.id === 'item-v041')!
     expect(v041.proposal.slotDate).toBeNull()
   })
@@ -62,13 +62,25 @@ describe('fixture integrity', () => {
     expect(fixture.items.filter((i) => i.safetyClass).map((i) => i.id)).toEqual(['item-v012'])
   })
 
-  it('confirms R-1 all week and R-2 on Tuesday and Thursday only', () => {
-    const r1 = fixture.covers.find((c) => c.id === 'R-1')!
-    const r2 = fixture.covers.find((c) => c.id === 'R-2')!
-    expect(r1.vehicleClass).toBe('standard')
-    expect(r2.vehicleClass).toBe('standard')
-    expect(r1.confirmedDates).toContain('2026-09-30')
-    expect(r2.confirmedDates).toEqual(['2026-09-29', '2026-10-01'])
+  it('carries no pool cover in any week or in the default template', () => {
+    expect(fixture.covers).toEqual([])
+    for (const week of fixture.weeks) expect(week.coverIds).toEqual([])
+    expect(fixture.defaultCoverIds).toEqual([])
+  })
+
+  it('names only covers that exist', () => {
+    const ids = new Set(fixture.covers.map((c) => c.id))
+    for (const coverId of [...fixture.weeks.flatMap((w) => w.coverIds), ...fixture.defaultCoverIds]) {
+      expect(ids.has(coverId)).toBe(true)
+    }
+  })
+
+  it('lightens standard demand on Thursday of week 40 and Wednesday and Thursday of week 41', () => {
+    expect(fixture.weeks[0].demandByDay).toEqual({ '2026-10-01': { standard: 37 } })
+    expect(fixture.weeks[1].demandByDay).toEqual({
+      '2026-10-07': { standard: 37 },
+      '2026-10-08': { standard: 37 },
+    })
   })
 
   it('offers no specialist cover at all', () => {

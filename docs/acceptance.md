@@ -361,3 +361,60 @@ more than the review counted. The per-item visit versus per-vehicle booking assu
 nine documents cite it and its describe titles by name, and splitting it would stale every one for
 no behavioural gain. Commands: `npm test` (302 tests, 17 files, all passing), `npx tsc --noEmit`
 (clean), `npm run build` (clean).
+
+## 2026-09-28: no pool cover
+
+**Build:** 4db248b · **Commands:** `npx tsc -b` (clean), `npm test` (323 tests, 17 files, all
+passing), `npm run build` (clean), plus a live browser pass of README's "The walkthrough" against
+`docs/superpowers/specs/2026-09-28-no-pool-cover-design.md` §3.1 and §3.2. Driven with
+`puppeteer-core` against `npx vite --port 5199 --strictPort`, reading DOM text and firing
+`element.click()`, never a screenshot.
+
+R-1 and R-2 are gone everywhere, so week 40's standard row opens one van short on every day but
+Thursday, where demand is 37 instead of 38 (D1, D5). A separate load, before the main pass, set
+`localStorage['fleet-maintenance-prototype/v1']` to `{"version": 2, ...}` and reloaded: the demo bar
+showed the notice `Saved state was written by an older build. Reset to the seed.`, confirming
+`CURRENT_VERSION` moved to 3 and an old save resets rather than partially loading (D6).
+
+The main pass cleared `localStorage`, reloaded, and clicked **Open the fleet** on the cover note.
+Steps 1 to 9 of the README walkthrough were then followed and checked against the spec:
+
+- **Step 1.** Fleet today read `44 of 45 vans on the road · standard short by 1 today`, matching
+  the one-van shortfall.
+- **Step 2.** The week 40 cold open's standard row read `37 / 38 short 1` on Monday, Tuesday,
+  Wednesday and Friday, and `37 / 37` on Thursday, exactly §3.1's cold-open row. Four shortfall
+  flags appeared, one per short day, each naming `V-012` as off the road.
+- **Step 3.** Adopting `V-012`'s proposal and requesting cover Monday for five days cleared every
+  day but Thursday, which read `37 + 1 / 37` with a `+1` spare tag; the flag line read "Every day is
+  covered. Spare capacity on Thu 1 Oct"; the Consequence tile showed `EUR 700`.
+- **Step 4.** Applying `V-103` and `V-118` (both Tuesday) put Tuesday at `35 + 1 / 38 short 2`.
+  Moving `V-118` to Thursday (the spare day) brought Tuesday to `36 + 1 / 38 short 1`, and
+  requesting a one-day Tuesday booking for `V-103` cleared it to `36 + 2 / 38`; the flag line read
+  "Every day is covered, with no spare van in the week". Switching to Fleet today, the running total
+  read `EUR 1,440` service, `EUR 840` cover, `EUR 2,280` of a `EUR 3,000` weekly budget, matching
+  §3.1's "This replaces EUR 2,420 everywhere."
+- **Step 5.** Applying `V-041`'s proposal and picking the Thursday slot broke the specialist row to
+  `6 / 7 short 1`, with standard capacity unaffected, confirming no lever closes a specialist gap
+  with standard cover. Switching the treatment to Watch, filling a rationale, a review date and a
+  trigger, and applying restored the specialist row to `7 / 7`.
+- **Step 6.** `V-027`'s proposal text named "2 Nov" for its already-booked service. Using the
+  proposal and applying it (Watch, with rationale and trigger prefilled) left the fleet card reading
+  `Watching · review Mon 2 Nov`.
+- **Step 7.** On `V-012`'s detail pane, the Bundle and Watch treatment buttons were both disabled,
+  and the blocked reason read "Safety class under UVV. The van is out of service until a release is
+  recorded, so waiting is not an option here."
+- **Step 8.** Commit succeeded; the summary's cost tiles read `EUR 1,440` service, `EUR 840` cover,
+  `EUR 2,280` of a `EUR 3,000` weekly budget. On the fleet dashboard, `V-012`'s attention card read
+  "Held · Safety-relevant brake defect recorded at UVV inspection · Booked Tue 29 Sep · Replacement
+  on site · day 1 of 5".
+- **Step 9.** Clicking **Advance to next review date** moved the demo clock to Wednesday 7 October
+  2026 (week 41). Week 41's cold open read Monday `37 / 38 short 1`, matching §3.2. Clicking the
+  Monday band cell opened the held-vehicle panel for `V-012`: "Held", "Safety-relevant brake defect
+  recorded at UVV inspection", "Release recorded for Tue 6 Oct", with the `ReplacementBookingControl`
+  underneath (D4). Requesting a one-day Monday booking cleared Monday to `37 + 1 / 38`. Adopting
+  `V-024` and `V-105` (both proposing Thursday) left Thursday at `36 / 37 short 1`; moving `V-105` to
+  Wednesday cleared both days to `37 / 37`, and the flag line read "Every day is covered, with no
+  spare van in the week", matching §3.2's "Move V-105 to Wed (resolves)" row.
+
+All 21 checks in the driven pass matched the spec and the README with no deviation. No source code
+was changed to make a check pass.

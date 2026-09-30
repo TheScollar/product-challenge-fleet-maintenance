@@ -131,6 +131,8 @@ export interface WeekFixture {
   weekId: WeekId
   days: ISODate[]
   demand: Demand
+  /** Per-day overrides. A day or class not listed uses `demand`. */
+  demandByDay?: Record<ISODate, Partial<Demand>>
   coverIds: string[]
   itemIds: ItemId[]
   budgetEur: number
@@ -161,7 +163,7 @@ export interface DayCapacity {
   owned: number
   unavailable: VehicleId[]
   cover: number
-  /** Pool rentals first, then ad hoc bookings, in the order they were counted. */
+  /** Every eligible booking, in the order they were counted; there is no pool cover. */
   coverIds: string[]
   available: number
   demand: number

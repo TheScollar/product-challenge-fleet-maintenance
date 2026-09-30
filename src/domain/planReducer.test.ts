@@ -370,4 +370,22 @@ describe('booking a replacement', () => {
     s = reduce(s, { type: 'reset' })
     expect(s).toEqual(initialState(fixture))
   })
+
+  it('records a booking for a held vehicle with no visit, in week 41', () => {
+    let s = reduce(initialState(fixture), { type: 'advance-days', days: 7 })
+    const booking = { vehicleId: 'V-012', startDate: '2026-10-05', days: 1 }
+    s = reduce(s, { type: 'set-booking', weekId: '2026-10-05', booking })
+    expect(bookingsFor({ state: s, weekId: '2026-10-05' })).toEqual({ 'V-012': booking })
+  })
+
+  it("keeps a held vehicle's booking when its item is cleared", () => {
+    const booking = { vehicleId: 'V-012', startDate: '2026-09-28', days: 5 }
+    let s = reduce(adoptedState(), { type: 'set-booking', weekId: '2026-09-28', booking })
+    s = reduce(s, {
+      type: 'set-decision',
+      weekId: '2026-09-28',
+      decision: { itemId: 'item-v012', treatment: null, slotDate: null, deferral: null },
+    })
+    expect(bookingsFor({ state: s, weekId: '2026-09-28' })).toEqual({ 'V-012': booking })
+  })
 })

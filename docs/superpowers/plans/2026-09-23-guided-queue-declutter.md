@@ -18,7 +18,7 @@
 - The red rule [D §6]: after this work, red at week-40 open appears only in blocker chips, the Blocking group (header, left edges, statuses), the Tue band cell and flagline, `no specialist cover`, and the safety badge. The Deadline chip is dark (`#2b3138`), not red.
 - All dates render through `formatDay` from `src/domain/clock.ts`.
 - Run `npm test` (vitest) and `npm run build` (tsc + vite) before every commit; both must pass.
-- Untracked files from other sessions exist in the working tree (`docs/mockups/fleet-overview-*`, `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`, `.nimbalyst/`). Never `git add .`; always add exact paths.
+- Untracked files from other sessions exist in the working tree (`docs/mockups/fleet-overview-*`, `docs/superpowers/specs/2026-09-23-fleet-overview-design.md`). Never `git add .`; always add exact paths.
 
 ---
 

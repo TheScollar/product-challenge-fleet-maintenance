@@ -1,6 +1,6 @@
 # Fleet Maintenance Challenge: Research & Framing Findings
 
-Working document for the MARKT-PILOT Product Builder Challenge (Fleet Maintenance).
+Working document for the fleet-maintenance product challenge.
 Status: domain research complete, scenario assumptions locked, primary persona selected, journey drafted, **scope locked** (section 8.4).
 Next: design decisions for the build (section 9).
 
@@ -416,9 +416,8 @@ finance-leased), this stays in-house rather than routing to a leasing provider. 
 **Decision:** 6.
 **Breaks today:** invoices approved in batches; duplicate repairs, wrong labour rates and inflated
 parts margins surface afterwards.
-**Note:** MARKT-PILOT adjacency (parts price transparency is their home ground). Worth having in the
-back pocket for the interview, but should not become the product's centre of gravity, which is
-availability.
+**Note:** Parts-price transparency is a useful adjacency. Worth having in the back pocket for the
+interview, but it should not become the product's centre of gravity, which is availability.
 
 ### Stage 5 — Closure
 
@@ -556,7 +555,7 @@ Research drawn from: fleet management practitioner literature (Fleetio, Geotab, 
 RTA, OxMaint, FleetRabbit, BusCMMS), delivery fleet downtime economics, German fleet and compliance
 sources (Arval Mobility Observatory Fleet & Mobility Barometer 2026 DE n=300; Dataforce Telematik in
 Flotten 2025; DGUV Vorschrift 70 / UVV guidance from Avrios, Carano, Fuhriva, Leasingengel), FMCSA and
-DVIR regulatory material, and MARKT-PILOT company sources.
+DVIR regulatory material, and industry sources.
 
 Caveats worth carrying into the interview:
 - **No research found** confirming that 40 to 50 van delivery fleets typically carry zero spares. The
