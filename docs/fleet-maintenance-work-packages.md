@@ -3,9 +3,7 @@
 The key build document for the fleet-maintenance product challenge.
 It carries the scope, the goals, the shared rules and the work breakdown. Build from this file.
 
-`fleet-maintenance-plan-review.md` is retained as the reasoning trail and the evidence behind each
-decision recorded here; it is no longer the live plan. Research and framing stay in
-`fleet-maintenance-research-findings.md`, referenced throughout as **[F §n]**. Where this document and
+Research and framing stay in `fleet-maintenance-research-findings.md`, referenced throughout as **[F §n]**. Where this document and
 **[F §8.4]** disagree, this document wins, and the divergence is stated at the point it occurs.
 
 **Status of the decisions below.** They are settled for the purpose of building and are written as
